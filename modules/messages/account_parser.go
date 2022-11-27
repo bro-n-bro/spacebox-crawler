@@ -1,23 +1,30 @@
 package messages
 
 import (
-	"fmt"
-
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 )
+
+// 07-tendermint-259
+// ibc.lightclients.tendermint.v1.Header
 
 // MessageNotSupported returns an error telling that the given message is not supported
 func MessageNotSupported(msg sdk.Msg) error {
-	return fmt.Errorf("message type not supported: %s", msg.String())
+	defer func(msg sdk.Msg) { // FIXME
+		if r := recover(); r != nil {
+			println("message type not supported:", r)
+		}
+	}(msg)
+	//return fmt.Errorf("message type not supported: %s", msg.String())
+	return nil
 }
 
 // MessageAddressesParser represents a function that extracts all the
@@ -48,7 +55,7 @@ var CosmosMessageAddressesParser = JoinMessageParsers(
 	DistributionMessagesParser,
 	EvidenceMessagesParser,
 	GovMessagesParser,
-	//IBCTransferMessagesParser,
+	IBCTransferMessagesParser,
 	SlashingMessagesParser,
 	StakingMessagesParser,
 	DefaultMessagesParser,
@@ -57,8 +64,9 @@ var CosmosMessageAddressesParser = JoinMessageParsers(
 // DefaultMessagesParser represents the default messages parser that simply returns the list
 // of all the signers of a message
 func DefaultMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
-	var signers = make([]string, len(cosmosMsg.GetSigners()))
-	for index, signer := range cosmosMsg.GetSigners() {
+	cosmosSigners := cosmosMsg.GetSigners()
+	signers := make([]string, len(cosmosSigners))
+	for index, signer := range cosmosSigners {
 		signers[index] = signer.String()
 	}
 	return signers, nil
@@ -213,6 +221,18 @@ func StakingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 	case *stakingtypes.MsgUndelegate:
 		return []string{msg.DelegatorAddress, msg.ValidatorAddress}, nil
 
+	}
+
+	return nil, MessageNotSupported(cosmosMsg)
+}
+
+// IBCTransferMessagesParser returns the list of all the accounts involved in the given
+// message if it's related to the x/iBCTransfer module
+func IBCTransferMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
+	switch msg := cosmosMsg.(type) {
+
+	case *ibctransfertypes.MsgTransfer:
+		return []string{msg.Sender, msg.Receiver}, nil
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)

@@ -3,7 +3,7 @@ package bank
 import (
 	"context"
 
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	grpcClient "bro-n-bro-osmosis/client/grpc"
@@ -12,7 +12,7 @@ import (
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
 	params, err := m.getGovParams(ctx, block.Height)
-	// TODO:
+	// TODO: UpdateProposal
 	_ = params
 	return err
 }

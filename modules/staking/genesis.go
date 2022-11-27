@@ -170,7 +170,8 @@ func saveDelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState
 		delegatorShares := validator.DelegatorShares
 
 		for _, delegation := range findDelegations(genState.Delegations, validator.OperatorAddress) {
-			delegationAmount := tokens.ToDec().Mul(delegation.Shares).Quo(delegatorShares).TruncateInt()
+
+			delegationAmount := sdk.NewDecFromBigInt(tokens.BigInt()).Mul(delegation.Shares).Quo(delegatorShares).TruncateInt()
 			delegations = append(delegations, types.NewDelegation(
 				delegation.DelegatorAddress,
 				validator.OperatorAddress,

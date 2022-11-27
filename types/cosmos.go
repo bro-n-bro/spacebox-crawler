@@ -22,6 +22,9 @@ type (
 		Evidence        tmtypes.EvidenceData
 	}
 
+	// Txs - slice of transactions
+	Txs []*Tx
+
 	// Tx represents an already existing blockchain transaction
 	Tx struct {
 		*sdktx.Tx
@@ -58,8 +61,8 @@ func NewBlockFromTmBlock(blk *tmctypes.ResultBlock) *Block {
 		blk.Block.Evidence,
 	)
 }
-func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse) []*Tx {
-	res := make([]*Tx, len(txs))
+func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse) Txs {
+	res := make(Txs, len(txs))
 	for i, tx := range txs {
 		res[i] = &Tx{
 			Tx:         tx.Tx,
@@ -93,6 +96,14 @@ func NewValidator(consAddr string, consPubKey string) *Validator {
 func ConvertValidatorPubKeyToBech32String(pubKey tmcrypto.PubKey) (string, error) {
 	bech32Prefix := sdk.GetConfig().GetBech32ConsensusPubPrefix()
 	return bech32.ConvertAndEncode(bech32Prefix, pubKey.Bytes())
+}
+
+// TotalGas calculates and returns total used gas of all transactions
+func (txs Txs) TotalGas() (totalGas uint64) {
+	for _, tx := range txs {
+		totalGas += uint64(tx.GasUsed)
+	}
+	return totalGas
 }
 
 // FindEventByType searches inside the given tx events for the message having the specified index, in order

@@ -3,8 +3,8 @@ package broker
 import (
 	"context"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	banktypes "github.com/cosmos/cosmos-sdk/types"
-	"github.com/segmentio/kafka-go"
 )
 
 func (b *Broker) PublishBank(ctx context.Context, response banktypes.Coins) error {
@@ -15,17 +15,27 @@ func (b *Broker) PublishBank(ctx context.Context, response banktypes.Coins) erro
 		return err
 	}
 
-	err = b.writer.WriteMessages(ctx,
-		// NOTE: Each Message has Topic defined, otherwise an error is returned.
-		kafka.Message{
-			Topic: "block-module",
-			Key:   []byte("block"),
-			Value: jsonBytes,
-		},
-	)
+	//err = b.writer.WriteMessages(ctx,
+	//	// NOTE: Each Message has Topic defined, otherwise an error is returned.
+	//	kafka.Message{
+	//		Topic: "block-module",
+	//		Key:   []byte("block"),
+	//		Value: jsonBytes,
+	//	},
+	//)
+	//if err != nil {
+	//	b.log.Error().Err(err).Msg("failed to write messages")
+	//	return err
+	//}
+	t := "test-topic"
+	err = b.p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &t, Partition: kafka.PartitionAny},
+		Value:          jsonBytes,
+		Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
+	}, nil)
 	if err != nil {
-		b.log.Error().Err(err).Msg("failed to write messages")
 		return err
 	}
+
 	return nil
 }

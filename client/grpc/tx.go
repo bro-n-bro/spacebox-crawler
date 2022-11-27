@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"sync"
@@ -43,8 +44,7 @@ func (c *Client) TxsOld(ctx context.Context, txs types2.Txs) ([]*tx.GetTxRespons
 	txResponses := make([]*tx.GetTxResponse, 0, len(txs))
 
 	for _, tmTx := range txs {
-		hash := fmt.Sprintf("%X", tmTx.Hash())
-		respPb, err := c.TxService.GetTx(ctx, &tx.GetTxRequest{Hash: hash})
+		respPb, err := c.TxService.GetTx(ctx, &tx.GetTxRequest{Hash: hex.EncodeToString(tmTx.Hash())})
 		if err != nil {
 			log.Println("GetTx error:", err)
 			continue

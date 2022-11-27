@@ -1,13 +1,14 @@
 package bank
 
 import (
+	"bro-n-bro-osmosis/internal/rep"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
-	"bro-n-bro-osmosis/adapter/broker"
 	grpcClient "bro-n-bro-osmosis/client/grpc"
 )
 
@@ -20,12 +21,13 @@ var (
 
 type Module struct {
 	log    *zerolog.Logger
-	broker *broker.Broker
 	client *grpcClient.Client
+	broker rep.Broker
+	tbM    tb.ToBroker
 	cdc    codec.Codec
 }
 
-func New(b *broker.Broker, cli *grpcClient.Client, cdc codec.Codec) *Module {
+func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "gov").Logger()
 
@@ -33,6 +35,7 @@ func New(b *broker.Broker, cli *grpcClient.Client, cdc codec.Codec) *Module {
 		log:    &l,
 		broker: b,
 		client: cli,
+		tbM:    tbM,
 		cdc:    cdc,
 	}
 }

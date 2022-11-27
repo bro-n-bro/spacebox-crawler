@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	grpcClient "bro-n-bro-osmosis/client/grpc"
 	"bro-n-bro-osmosis/types"
@@ -19,14 +20,17 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	}
 
 	switch msg := cosmosMsg.(type) {
-	case *govtypes.MsgSubmitProposal:
+	case *govtypesv1beta1.MsgSubmitProposal:
 		return handleMsgSubmitProposal(ctx, tx, index, msg, m.client.GovQueryClient, m.cdc)
 
-	case *govtypes.MsgDeposit:
+	case *govtypesv1beta1.MsgDeposit:
 		return handleMsgDeposit(ctx, tx, msg, m.client.GovQueryClient)
 
-	case *govtypes.MsgVote:
-		return handleMsgVote(tx, msg)
+	case *govtypesv1beta1.MsgVote:
+		pvm := m.tbM.MapProposalVoteMessage(types.NewProposalVoteMessage(msg.ProposalId, msg.Voter, msg.Option,
+			tx.Height))
+		// TODO: TEST IT
+		return m.broker.PublishProposalVoteMessage(ctx, pvm)
 	}
 
 	return nil
@@ -34,8 +38,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 // handleMsgSubmitProposal allows to properly handle a handleMsgSubmitProposal
 func handleMsgSubmitProposal(
-	ctx context.Context, tx *types.Tx, index int, msg *govtypes.MsgSubmitProposal,
-	govClient govtypes.QueryClient, cdc codec.Codec,
+	ctx context.Context, tx *types.Tx, index int, msg *govtypesv1beta1.MsgSubmitProposal,
+	govClient govtypesv1beta1.QueryClient, cdc codec.Codec,
 ) error {
 	// Get the proposal id
 	event, err := tx.FindEventByType(index, govtypes.EventTypeSubmitProposal)
@@ -56,7 +60,7 @@ func handleMsgSubmitProposal(
 	// Get the proposal
 	res, err := govClient.Proposal(
 		ctx,
-		&govtypes.QueryProposalRequest{ProposalId: proposalID},
+		&govtypesv1beta1.QueryProposalRequest{ProposalId: proposalID},
 	)
 	if err != nil {
 		return err
@@ -65,7 +69,7 @@ func handleMsgSubmitProposal(
 	proposal := res.Proposal
 
 	// Unpack the content
-	var content govtypes.Content
+	var content govtypesv1beta1.Content
 	err = cdc.UnpackAny(proposal.Content, &content)
 	if err != nil {
 		return err
@@ -75,17 +79,17 @@ func handleMsgSubmitProposal(
 		proposal.ProposalId,
 		proposal.ProposalRoute(),
 		proposal.ProposalType(),
-		proposal.GetContent(),
+		msg.Proposer,
 		proposal.Status.String(),
+		proposal.GetContent(),
 		proposal.SubmitTime,
 		proposal.DepositEndTime,
 		proposal.VotingStartTime,
 		proposal.VotingEndTime,
-		msg.Proposer,
 	)
 
 	// Store the deposit
-	deposit := types.NewDeposit(proposal.ProposalId, msg.Proposer, msg.InitialDeposit, tx.Height)
+	deposit := types.NewProposalDeposit(proposal.ProposalId, msg.Proposer, msg.InitialDeposit, tx.Height)
 
 	// TODO:
 	_, _ = proposalObj, deposit
@@ -94,27 +98,19 @@ func handleMsgSubmitProposal(
 }
 
 // handleMsgDeposit allows to properly handle a handleMsgDeposit
-func handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtypes.MsgDeposit, govClient govtypes.QueryClient) error {
+func handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgDeposit, govClient govtypesv1beta1.QueryClient) error {
 	res, err := govClient.Deposit(
 		ctx,
-		&govtypes.QueryDepositRequest{ProposalId: msg.ProposalId, Depositor: msg.Depositor},
+		&govtypesv1beta1.QueryDepositRequest{ProposalId: msg.ProposalId, Depositor: msg.Depositor},
 		grpcClient.GetHeightRequestHeader(tx.Height),
 	)
 	if err != nil {
 		return fmt.Errorf("error while getting proposal deposit: %s", err)
 	}
 
-	deposit := types.NewDeposit(msg.ProposalId, msg.Depositor, res.Deposit.Amount, tx.Height)
+	deposit := types.NewProposalDeposit(msg.ProposalId, msg.Depositor, res.Deposit.Amount, tx.Height)
 
 	_ = deposit
-	// TODO:
-	return nil
-}
-
-// handleMsgVote allows to properly handle a handleMsgVote
-func handleMsgVote(tx *types.Tx, msg *govtypes.MsgVote) error {
-	vote := types.NewVote(msg.ProposalId, msg.Voter, msg.Option, tx.Height)
-	_ = vote
 	// TODO:
 	return nil
 }

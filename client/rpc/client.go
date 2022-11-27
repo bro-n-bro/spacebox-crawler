@@ -5,29 +5,44 @@ import (
 	"net/http"
 
 	tmHttp "github.com/tendermint/tendermint/rpc/client/http"
-	"github.com/tendermint/tendermint/rpc/jsonrpc/client"
+	jsonrpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
 )
 
 type Client struct {
-	target    string
-	wsEnabled bool
+	*jsonrpcclient.WSClient
+	*tmHttp.WSEvents
 
 	RpcClient  *tmHttp.HTTP
 	HttpClient *http.Client
+
+	cfg Config
 }
 
-func New(target string, wsEnabled bool) *Client {
-	return &Client{target: target, wsEnabled: wsEnabled}
+func New(cfg Config) *Client {
+	return &Client{cfg: cfg}
 }
 
 func (c *Client) Start(ctx context.Context) error {
-	httpCli, err := client.DefaultHTTPClient(c.target)
+	httpCli, err := jsonrpcclient.DefaultHTTPClient(c.cfg.Host)
 	if err != nil {
 		return err
 	}
 
-	if c.wsEnabled {
-		cli, err := tmHttp.NewWithClient(c.target, "/websocket", httpCli)
+	c.HttpClient = httpCli
+
+	// FIXME: does not work without websocket
+	if c.cfg.WSEnabled {
+		cli, err := tmHttp.NewWithClient(c.cfg.Host, "/websocket", httpCli)
+		if err != nil {
+			return err
+		}
+		if err = cli.Start(); err != nil {
+			return err
+		}
+		c.RpcClient = cli
+	} else {
+		//return nil
+		cli, err := tmHttp.NewWithClient(c.cfg.Host, "", httpCli)
 		if err != nil {
 			return err
 		}
@@ -37,17 +52,17 @@ func (c *Client) Start(ctx context.Context) error {
 		c.RpcClient = cli
 	}
 
-	c.HttpClient = httpCli
-
 	return nil
 }
 
 func (c *Client) Stop(ctx context.Context) error {
 	c.HttpClient.CloseIdleConnections()
-	if c.wsEnabled {
+	if c.cfg.WSEnabled {
 		if err := c.RpcClient.Stop(); err != nil {
 			return err
 		}
 	}
 	return nil
 }
+
+func (c *Client) WsEnabled() bool { return c.cfg.WSEnabled }

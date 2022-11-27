@@ -1,37 +1,81 @@
 package worker
 
-//
-//import (
-//	"context"
-//
-//	"bro-n-bro-osmosis/internal/rep"
-//	"bro-n-bro-osmosis/types"
-//)
-//
-//type Worker struct {
-//	Broker     rep.Broker
-//	RPCClient  rep.RPCClient
-//	GrpcClient rep.GrpcClient
-//	Modules    []types.Module
-//
-//	cancel func()
-//}
-//
-//func New(b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient, modules []types.Module) *Worker {
-//	return &Worker{
-//		Broker:     b,
-//		RPCClient:  rpcCli,
-//		GrpcClient: grpcCli,
-//		Modules:    modules,
-//	}
-//
-//}
-//
-//func (w *Worker) Start(ctx context.Context) error {
-//	ctx, cancel := context.WithCancel(ctx)
-//
-//}
-//
-//func (w *Worker) Stop(ctx context.Context) error {
-//
-//}
+import (
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
+	"context"
+	"fmt"
+	"os"
+	"sync"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/rs/zerolog"
+
+	"bro-n-bro-osmosis/internal/rep"
+	"bro-n-bro-osmosis/types"
+)
+
+type Worker struct {
+	log *zerolog.Logger
+	wg  *sync.WaitGroup
+
+	broker     rep.Broker
+	rpcClient  rep.RPCClient
+	grpcClient rep.GrpcClient
+	modules    []types.Module
+	marshaler  codec.Codec
+	cfg        Config
+	tbM        tb.ToBroker
+
+	cancel   func()
+	heightCh chan int64
+}
+
+func New(cfg Config, b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient, modules []types.Module,
+	marshaler codec.Codec, tbM tb.ToBroker) *Worker {
+
+	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
+		Str("cmp", "worker").Logger()
+	return &Worker{
+		cfg:        cfg,
+		log:        &l,
+		broker:     b,
+		rpcClient:  rpcCli,
+		grpcClient: grpcCli,
+		modules:    modules,
+		marshaler:  marshaler,
+		tbM:        tbM,
+		wg:         &sync.WaitGroup{},
+		heightCh:   make(chan int64, cfg.ChanSize),
+	}
+}
+
+func (w *Worker) Start(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	w.cancel = cancel
+
+	for i := 0; i < w.cfg.WorkersCount; i++ {
+		w.wg.Add(1)
+		go w.processHeight(ctx, i) // run processing block function
+	}
+
+	if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() {
+		eventCh, err := w.rpcClient.SubscribeNewBlocks(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to subscribe to new blocks: %s", err)
+		}
+		go w.enqueueNewBlocks(ctx, eventCh)
+	}
+
+	go w.enqueueHeight()
+
+	return nil
+
+}
+
+func (w *Worker) Stop(_ context.Context) error {
+	w.cancel()
+	w.wg.Wait()
+	close(w.heightCh)
+	w.log.Info().Msg("stop workers")
+	return nil
+}

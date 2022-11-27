@@ -1,7 +1,10 @@
 package bank
 
 import (
+	grpcClient "bro-n-bro-osmosis/client/grpc"
 	"context"
+
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
@@ -9,12 +12,18 @@ import (
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
-	coins, err := m.client.GetTotalSupply(ctx, block.Height)
+	resp, err := m.client.BankQueryClient.TotalSupply(
+		ctx,
+		&banktypes.QueryTotalSupplyRequest{},
+		grpcClient.GetHeightRequestHeader(block.Height))
 	if err != nil {
 		return err
 	}
-	_ = coins
-	// TODO:
-	//err = m.broker.PublishBank(ctx, coins)
-	return err
+
+	// TODO: tests
+	err = m.broker.PublishSupply(ctx, m.tbM.MapSupply(types.NewTotalSupply(block.Height, types.NewCoinsFromCdk(resp.Supply))))
+	if err != nil {
+		return err
+	}
+	return nil
 }

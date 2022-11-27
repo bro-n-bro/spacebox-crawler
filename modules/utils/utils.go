@@ -26,10 +26,18 @@ func GetGenesisAccounts(appState map[string]json.RawMessage, cdc codec.Codec) ([
 			return nil, err
 		}
 
-		accounts[index] = types.NewAccount(accountI.GetAddress().String())
+		accounts[index] = types.NewAccount(accountI.GetAddress().String(), 0)
 	}
 
 	return accounts, nil
+}
+
+func GetAccounts(addresses []string, height int64) []types.Account {
+	res := make([]types.Account, len(addresses))
+	for i, addr := range addresses {
+		res[i] = types.NewAccount(addr, height)
+	}
+	return res
 }
 
 func ContainAny[T constraints.Ordered](src []T, trg T) bool {

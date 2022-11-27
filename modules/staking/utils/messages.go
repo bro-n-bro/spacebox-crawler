@@ -2,6 +2,8 @@ package utils
 
 import (
 	grpcClient "bro-n-bro-osmosis/client/grpc"
+	"bro-n-bro-osmosis/internal/rep"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 	"context"
 	"time"
@@ -102,7 +104,8 @@ func StoreDelegationFromMessage(height int64, msg *stakingtypes.MsgDelegate, sta
 
 // StoreRedelegationFromMessage handles a MsgBeginRedelegate by saving the redelegation inside the database,
 // and returns the new redelegation instance
-func StoreRedelegationFromMessage(tx *types.Tx, index int, msg *stakingtypes.MsgBeginRedelegate) (*types.Redelegation, error) {
+func StoreRedelegationFromMessage(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgBeginRedelegate,
+	broker rep.Broker, mapper tb.ToBroker) (*types.Redelegation, error) {
 	event, err := tx.FindEventByType(index, stakingtypes.EventTypeRedelegate)
 	if err != nil {
 		return nil, err
@@ -127,6 +130,20 @@ func StoreRedelegationFromMessage(tx *types.Tx, index int, msg *stakingtypes.Msg
 		tx.Height,
 	)
 
+	redelegationMessage := types.NewRedelegationMessage(
+		msg.DelegatorAddress,
+		msg.ValidatorSrcAddress,
+		msg.ValidatorDstAddress,
+		tx.TxHash,
+		types.NewCoinFromCdk(msg.Amount),
+		completionTime,
+		tx.Height)
+
+	// TODO: test it
+	err = broker.PublishRedelegationMessage(ctx, mapper.MapRedelegationMessage(redelegationMessage))
+	if err != nil {
+		return nil, err
+	}
 	// TODO:
 	//err = db.SaveRedelegations([]types.Redelegation{redelegation})
 
@@ -135,7 +152,8 @@ func StoreRedelegationFromMessage(tx *types.Tx, index int, msg *stakingtypes.Msg
 
 // StoreUnbondingDelegationFromMessage handles a MsgUndelegate storing the new unbonding delegation inside the database,
 // and returns the new unbonding delegation instance
-func StoreUnbondingDelegationFromMessage(tx *types.Tx, index int, msg *stakingtypes.MsgUndelegate) (*types.UnbondingDelegation, error) {
+func StoreUnbondingDelegationFromMessage(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgUndelegate,
+	broker rep.Broker, mapper tb.ToBroker) (*types.UnbondingDelegation, error) {
 	event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond)
 	if err != nil {
 		return nil, err
@@ -158,6 +176,20 @@ func StoreUnbondingDelegationFromMessage(tx *types.Tx, index int, msg *stakingty
 		completionTime,
 		tx.Height,
 	)
+
+	undDelegationMessage := types.NewUnbondingDelegationMessage(
+		msg.DelegatorAddress,
+		msg.ValidatorAddress,
+		tx.TxHash,
+		types.NewCoinFromCdk(msg.Amount),
+		completionTime,
+		tx.Height)
+
+	// TODO: test it
+	err = broker.PublishUnbondingDelegationMessage(ctx, mapper.MapUnbondingDelegationMessage(undDelegationMessage))
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO:
 	//err =  db.SaveUnbondingDelegations([]types.UnbondingDelegation{delegation})

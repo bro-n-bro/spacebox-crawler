@@ -6,12 +6,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	sdk "github.com/tendermint/tendermint/rpc/core/types"
+	tmccoretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmctypes "github.com/tendermint/tendermint/types"
 )
 
-func (c *Client) Validators(ctx context.Context, height int64) (*sdk.ResultValidators, error) {
-	vals := &sdk.ResultValidators{
+func (c *Client) Validators(ctx context.Context, height int64) (*tmccoretypes.ResultValidators, error) {
+	vals := &tmccoretypes.ResultValidators{
 		BlockHeight: height,
 	}
 

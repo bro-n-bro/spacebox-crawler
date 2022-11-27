@@ -1,8 +1,8 @@
 package slasing
 
 import (
-	"bro-n-bro-osmosis/adapter/broker"
 	grpcClient "bro-n-bro-osmosis/client/grpc"
+	"bro-n-bro-osmosis/internal/rep"
 	"bro-n-bro-osmosis/types"
 	"os"
 
@@ -16,11 +16,11 @@ var (
 
 type Module struct {
 	log    *zerolog.Logger
-	broker *broker.Broker
+	broker rep.Broker
 	client *grpcClient.Client
 }
 
-func New(b *broker.Broker, cli *grpcClient.Client) *Module {
+func New(b rep.Broker, cli *grpcClient.Client) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "slashing").Logger()
 
