@@ -8,9 +8,11 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	govutils "bro-n-bro-osmosis/modules/gov/utils"
 )
 
-func (m *Module) HandleGenesis(_ context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 
 	// Read the genesis state
 	var genState govtypesv1beta1.GenesisState
@@ -19,8 +21,10 @@ func (m *Module) HandleGenesis(_ context.Context, _ *tmtypes.GenesisDoc, appStat
 		return fmt.Errorf("error while reading gov genesis data: %s", err)
 	}
 
-	// TODO:
-	_ = genState.Proposals
+	proposals := genState.Proposals
+	if err = govutils.SaveProposals(ctx, proposals, m.broker, m.tbM); err != nil {
+		return fmt.Errorf("error while saving genesis proposal data: %s", err)
+	}
 
 	return nil
 }

@@ -10,5 +10,7 @@ func (tb ToBroker) MapDelegationRewardMessage(m types.DelegationRewardMessage) m
 		Coins:            tb.MapCoins(m.Coins),
 		DelegatorAddress: m.DelegatorAddress,
 		ValidatorAddress: m.ValidatorAddress,
+		TxHash:           m.TxHash,
+		Height:           m.Height,
 	}
 }

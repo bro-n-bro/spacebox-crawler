@@ -12,10 +12,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	RedelegationMessageTopic = "redelegation_message"
-)
-
 func (b *Broker) PublishRedelegationMessage(ctx context.Context, rm model.RedelegationMessage) error {
 	return nil
 
@@ -24,7 +20,7 @@ func (b *Broker) PublishRedelegationMessage(ctx context.Context, rm model.Redele
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &RedelegationMessageTopic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: RedelegationMessageTopic, Partition: kafka.PartitionAny},
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)

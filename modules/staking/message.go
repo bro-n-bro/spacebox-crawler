@@ -27,7 +27,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return handleEditValidator(tx.Height, msg)
 
 	case *stakingtypes.MsgDelegate:
-		return stakingutils.StoreDelegationFromMessage(tx.Height, msg, m.client.StakingQueryClient)
+		return stakingutils.StoreDelegationFromMessage(ctx, tx, msg, m.client.StakingQueryClient, m.broker, m.tbM)
 
 	case *stakingtypes.MsgBeginRedelegate:
 		return handleMsgBeginRedelegate(ctx, tx, index, msg, m.client.StakingQueryClient, m.broker, m.tbM)
@@ -108,7 +108,7 @@ func handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, index int, msg 
 	}
 
 	// Update the current delegations
-	return stakingutils.UpdateDelegationsAndReplaceExisting(tx.Height, msg.DelegatorAddress, client)
+	return stakingutils.UpdateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress, client, broker, mapper)
 }
 
 // handleMsgUndelegate handles a MsgUndelegate storing the data inside the database
@@ -121,5 +121,5 @@ func handleMsgUndelegate(ctx context.Context, tx *types.Tx, index int, msg *stak
 	}
 
 	// Update the current delegations
-	return stakingutils.UpdateDelegationsAndReplaceExisting(tx.Height, msg.DelegatorAddress, stakingClient)
+	return stakingutils.UpdateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress, stakingClient, broker, mapper)
 }

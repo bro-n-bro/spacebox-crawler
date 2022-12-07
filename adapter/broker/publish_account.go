@@ -12,10 +12,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	AccountTopic = "account"
-)
-
 func (b *Broker) PublishAccounts(ctx context.Context, accounts []model.Account) error {
 	return nil
 
@@ -30,7 +26,7 @@ func (b *Broker) PublishAccounts(ctx context.Context, accounts []model.Account) 
 			return errors.Wrap(err, MsgErrJsonMarshalFail)
 		}
 		err = b.p.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: &AccountTopic, Partition: kafka.PartitionAny},
+			TopicPartition: kafka.TopicPartition{Topic: AccountTopic, Partition: kafka.PartitionAny},
 			Value:          data,
 			//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 		}, nil)

@@ -17,6 +17,7 @@ type (
 		Height          int64
 		Hash            string
 		TxNum           int
+		TotalGas        uint64
 		ProposerAddress string
 		Timestamp       time.Time
 		Evidence        tmtypes.EvidenceData
@@ -37,9 +38,13 @@ type (
 		ConsAddr   string
 		ConsPubKey string
 	}
+
+	MessageStruct struct {
+	}
 )
 
-func NewBlock(height int64, hash, proposerAddress string, txNum int, timestamp time.Time, evidence tmtypes.EvidenceData) *Block {
+func NewBlock(height int64, hash, proposerAddress string, txNum int, totalGas uint64, timestamp time.Time,
+	evidence tmtypes.EvidenceData) *Block {
 	return &Block{
 		Height:          height,
 		Hash:            hash,
@@ -47,16 +52,18 @@ func NewBlock(height int64, hash, proposerAddress string, txNum int, timestamp t
 		ProposerAddress: proposerAddress,
 		Timestamp:       timestamp,
 		Evidence:        evidence,
+		TotalGas:        totalGas,
 	}
 }
 
 // NewBlockFromTmBlock builds a new Block instance from a given ResultBlock object
-func NewBlockFromTmBlock(blk *tmctypes.ResultBlock) *Block {
+func NewBlockFromTmBlock(blk *tmctypes.ResultBlock, totalGas uint64) *Block {
 	return NewBlock(
 		blk.Block.Height,
 		blk.Block.Hash().String(),
 		sdk.ConsAddress(blk.Block.ProposerAddress).String(),
 		len(blk.Block.Txs),
+		totalGas,
 		blk.Block.Time,
 		blk.Block.Evidence,
 	)
@@ -129,4 +136,9 @@ func (tx Tx) FindAttributeByKey(event sdk.StringEvent, attrKey string) (string, 
 	}
 
 	return "", fmt.Errorf("no event with attribute %s found inside tx with hash %s", attrKey, tx.TxHash)
+}
+
+// Successful tells whether this tx is successful or not
+func (tx Tx) Successful() bool {
+	return tx.TxResponse.Code == 0
 }

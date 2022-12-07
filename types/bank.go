@@ -6,7 +6,7 @@ type (
 	// AccountBalance represents the balance of an account at a given height
 	AccountBalance struct {
 		Address string
-		Balance sdk.Coins
+		Balance Coins
 		Height  int64
 	}
 
@@ -22,13 +22,21 @@ type (
 		TxHash      string
 		Height      int64
 	}
+
+	MsgMultiSend struct {
+		Coins       Coins
+		AddressFrom string
+		AddressTo   string
+		TxHash      string
+		Height      int64
+	}
 )
 
 // NewAccountBalance allows to build a new AccountBalance instance
 func NewAccountBalance(address string, balance sdk.Coins, height int64) AccountBalance {
 	return AccountBalance{
 		Address: address,
-		Balance: balance,
+		Balance: NewCoinsFromCdk(balance),
 		Height:  height,
 	}
 }
@@ -43,6 +51,16 @@ func NewTotalSupply(height int64, coins Coins) TotalSupply {
 
 func NewMsgSend(coins Coins, height int64, addressFrom, addressTo, txHash string) MsgSend {
 	return MsgSend{
+		Coins:       coins,
+		AddressFrom: addressFrom,
+		AddressTo:   addressTo,
+		TxHash:      txHash,
+		Height:      height,
+	}
+}
+
+func NewMsgMultiSend(coins Coins, height int64, addressFrom, addressTo, txHash string) MsgMultiSend {
+	return MsgMultiSend{
 		Coins:       coins,
 		AddressFrom: addressFrom,
 		AddressTo:   addressTo,

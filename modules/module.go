@@ -8,6 +8,7 @@ import (
 	"bro-n-bro-osmosis/internal/rep"
 	authModule "bro-n-bro-osmosis/modules/auth"
 	bankModule "bro-n-bro-osmosis/modules/bank"
+	coreModule "bro-n-bro-osmosis/modules/core"
 	crisisModule "bro-n-bro-osmosis/modules/crisis"
 	distributionModule "bro-n-bro-osmosis/modules/distribution"
 	evidenceModule "bro-n-bro-osmosis/modules/evidence"
@@ -38,13 +39,15 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, ad
 		case "gov":
 			res = append(res, govModule.New(b, cli, tbMapper, cdc))
 		case "mint":
-			res = append(res, mintModule.New(b, cli))
+			res = append(res, mintModule.New(b, cli, tbMapper))
 		case "slashing":
 			res = append(res, slashingModule.New(b, cli))
 		case "staking":
 			res = append(res, stakingModule.New(b, cli, tbMapper, cdc, modules))
 		case "distribution":
 			res = append(res, distributionModule.New(b, cli, tbMapper, cdc, addressesParser))
+		case "core":
+			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
 
 		default:
 			continue

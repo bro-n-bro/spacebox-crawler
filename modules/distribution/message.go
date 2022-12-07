@@ -34,6 +34,8 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx
 		drm := types.NewDelegationRewardMessage(
 			msg.DelegatorAddress,
 			msg.ValidatorAddress,
+			tx.TxHash,
+			tx.Height,
 			types.NewCoinsFromCdkDec(resp.Rewards),
 		)
 

@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -16,6 +17,7 @@ type StakingValidator interface {
 	GetMaxChangeRate() *sdk.Dec
 	GetMaxRate() *sdk.Dec
 	GetHeight() int64
+	GetMinSelfDelegation() *sdkmath.Int
 }
 
 // validator allows to easily implement the Validator interface
@@ -26,15 +28,14 @@ type stakingValidator struct {
 	SelfDelegateAddress string
 	MaxChangeRate       *sdk.Dec
 	MaxRate             *sdk.Dec
+	MinSelfDelegation   *sdkmath.Int
 	Height              int64
 }
 
-// NewValidator allows to build a new Validator implementation having the given data
+// NewStakingValidator allows to build a new Validator implementation having the given data
 func NewStakingValidator(
-	consAddr string, opAddr string, consPubKey string,
-	selfDelegateAddress string, maxChangeRate *sdk.Dec,
-	maxRate *sdk.Dec, height int64,
-) StakingValidator {
+	consAddr, opAddr, consPubKey, selfDelegateAddress string, maxChangeRate, maxRate *sdk.Dec,
+	height int64) StakingValidator {
 	return stakingValidator{
 		ConsensusAddr:       consAddr,
 		ConsPubKey:          consPubKey,
@@ -74,6 +75,10 @@ func (v stakingValidator) GetMaxRate() *sdk.Dec {
 
 func (v stakingValidator) GetHeight() int64 {
 	return v.Height
+}
+
+func (v stakingValidator) GetMinSelfDelegation() *sdkmath.Int {
+	return v.MinSelfDelegation
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -160,5 +165,3 @@ func NewValidatorStatus(valConsAddr, pubKey string, status int, jailed bool, hei
 		Height:           height,
 	}
 }
-
-//---------------------------------------------------------------

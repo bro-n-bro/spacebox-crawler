@@ -1,6 +1,7 @@
 package bank
 
 import (
+	govutils "bro-n-bro-osmosis/modules/gov/utils"
 	"context"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -12,8 +13,13 @@ import (
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
 	params, err := m.getGovParams(ctx, block.Height)
+	// TODO: test it
+	// TODO: maybe check diff from mongo in my side?
+	if err := m.broker.PublishGovParams(ctx, m.tbM.MapGovParams(params)); err != nil {
+		return err
+	}
+
 	// TODO: UpdateProposal
-	_ = params
 	return err
 }
 
@@ -54,4 +60,27 @@ func (m *Module) getGovParams(ctx context.Context, height int64) (*types.GovPara
 	)
 
 	return govParams, nil
+}
+
+// updateProposals updates the proposals
+func (m *Module) updateProposals(ctx context.Context, height int64, blockVals *tmctypes.ResultValidators) error {
+	var ids []uint64
+	//ids, err := db.GetOpenProposalsIds()
+	//if err != nil {
+	//	log.Error().Err(err).Str("module", "gov").Msg("error while getting open ids")
+	//}
+
+	if len(ids) > 0 {
+		clients := govutils.NewUpdateProposalClients(m.client.GovQueryClient, m.client.BankQueryClient,
+			m.client.StakingQueryClient)
+
+		for _, id := range ids {
+			err := govutils.UpdateProposal(ctx, height, blockVals, id, clients, m.cdc, m.broker, m.tbM)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

@@ -15,13 +15,20 @@ const (
 type (
 	// DepositParams contains the data of the deposit parameters of the x/gov module
 	DepositParams struct {
-		MinDeposit       sdk.Coins `json:"min_deposit,omitempty" yaml:"min_deposit"`
-		MaxDepositPeriod int64     `json:"max_deposit_period,omitempty" yaml:"max_deposit_period"`
+		MinDeposit       Coins `json:"min_deposit,omitempty" yaml:"min_deposit"`
+		MaxDepositPeriod int64 `json:"max_deposit_period,omitempty" yaml:"max_deposit_period"`
 	}
 
 	// VotingParams contains the voting parameters of the x/gov module
 	VotingParams struct {
 		VotingPeriod int64 `json:"voting_period,omitempty" yaml:"voting_period"`
+	}
+
+	// TallyParams contains the tally parameters of the x/gov module
+	TallyParams struct {
+		Quorum        sdk.Dec `json:"quorum,omitempty"`
+		Threshold     sdk.Dec `json:"threshold,omitempty"`
+		VetoThreshold sdk.Dec `json:"veto_threshold,omitempty" yaml:"veto_threshold"`
 	}
 
 	// GovParams contains the data of the x/gov module parameters
@@ -30,13 +37,6 @@ type (
 		VotingParams  VotingParams  `json:"voting_params" yaml:"voting_params"`
 		TallyParams   TallyParams   `json:"tally_params" yaml:"tally_params"`
 		Height        int64         `json:"height" ymal:"height"`
-	}
-
-	// TallyParams contains the tally parameters of the x/gov module
-	TallyParams struct {
-		Quorum        sdk.Dec `json:"quorum,omitempty"`
-		Threshold     sdk.Dec `json:"threshold,omitempty"`
-		VetoThreshold sdk.Dec `json:"veto_threshold,omitempty" yaml:"veto_threshold"`
 	}
 
 	// Proposal represents a single governance proposal
@@ -102,7 +102,7 @@ type (
 // NewDepositParam allows to build a new DepositParams
 func NewDepositParam(d govtypes.DepositParams) DepositParams {
 	return DepositParams{
-		MinDeposit:       d.MinDeposit,
+		MinDeposit:       NewCoinsFromCdk(d.MinDeposit),
 		MaxDepositPeriod: d.MaxDepositPeriod.Nanoseconds(),
 	}
 }

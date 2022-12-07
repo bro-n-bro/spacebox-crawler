@@ -6,6 +6,8 @@ import (
 	"bro-n-bro-osmosis/types"
 	"os"
 
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
+
 	"github.com/rs/zerolog"
 )
 
@@ -18,9 +20,10 @@ type Module struct {
 	log    *zerolog.Logger
 	broker rep.Broker
 	client *grpcClient.Client
+	tbM    tb.ToBroker
 }
 
-func New(b rep.Broker, cli *grpcClient.Client) *Module {
+func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "mint").Logger()
 
@@ -28,6 +31,7 @@ func New(b rep.Broker, cli *grpcClient.Client) *Module {
 		log:    &l,
 		broker: b,
 		client: cli,
+		tbM:    tbM,
 	}
 }
 

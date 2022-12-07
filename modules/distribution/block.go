@@ -2,8 +2,6 @@ package distribution
 
 import (
 	"context"
-	"reflect"
-	"sync"
 
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -13,14 +11,9 @@ import (
 	"bro-n-bro-osmosis/types"
 )
 
-var (
-	mu         sync.Mutex
-	lastParams *types.DistributionParams
-)
-
-func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
+func (m *Module) HandleBlock(ctx context.Context, block *types.Block, vals *tmctypes.ResultValidators) error {
 	// TODO: maybe use consensus client for get correct validators?
-	go m.updateParams(block.Height)
+	go m.updateParams(ctx, block.Height)
 
 	// Update the validator commissions
 	go utils.UpdateValidatorsCommissionAmounts(block.Height, m.client.DistributionQueryClient)
@@ -30,7 +23,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 	return nil
 }
 
-func (m *Module) updateParams(height int64) {
+func (m *Module) updateParams(ctx context.Context, height int64) {
 	//log.Debug().Str("module", "distribution").Int64("height", height).
 	//	Msg("updating params")
 
@@ -46,28 +39,10 @@ func (m *Module) updateParams(height int64) {
 		return
 	}
 
-	// TODO:
+	// TODO: maybe check diff from mongo in my side?
 	params := types.NewDistributionParams(res.Params, height)
-	mu.Lock()
-	if lastParams == nil {
-		m.log.Warn().Msg("set first params")
-		lastParams = &params
-	} else if !reflect.DeepEqual(lastParams.Params, params.Params) {
-		m.log.Warn().
-			Int64("last_height", lastParams.Height).
-			Int64("cur_height", height).
-			Str("last_params", lastParams.String()).
-			Str("cur_params", params.String()).
-			Msg("params not equal")
-		lastParams = &params
+	// TODO: test it
+	if err := m.broker.PublishDistributionParams(ctx, m.tbM.MapDistributionParams(params)); err != nil {
+		m.log.Error().Int64("height", height).Err(err).Msg("PublishDistributionParams error")
 	}
-	mu.Unlock()
-
-	//err = db.SaveDistributionParams(types.NewDistributionParams(res.Params, height))
-	//if err != nil {
-	//	log.Error().Str("module", "distribution").Err(err).
-	//		Int64("height", height).
-	//		Msg("error while saving params")
-	//	return
-	//}
 }

@@ -12,10 +12,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	ProposalVoteMessageTopic = "proposal_vote_message"
-)
-
 func (b *Broker) PublishProposalVoteMessage(ctx context.Context, pvm model.ProposalVoteMessage) error {
 	return nil
 
@@ -24,7 +20,7 @@ func (b *Broker) PublishProposalVoteMessage(ctx context.Context, pvm model.Propo
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &ProposalVoteMessageTopic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: ProposalVoteMessageTopic, Partition: kafka.PartitionAny},
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)

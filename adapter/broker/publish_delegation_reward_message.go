@@ -12,9 +12,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	DelegationRewardMessageTopic = "delegation_reward_message"
-)
+var ()
 
 func (b *Broker) PublishDelegationRewardMessage(ctx context.Context, drm model.DelegationRewardMessage) error {
 	return nil
@@ -24,7 +22,7 @@ func (b *Broker) PublishDelegationRewardMessage(ctx context.Context, drm model.D
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &DelegationRewardMessageTopic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: DelegationRewardMessageTopic, Partition: kafka.PartitionAny},
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)

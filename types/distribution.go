@@ -21,11 +21,11 @@ type (
 	}
 	// DelegatorRewardAmount contains the data of a delegator commission amount
 	DelegatorRewardAmount struct {
-		ValidatorOperAddr string
-		DelegatorAddress  string
-		WithdrawAddress   string
-		Amount            []sdk.DecCoin
-		Height            int64
+		OperatorAddress  string
+		DelegatorAddress string
+		WithdrawAddress  string
+		Amount           []sdk.DecCoin
+		Height           int64
 	}
 	// DelegationRewardMessage contains Coins for DelegatorAddress and ValidatorAddress
 	// coming from MsgWithdrawDelegatorReward tx message
@@ -33,6 +33,8 @@ type (
 		DelegatorAddress string
 		ValidatorAddress string
 		Coins            Coins
+		Height           int64
+		TxHash           string
 	}
 )
 
@@ -45,9 +47,8 @@ func NewDistributionParams(params distrtypes.Params, height int64) DistributionP
 }
 
 // NewValidatorCommissionAmount allows to build a new ValidatorCommissionAmount instance
-func NewValidatorCommissionAmount(
-	valOperAddr, valSelfDelegateAddress string, amount sdk.DecCoins, height int64,
-) ValidatorCommissionAmount {
+func NewValidatorCommissionAmount(valOperAddr, valSelfDelegateAddress string, amount sdk.DecCoins,
+	height int64) ValidatorCommissionAmount {
 	return ValidatorCommissionAmount{
 		ValidatorOperAddr:         valOperAddr,
 		ValidatorSelfDelegateAddr: valSelfDelegateAddress,
@@ -57,23 +58,24 @@ func NewValidatorCommissionAmount(
 }
 
 // NewDelegatorRewardAmount allows to build a new DelegatorRewardAmount instance
-func NewDelegatorRewardAmount(
-	delegator, valOperAddr, withdrawAddress string, amount sdk.DecCoins, height int64,
-) DelegatorRewardAmount {
+func NewDelegatorRewardAmount(delegator, valOperAddr, withdrawAddress string, amount sdk.DecCoins,
+	height int64) DelegatorRewardAmount {
 	return DelegatorRewardAmount{
-		ValidatorOperAddr: valOperAddr,
-		DelegatorAddress:  delegator,
-		WithdrawAddress:   withdrawAddress,
-		Amount:            amount,
-		Height:            height,
+		OperatorAddress:  valOperAddr,
+		DelegatorAddress: delegator,
+		WithdrawAddress:  withdrawAddress,
+		Amount:           amount,
+		Height:           height,
 	}
 }
 
 // NewDelegationRewardMessage returns the new instance of DelegationRewardMessage
-func NewDelegationRewardMessage(delAddr, valAddr string, coins Coins) DelegationRewardMessage {
+func NewDelegationRewardMessage(delAddr, valAddr, txHash string, height int64, coins Coins) DelegationRewardMessage {
 	return DelegationRewardMessage{
 		DelegatorAddress: delAddr,
 		ValidatorAddress: valAddr,
 		Coins:            coins,
+		TxHash:           txHash,
+		Height:           height,
 	}
 }

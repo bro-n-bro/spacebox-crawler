@@ -37,7 +37,8 @@ func UpdateValidatorsCommissionAmounts(height int64, client distrtypes.QueryClie
 }
 
 func updateValidatorCommission(height int64, distrClient distrtypes.QueryClient, validator types.StakingValidator) {
-	commission, err := GetValidatorCommissionAmount(height, validator, distrClient)
+	commission, err := GetValidatorCommissionAmount(height, validator.GetOperator(), validator.GetSelfDelegateAddress(),
+		distrClient)
 	if err != nil {
 		//log.Error().Str("module", "distribution").Err(err).
 		//	Int64("height", height).
@@ -58,11 +59,11 @@ func updateValidatorCommission(height int64, distrClient distrtypes.QueryClient,
 
 // GetValidatorCommissionAmount returns the amount of the validator commission for the given validator
 func GetValidatorCommissionAmount(
-	height int64, validator types.StakingValidator, distrClient distrtypes.QueryClient,
+	height int64, operatorAddress, selfDelegateAddress string, distrClient distrtypes.QueryClient,
 ) (types.ValidatorCommissionAmount, error) {
 	res, err := distrClient.ValidatorCommission(
 		context.Background(),
-		&distrtypes.QueryValidatorCommissionRequest{ValidatorAddress: validator.GetOperator()},
+		&distrtypes.QueryValidatorCommissionRequest{ValidatorAddress: operatorAddress},
 		grpcClient.GetHeightRequestHeader(height),
 	)
 	if err != nil {
@@ -70,8 +71,8 @@ func GetValidatorCommissionAmount(
 	}
 
 	return types.NewValidatorCommissionAmount(
-		validator.GetOperator(),
-		validator.GetSelfDelegateAddress(),
+		operatorAddress,
+		selfDelegateAddress,
 		res.Commission.Commission,
 		height,
 	), nil

@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"time"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
@@ -16,6 +16,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"google.golang.org/grpc"
 )
 
 type Client struct {
@@ -41,13 +42,22 @@ func (c *Client) Start(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
+	options := []grpc.DialOption{
+		grpc.WithBlock(),
+	}
+
+	// Add required secure grpc option based on config parameter
+	if c.cfg.SecureConnection {
+		options = append(options, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+	} else {
+		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
 	// Create a connection to the gRPC server.
 	grpcConn, err := grpc.DialContext(
 		ctx,
 		c.cfg.Host, // Or your gRPC server address.
-		//grpc.WithInsecure(), // The SDK doesn't support any transport security mechanism.
-		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})),
-		grpc.WithBlock(),
+		options...,
 	)
 	if err != nil {
 		return err

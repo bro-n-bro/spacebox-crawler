@@ -8,6 +8,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	grpcClient "bro-n-bro-osmosis/client/grpc"
+	"bro-n-bro-osmosis/internal/rep"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 )
 
@@ -107,9 +109,8 @@ func GetDelegatorDelegations(height int64, delegator string, client stakingtypes
 
 // UpdateDelegationsAndReplaceExisting updates the delegations of the given delegator by querying them at the
 // required height, and then stores them inside the database by replacing all existing ones.
-func UpdateDelegationsAndReplaceExisting(
-	height int64, delegator string, client stakingtypes.QueryClient,
-) error {
+func UpdateDelegationsAndReplaceExisting(ctx context.Context, height int64, delegator string,
+	client stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker) error {
 	// Remove existing delegations
 	//err := db.DeleteDelegatorDelegations(delegator)
 	//if err != nil {
@@ -121,17 +122,22 @@ func UpdateDelegationsAndReplaceExisting(
 		return err
 	}
 
-	// TODO:
-	//err = db.SaveDelegations(delegations)
-	_ = delegations
+	for _, delegation := range delegations {
+		// TODO: test IT
+		if err = broker.PublishDelegation(ctx, mapper.MapDelegation(delegation)); err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
 // RefreshDelegations returns a function that when called updates the delegations of the provided delegator.
 // In order to properly update the data, it removes all the existing delegations and stores new ones querying the gRPC
-func RefreshDelegations(height int64, delegator string, client stakingtypes.QueryClient) func() {
+func RefreshDelegations(ctx context.Context, height int64, delegator string, client stakingtypes.QueryClient,
+	broker rep.Broker, mapper tb.ToBroker) func() {
 	return func() {
-		err := UpdateDelegationsAndReplaceExisting(height, delegator, client)
+		err := UpdateDelegationsAndReplaceExisting(ctx, height, delegator, client, broker, mapper)
 		if err != nil {
 			//log.Error().Str("module", "staking").Err(err).
 			//	Str("operation", "refresh delegations").Msg("error while refreshing delegations")

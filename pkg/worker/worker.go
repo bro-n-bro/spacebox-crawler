@@ -35,7 +35,7 @@ func New(cfg Config, b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient,
 
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("cmp", "worker").Logger()
-	return &Worker{
+	w := &Worker{
 		cfg:        cfg,
 		log:        &l,
 		broker:     b,
@@ -47,6 +47,8 @@ func New(cfg Config, b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient,
 		wg:         &sync.WaitGroup{},
 		heightCh:   make(chan int64, cfg.ChanSize),
 	}
+	w.fillModules()
+	return w
 }
 
 func (w *Worker) Start(ctx context.Context) error {

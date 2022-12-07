@@ -12,10 +12,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	SendMessageTopic = "send_message"
-)
-
 func (b *Broker) PublishSendMessage(ctx context.Context, sm model.SendMessage) error {
 	return nil
 
@@ -24,7 +20,7 @@ func (b *Broker) PublishSendMessage(ctx context.Context, sm model.SendMessage) e
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &SendMessageTopic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: SendMessageTopic, Partition: kafka.PartitionAny},
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)

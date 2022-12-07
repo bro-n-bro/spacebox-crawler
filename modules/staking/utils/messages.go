@@ -81,8 +81,10 @@ func StoreValidatorFromMsgCreateValidator(height int64, msg *stakingtypes.MsgCre
 }
 
 // StoreDelegationFromMessage handles a MsgDelegate and saves the delegation inside the database
-func StoreDelegationFromMessage(height int64, msg *stakingtypes.MsgDelegate, stakingClient stakingtypes.QueryClient) error {
-	header := grpcClient.GetHeightRequestHeader(height)
+func StoreDelegationFromMessage(ctx context.Context, tx *types.Tx, msg *stakingtypes.MsgDelegate,
+	stakingClient stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker) error {
+
+	header := grpcClient.GetHeightRequestHeader(tx.Height)
 	res, err := stakingClient.Delegation(
 		context.Background(),
 		&stakingtypes.QueryDelegationRequest{
@@ -95,10 +97,30 @@ func StoreDelegationFromMessage(height int64, msg *stakingtypes.MsgDelegate, sta
 		return err
 	}
 
-	delegation := ConvertDelegationResponse(height, *res.DelegationResponse)
-	//return db.SaveDelegations([]types.Delegation{delegation})
-	// TODO:
-	_ = delegation
+	// TODO: test it
+	d := types.NewDelegation(
+		res.DelegationResponse.Delegation.DelegatorAddress,
+		res.DelegationResponse.Delegation.ValidatorAddress,
+		res.DelegationResponse.Balance,
+		tx.Height,
+	)
+
+	if err = broker.PublishDelegation(ctx, mapper.MapDelegation(d)); err != nil {
+		return err
+	}
+
+	dm := types.NewDelegationMessage(
+		res.DelegationResponse.Delegation.DelegatorAddress,
+		res.DelegationResponse.Delegation.ValidatorAddress,
+		tx.TxHash,
+		res.DelegationResponse.Balance,
+		tx.Height,
+	)
+
+	if err = broker.PublishDelegationMessage(ctx, mapper.MapDelegationMessage(dm)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -169,7 +191,7 @@ func StoreUnbondingDelegationFromMessage(ctx context.Context, tx *types.Tx, inde
 		return nil, err
 	}
 
-	delegation := types.NewUnbondingDelegation(
+	unbDelegation := types.NewUnbondingDelegation(
 		msg.DelegatorAddress,
 		msg.ValidatorAddress,
 		msg.Amount,
@@ -177,13 +199,20 @@ func StoreUnbondingDelegationFromMessage(ctx context.Context, tx *types.Tx, inde
 		tx.Height,
 	)
 
+	// TODO: test it
+	err = broker.PublishUnbondingDelegation(ctx, mapper.MapUnbondingDelegation(unbDelegation))
+	if err != nil {
+		return nil, err
+	}
+
 	undDelegationMessage := types.NewUnbondingDelegationMessage(
 		msg.DelegatorAddress,
 		msg.ValidatorAddress,
 		tx.TxHash,
 		types.NewCoinFromCdk(msg.Amount),
 		completionTime,
-		tx.Height)
+		tx.Height,
+	)
 
 	// TODO: test it
 	err = broker.PublishUnbondingDelegationMessage(ctx, mapper.MapUnbondingDelegationMessage(undDelegationMessage))
@@ -191,8 +220,5 @@ func StoreUnbondingDelegationFromMessage(ctx context.Context, tx *types.Tx, inde
 		return nil, err
 	}
 
-	// TODO:
-	//err =  db.SaveUnbondingDelegations([]types.UnbondingDelegation{delegation})
-
-	return &delegation, err
+	return &unbDelegation, err
 }

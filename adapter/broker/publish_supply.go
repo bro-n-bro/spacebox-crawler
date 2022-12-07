@@ -12,10 +12,6 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	SupplyTopic = "supply"
-)
-
 func (b *Broker) PublishSupply(ctx context.Context, supply model.Supply) error {
 	return nil
 
@@ -24,7 +20,7 @@ func (b *Broker) PublishSupply(ctx context.Context, supply model.Supply) error {
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &SupplyTopic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: SupplyTopic, Partition: kafka.PartitionAny},
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)

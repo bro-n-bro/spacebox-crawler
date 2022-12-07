@@ -13,15 +13,20 @@ type (
 	Delegation struct {
 		DelegatorAddress  string
 		ValidatorOperAddr string
-		Coin              sdk.Coin
+		Coin              Coin
 		Height            int64
+	}
+
+	DelegationMessage struct {
+		Delegation
+		TxHash string
 	}
 
 	// UnbondingDelegation represents a single unbonding delegation
 	UnbondingDelegation struct {
 		DelegatorAddress    string
 		ValidatorOperAddr   string
-		Coin                sdk.Coin
+		Coin                Coin
 		CompletionTimestamp time.Time
 		Height              int64
 	}
@@ -57,8 +62,16 @@ func NewDelegation(delegator, validatorOperAddr string, amount sdk.Coin, height 
 	return Delegation{
 		DelegatorAddress:  delegator,
 		ValidatorOperAddr: validatorOperAddr,
-		Coin:              amount,
+		Coin:              NewCoinFromCdk(amount),
 		Height:            height,
+	}
+}
+
+// NewDelegationMessage creates a new DelegationMessage instance
+func NewDelegationMessage(delegator, validatorOperAddr, txHash string, amount sdk.Coin, height int64) DelegationMessage {
+	return DelegationMessage{
+		Delegation: NewDelegation(delegator, validatorOperAddr, amount, height),
+		TxHash:     txHash,
 	}
 }
 
@@ -68,7 +81,7 @@ func NewUnbondingDelegation(delegator, validatorOperAddr string, coin sdk.Coin, 
 	return UnbondingDelegation{
 		DelegatorAddress:    delegator,
 		ValidatorOperAddr:   validatorOperAddr,
-		Coin:                coin,
+		Coin:                NewCoinFromCdk(coin),
 		CompletionTimestamp: completionTimestamp,
 		Height:              height,
 	}

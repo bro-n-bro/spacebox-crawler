@@ -13,7 +13,7 @@ import (
 
 // HandleGenesis handles the genesis state of the x/bank module in order to store the initial values
 // of the different account balances.
-func (m *Module) HandleGenesis(_ context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	var bankState banktypes.GenesisState
 	if err := m.cdc.UnmarshalJSON(appState[banktypes.ModuleName], &bankState); err != nil {
 		return err
@@ -24,27 +24,24 @@ func (m *Module) HandleGenesis(_ context.Context, doc *tmtypes.GenesisDoc, appSt
 	if err != nil {
 		return err
 	}
-	accountsMap := getAccountsMap(accounts)
 
-	var balances []types.AccountBalance
+	uniqueAddresses := make(map[string]struct{})
+	for _, acc := range accounts {
+		uniqueAddresses[acc.Address] = struct{}{}
+	}
+
 	for _, balance := range bankState.Balances {
-		_, ok := accountsMap[balance.Address]
+		_, ok := uniqueAddresses[balance.Address]
 		if !ok {
+			// skip already published
 			continue
 		}
-
-		balances = append(balances, types.NewAccountBalance(balance.Address, balance.Coins, doc.InitialHeight))
+		ab := types.NewAccountBalance(balance.Address, balance.Coins, doc.InitialHeight)
+		// TODO: test it
+		if err = m.broker.PublishAccountBalance(ctx, m.tbM.MapAccountBalance(ab)); err != nil {
+			return err
+		}
 	}
 
-	// TODO:
-	_ = balances
 	return nil
-}
-
-func getAccountsMap(accounts []types.Account) map[string]struct{} {
-	var accountsMap = make(map[string]struct{}, len(accounts))
-	for _, account := range accounts {
-		accountsMap[account.Address] = struct{}{}
-	}
-	return accountsMap
 }

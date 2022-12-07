@@ -11,8 +11,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
+	"bro-n-bro-osmosis/adapter/broker/model"
 	grpcClient "bro-n-bro-osmosis/client/grpc"
+	"bro-n-bro-osmosis/internal/rep"
 	"bro-n-bro-osmosis/modules/staking/keybase"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 )
 
@@ -48,7 +51,7 @@ func ConvertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 	}
 
 	var operator sdk.ValAddress
-	//operator = validator.GetOperator() // FIXME: here was a panic: invalid Bech32 prefix; expected cosmosvaloper, got bostromvaloper
+	operator = validator.GetOperator() // FIXME: here was a panic: invalid Bech32 prefix; expected cosmosvaloper, got bostromvaloper
 	return types.NewStakingValidator(
 		consAddr.String(),
 		validator.OperatorAddress,
@@ -76,8 +79,7 @@ func ConvertValidatorDescription(
 // --------------------------------------------------------------------------------------------------------------------
 
 // GetValidators returns the validators list at the given height
-func GetValidators(
-	height int64, stakingClient stakingtypes.QueryClient, cdc codec.Codec,
+func GetValidators(height int64, stakingClient stakingtypes.QueryClient, cdc codec.Codec,
 ) ([]stakingtypes.Validator, []types.StakingValidator, error) {
 
 	return GetValidatorsWithStatus(height, "", stakingClient, cdc)
@@ -127,12 +129,17 @@ func GetValidatorsWithStatus(
 }
 
 // UpdateValidators updates the list of validators that are present at the given height
-func UpdateValidators(
-	height int64, client stakingtypes.QueryClient, cdc codec.Codec,
-) ([]stakingtypes.Validator, error) {
+func UpdateValidators(ctx context.Context, height int64, client stakingtypes.QueryClient, cdc codec.Codec,
+	broker rep.Broker, mapper tb.ToBroker) ([]stakingtypes.Validator, error) {
 
 	vals, validators, err := GetValidators(height, client, cdc)
 	if err != nil {
+		return nil, err
+	}
+
+	// TODO: save to mongo?
+	// TODO: test it
+	if err = publishValidatorsData(ctx, validators, broker, mapper); err != nil {
 		return nil, err
 	}
 
@@ -186,4 +193,32 @@ func GetValidatorsVotingPowers(height int64, vals *tmctypes.ResultValidators) []
 		votingPowers[index] = types.NewValidatorVotingPower(consAddr, validator.VotingPower, height)
 	}
 	return votingPowers
+}
+
+func publishValidatorsData(ctx context.Context, sVals []types.StakingValidator, broker rep.Broker,
+	mapper tb.ToBroker) error {
+
+	vals := make(types.Validators, len(sVals))
+	accounts := make([]types.Account, len(sVals))
+	valsInfo := make([]model.ValidatorInfo, len(sVals))
+	for i, val := range sVals {
+		vals[i] = types.NewValidator(val.GetConsAddr(), val.GetConsPubKey())
+		accounts[i] = types.NewAccount(val.GetSelfDelegateAddress(), val.GetHeight())
+		valsInfo[i] = mapper.MapValidatorInfo(val)
+	}
+
+	err := broker.PublishValidators(ctx, mapper.MapValidators(vals))
+	if err != nil {
+		return err
+	}
+	err = broker.PublishAccounts(ctx, mapper.MapAccounts(accounts))
+	if err != nil {
+		return err
+	}
+	err = broker.PublishValidatorsInfo(ctx, valsInfo)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

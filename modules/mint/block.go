@@ -3,6 +3,8 @@ package mint
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
@@ -32,11 +34,14 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 	//	m.log.Error().Err(err).Int64("height", block.Height).Msg("error while getting inflation")
 	//	return err
 	//}
-	//
+	//_ = inflationResp
 
-	// TODO:
-
-	_ = types.NewMintParams(paramsResp.Params, block.Height)
-
+	// TODO: maybe check diff from mongo in my side?
+	params := types.NewMintParams(paramsResp.Params, block.Height)
+	// TODO: test it
+	err = m.broker.PublishMintParams(ctx, m.tbM.MapMingParams(params))
+	if err != nil {
+		return errors.Wrap(err, "PublishMintParams error")
+	}
 	return nil
 }

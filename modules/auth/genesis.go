@@ -9,13 +9,15 @@ import (
 	"bro-n-bro-osmosis/modules/utils"
 )
 
-func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	accounts, err := utils.GetGenesisAccounts(appState, m.cdc)
 	if err != nil {
 		return err
 	}
 
-	// TODO:
-	_ = accounts
+	// TODO: test it
+	if err = m.broker.PublishAccounts(ctx, m.tbM.MapAccounts(accounts)); err != nil {
+		return err
+	}
 	return nil
 }

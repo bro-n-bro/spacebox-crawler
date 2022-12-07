@@ -12,24 +12,20 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-var (
-	UnbondingDelegationMessageTopic = "unbonding_delegation_message"
-)
-
-func (b *Broker) PublishUnbondingDelegationMessage(ctx context.Context, udm model.UnbondingDelegationMessage) error {
+func (b *Broker) PublishAccountBalance(ctx context.Context, ab model.AccountBalance) error {
 	return nil
 
-	data, err := jsoniter.Marshal(udm) // FIXME: maybe user another way to encode data
+	data, err := jsoniter.Marshal(ab) // FIXME: maybe user another way to encode data
 	if err != nil {
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &UnbondingDelegationMessageTopic, Partition: kafka.PartitionAny},
+		TopicPartition: kafka.TopicPartition{Topic: AccountBalance, Partition: kafka.PartitionAny},
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)
 	if err != nil {
-		return errors.Wrap(err, "produce unbonding_delegation_message fail")
+		return errors.Wrap(err, "produce supply fail")
 	}
 	return nil
 }

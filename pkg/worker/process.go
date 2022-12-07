@@ -13,6 +13,10 @@ import (
 	"bro-n-bro-osmosis/types"
 )
 
+const (
+	keyModule = "module"
+)
+
 func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 	var parsedCount int
 	defer w.wg.Done()
@@ -119,16 +123,8 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 				Dur("txs_dur", time.Since(_txsDur)).
 				Msg("Get txs info")
 
-			b := types.NewBlockFromTmBlock(block)
 			txs := types.NewTxsFromTmTxs(txsRes)
-
-			if err := w.broker.PublishBlock(ctx, w.tbM.MapBlock(b, txs.TotalGas())); err != nil {
-				w.log.Error().
-					Err(err).
-					Int64("block_height", height).
-					Msg("PublishBlock error")
-				continue
-			}
+			b := types.NewBlockFromTmBlock(block, txs.TotalGas())
 
 			// handle block first
 			w.processBlock(ctx, b, vals)
@@ -148,36 +144,28 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc
 		return err
 	}
 
-	for _, module := range w.modules {
-		if genesisModule, ok := module.(types.GenesisModule); ok {
-			if err := genesisModule.HandleGenesis(ctx, genesis, appState); err != nil {
-				w.log.Error().Err(err).Msgf("handle genesis error. module: %s, err: %v", module, err)
-			}
+	for _, m := range genesisHandlers {
+		if err := m.HandleGenesis(ctx, genesis, appState); err != nil {
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("handle genesis error: %v", err)
 		}
 	}
 	return nil
 }
 
 func (w *Worker) processBlock(ctx context.Context, block *types.Block, vals *tmtcoreypes.ResultValidators) {
-	for _, m := range w.modules {
-		hbI, ok := m.(types.BlockModule)
-		if ok {
-			if err := hbI.HandleBlock(ctx, block, vals); err != nil {
-				w.log.Error().Err(err).Msgf("HandleBlock error:", err)
-			}
+	for _, m := range blockHandlers {
+		if err := m.HandleBlock(ctx, block, vals); err != nil {
+			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleBlock error:", err)
 		}
 	}
 }
 
 func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) {
 	for _, tx := range txs {
-		for _, m := range w.modules {
-			hTxI, ok := m.(types.TransactionModule)
-			if ok {
-				if err := hTxI.HandleTx(ctx, tx); err != nil {
-					w.log.Error().Err(err).Msgf("HandleTX error:", err)
-					continue
-				}
+		for _, m := range transactionHandlers {
+			if err := m.HandleTx(ctx, tx); err != nil {
+				w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleTX error:", err)
+				continue
 			}
 		}
 
@@ -188,16 +176,12 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) {
 			if err != nil {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
 				continue
-				//return fmt.Errorf("error while unpacking message: %s", err)
 			}
 
-			for _, m := range w.modules {
-				if messageModule, ok := m.(types.MessageModule); ok {
-					err = messageModule.HandleMessage(ctx, i, stdMsg, tx)
-					if err != nil {
-						w.log.Error().Err(err).Msgf("HandleMessage error:", m, tx, stdMsg, err)
-						continue
-					}
+			for _, m := range messageHandlers {
+				if err = m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
+					w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleMessage error:", err)
+					continue
 				}
 			}
 		}

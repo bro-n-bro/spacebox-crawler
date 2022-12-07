@@ -1,6 +1,10 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 type Coins []Coin
 
@@ -33,4 +37,8 @@ func NewCoinsFromCdkDec(coins sdk.DecCoins) Coins {
 		}
 	}
 	return res
+}
+
+func (c Coin) IsEqual(o Coin) bool {
+	return c.Denom == o.Denom && math.Nextafter(c.Amount, o.Amount) == o.Amount
 }

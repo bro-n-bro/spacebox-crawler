@@ -1,6 +1,8 @@
 package staking
 
 import (
+	"bro-n-bro-osmosis/internal/rep"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"context"
 	"encoding/hex"
 	"time"
@@ -20,13 +22,13 @@ import (
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, vals *tmctypes.ResultValidators) error {
 	// Update the validators
-	validators, err := stakingutils.UpdateValidators(block.Height, m.client.StakingQueryClient, m.cdc)
+	validators, err := stakingutils.UpdateValidators(ctx, block.Height, m.client.StakingQueryClient, m.cdc, m.broker, m.tbM)
 	if err != nil {
 		return err
 	}
 
 	// Get the params
-	go updateParams(block.Height, m.client.StakingQueryClient)
+	go m.updateParams(ctx, block.Height)
 
 	// Update the voting powers
 	go updateValidatorVotingPower(block.Height, vals)
@@ -41,18 +43,18 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, vals *tmct
 	go updateStakingPool(block.Height, m.client.StakingQueryClient)
 
 	// Update redelegations and unbonding delegations
-	go updateElapsedDelegations(block.Height, block.Timestamp, m.client.StakingQueryClient, m.client.BankQueryClient,
-		m.enabledModules)
+	go updateElapsedDelegations(ctx, block.Height, block.Timestamp, m.client.StakingQueryClient, m.client.BankQueryClient,
+		m.enabledModules, m.broker, m.tbM)
 
 	return nil
 }
 
 // updateParams gets the updated params and stores them inside the database
-func updateParams(height int64, stakingClient stakingtypes.QueryClient) {
+func (m *Module) updateParams(ctx context.Context, height int64) {
 	//log.Debug().Str("module", "staking").Int64("height", height).
 	//	Msg("updating params")
 	//
-	res, err := stakingClient.Params(
+	res, err := m.client.StakingQueryClient.Params(
 		context.Background(),
 		&stakingtypes.QueryParamsRequest{},
 		grpcClient.GetHeightRequestHeader(height),
@@ -64,7 +66,12 @@ func updateParams(height int64, stakingClient stakingtypes.QueryClient) {
 		return
 	}
 
-	_ = res
+	// TODO: test it
+	// TODO: maybe check diff from mongo in my side?
+	err = m.broker.PublishStakingParams(ctx, m.tbM.MapStakingParams(types.NewStakingParams(res.Params, height)))
+	if err != nil {
+		return
+	}
 
 	// TODO:
 	//err = db.SaveStakingParams(types.NewStakingParams(res.Params, height))
@@ -183,8 +190,9 @@ func updateStakingPool(height int64, stakingClient stakingtypes.QueryClient) {
 
 // updateElapsedDelegations updates the redelegations and unbonding delegations that have elapsed
 func updateElapsedDelegations(
-	height int64, timestamp time.Time,
+	ctx context.Context, height int64, timestamp time.Time,
 	stakingClient stakingtypes.QueryClient, bankClient banktypes.QueryClient, enabledModules []string,
+	broker rep.Broker, mapper tb.ToBroker,
 ) {
 	//log.Debug().Str("module", "staking").Int64("height", height).
 	//	Msg("updating elapsed redelegations and unbonding delegations")
@@ -221,7 +229,7 @@ func updateElapsedDelegations(
 
 	// Update the delegations and balances of all the delegators
 	for delegator := range delegators {
-		stakingutils.RefreshDelegations(height, delegator, stakingClient)
+		stakingutils.RefreshDelegations(ctx, height, delegator, stakingClient, broker, mapper)
 		stakingutils.RefreshBalance(delegator, bankClient)
 
 		if utils.ContainAny(enabledModules, "history") {

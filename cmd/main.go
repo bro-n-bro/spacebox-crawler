@@ -1,15 +1,13 @@
 package main
 
 import (
-	"context"
-	"os"
-	"os/signal"
-	"syscall"
+	"log"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
 
 	"bro-n-bro-osmosis/internal/app"
+	executor "bro-n-bro-osmosis/pkg/app"
 )
 
 func main() {
@@ -31,18 +29,8 @@ func _main() {
 	// create an application
 	a := app.New(cfg)
 
-	// start an application
-	if err := a.Start(context.Background()); err != nil {
-		panic(err)
-	}
-
-	// wait for OS signal for graceful shutdown
-	quitCh := make(chan os.Signal, 1)
-	signal.Notify(quitCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	<-quitCh
-
-	// stop an application
-	if err := a.Stop(context.Background()); err != nil {
-		panic(err)
+	// run service
+	if err := executor.Run(a); err != nil {
+		log.Fatal(err)
 	}
 }

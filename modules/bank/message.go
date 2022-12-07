@@ -10,7 +10,7 @@ import (
 	"bro-n-bro-osmosis/types"
 )
 
-func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx *types.Tx) error {
+func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	addresses, err := m.parser(m.cdc, cosmosMsg)
 	if err != nil {
 		m.log.Error().Err(err).Msg("HandleMessage getAddresses error:")
@@ -20,6 +20,14 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx
 
 	switch msg := cosmosMsg.(type) {
 	// todo: 	case *banktypes.MsgMultiSend:
+	case *banktypes.MsgMultiSend:
+		// todo: collect input/output and coins
+		// todo: think about how to collect total amount from outputs
+		msgMultiSend := types.NewMsgMultiSend(nil, tx.Height, "", "", tx.TxHash)
+
+		if err = m.broker.PublishMultiSendMessage(ctx, m.tbM.MapMsgMultiSend(msgMultiSend)); err != nil {
+			return err
+		}
 	case *banktypes.MsgSend:
 		// TODO: test it
 		msgSend := types.NewMsgSend(types.NewCoinsFromCdk(msg.Amount), tx.Height, msg.FromAddress, msg.ToAddress, tx.TxHash)

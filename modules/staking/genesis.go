@@ -16,7 +16,7 @@ import (
 	"bro-n-bro-osmosis/types"
 )
 
-func (m *Module) HandleGenesis(_ context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	// Read the genesis state
 	var genState stakingtypes.GenesisState
 	err := m.cdc.UnmarshalJSON(appState[stakingtypes.ModuleName], &genState)
@@ -43,13 +43,13 @@ func (m *Module) HandleGenesis(_ context.Context, doc *tmtypes.GenesisDoc, appSt
 	}
 
 	// Save the delegations
-	err = saveDelegations(doc, genState)
+	err = m.saveDelegations(ctx, doc, genState)
 	if err != nil {
 		return fmt.Errorf("error while storing staking genesis delegations: %s", err)
 	}
 
 	// Save the unbonding delegations
-	err = saveUnbondingDelegations(doc, genState)
+	err = m.saveUnbondingDelegations(ctx, doc, genState)
 	if err != nil {
 		return fmt.Errorf("error while storing staking genesis unbonding delegations: %s", err)
 	}
@@ -163,7 +163,7 @@ func saveValidatorDescription(doc *tmtypes.GenesisDoc, validators stakingtypes.V
 // --------------------------------------------------------------------------------------------------------------------
 
 // saveDelegations stores the delegations data present inside the given genesis state
-func saveDelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+func (m *Module) saveDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
 	delegations := make([]types.Delegation, 0)
 	for _, validator := range genState.Validators {
 		tokens := validator.Tokens
@@ -181,9 +181,13 @@ func saveDelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState
 		}
 	}
 
-	//if err := db.SaveDelegations(delegations); err != nil {
-	//	return err
-	//}
+	for _, delegation := range delegations {
+		// TODO: test it
+		if err := m.broker.PublishDelegation(ctx, m.tbM.MapDelegation(delegation)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -202,7 +206,7 @@ func findDelegations(genData stakingtypes.Delegations, valAddr string) stakingty
 // --------------------------------------------------------------------------------------------------------------------
 
 // saveUnbondingDelegations stores the unbonding delegations data present inside the given genesis state
-func saveUnbondingDelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+func (m *Module) saveUnbondingDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
 	unbondingDelegations := make([]types.UnbondingDelegation, 0)
 	for _, validator := range genState.Validators {
 		valUD := findUnbondingDelegations(genState.UnbondingDelegations, validator.OperatorAddress)
@@ -219,7 +223,13 @@ func saveUnbondingDelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.Gen
 		}
 	}
 
-	//return db.SaveUnbondingDelegations(unbondingDelegations)
+	for _, ud := range unbondingDelegations {
+		// TODO: test it
+		if err := m.broker.PublishUnbondingDelegation(ctx, m.tbM.MapUnbondingDelegation(ud)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

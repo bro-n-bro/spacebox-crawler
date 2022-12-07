@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 
 	"github.com/cosmos/cosmos-sdk/simapp/params"
@@ -65,14 +67,16 @@ func (a *App) Start(ctx context.Context) error {
 	rpcCli := rpcClient.New(a.cfg.RpcConfig)
 	b := broker.New(a.cfg.BrokerConfig)
 
-	tb := tb.ToBroker{}
-
 	//encoding := MakeEncodingConfig(getBasicManagers())
 	cdc := MakeEncodingConfigV2()
-	parser := messages.JoinMessageParsers(messages.CosmosMessageAddressesParser)
-	modules := modules.BuildModules(b, grpcCli, tb, parser, cdc, a.cfg.Modules...)
 
-	w := worker.New(a.cfg.WorkerConfig, b, rpcCli, grpcCli, modules, cdc, tb)
+	tb := tb.NewToBroker(cdc)
+	parser := messages.JoinMessageParsers(messages.CosmosMessageAddressesParser)
+	modules := modules.BuildModules(b, grpcCli, *tb, parser, cdc, a.cfg.Modules...)
+
+	w := worker.New(a.cfg.WorkerConfig, b, rpcCli, grpcCli, modules, cdc, *tb)
+
+	MakeSdkConfig(a.cfg, sdk.GetConfig())
 
 	// TODO: mongo
 
@@ -172,6 +176,7 @@ func MakeEncodingConfigV2() codec.Codec {
 	ir := cdc.NewInterfaceRegistry()
 	simapp.ModuleBasics.RegisterInterfaces(ir)
 	std.RegisterInterfaces(ir)
+	std.RegisterLegacyAminoCodec(codec.NewAminoCodec(codec.NewLegacyAmino()).LegacyAmino) // FIXME: not needed?
 	ibcstypes.RegisterInterfaces(ir)
 	ibctransfertypes.RegisterInterfaces(ir)
 
@@ -187,4 +192,22 @@ func mergeBasicManagers(managers []cosmomodule.BasicManager) cosmomodule.BasicMa
 		}
 	}
 	return union
+}
+
+// MakeSdkConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
+// inside the configuration
+func MakeSdkConfig(cfg Config, sdkConfig *sdk.Config) {
+	prefix := cfg.ChainPrefix
+	sdkConfig.SetBech32PrefixForAccount(
+		prefix,
+		prefix+sdk.PrefixPublic,
+	)
+	sdkConfig.SetBech32PrefixForValidator(
+		prefix+sdk.PrefixValidator+sdk.PrefixOperator,
+		prefix+sdk.PrefixValidator+sdk.PrefixOperator+sdk.PrefixPublic,
+	)
+	sdkConfig.SetBech32PrefixForConsensusNode(
+		prefix+sdk.PrefixValidator+sdk.PrefixConsensus,
+		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,
+	)
 }

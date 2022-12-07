@@ -20,6 +20,7 @@ func UpdateDelegatorsRewardsAmounts(height int64, client distrtypes.QueryClient)
 	//log.Error().Str("module", "distribution").Err(err).Int64("height", height).
 	//	Msg("error while getting delegators")
 	//}
+
 	var delegators []string
 	if len(delegators) == 0 {
 		//log.Debug().Str("module", "distribution").Int64("height", height).
@@ -52,9 +53,10 @@ func updateDelegatorCommission(height int64, delegator string, distrClient distr
 }
 
 // GetDelegatorRewards returns the current rewards for the given delegator
-func GetDelegatorRewards(height int64, delegator string, distrClient distrtypes.QueryClient) ([]types.DelegatorRewardAmount, error) {
-	header := grpcClient.GetHeightRequestHeader(height)
+func GetDelegatorRewards(height int64, delegator string,
+	distrClient distrtypes.QueryClient) ([]types.DelegatorRewardAmount, error) {
 
+	header := grpcClient.GetHeightRequestHeader(height)
 	rewardsRes, err := distrClient.DelegationTotalRewards(
 		context.Background(),
 		&distrtypes.QueryDelegationTotalRewardsRequest{DelegatorAddress: delegator},
