@@ -34,7 +34,7 @@ func (w *Worker) fillModules() {
 	copy(transactionHandlers, txModules)
 
 	blockHandlers = make([]types.BlockModule, len(blockModules))
-	copy(blockHandlers, blockHandlers)
+	copy(blockHandlers, blockModules)
 
 	genesisHandlers = make([]types.GenesisModule, len(genModules))
 	copy(genesisHandlers, genModules)

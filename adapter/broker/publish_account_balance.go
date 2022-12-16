@@ -5,26 +5,18 @@ import (
 
 	"github.com/pkg/errors"
 
-	"bro-n-bro-osmosis/adapter/broker/model"
+	"github.com/hexy-dev/spacebox/broker/model"
 
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 func (b *Broker) PublishAccountBalance(ctx context.Context, ab model.AccountBalance) error {
-	return nil
 
 	data, err := jsoniter.Marshal(ab) // FIXME: maybe user another way to encode data
 	if err != nil {
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
-	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: AccountBalance, Partition: kafka.PartitionAny},
-		Value:          data,
-		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
-	}, nil)
-	if err != nil {
+	if err := b.produce(AccountBalance, data); err != nil {
 		return errors.Wrap(err, "produce supply fail")
 	}
 	return nil

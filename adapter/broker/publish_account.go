@@ -5,15 +5,12 @@ import (
 
 	"github.com/pkg/errors"
 
-	"bro-n-bro-osmosis/adapter/broker/model"
-
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (b *Broker) PublishAccounts(ctx context.Context, accounts []model.Account) error {
-	return nil
 
 	for i := 0; i < len(accounts); i++ {
 		select {
@@ -25,12 +22,8 @@ func (b *Broker) PublishAccounts(ctx context.Context, accounts []model.Account) 
 		if err != nil {
 			return errors.Wrap(err, MsgErrJsonMarshalFail)
 		}
-		err = b.p.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: AccountTopic, Partition: kafka.PartitionAny},
-			Value:          data,
-			//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
-		}, nil)
-		if err != nil {
+
+		if err := b.produce(Account, data); err != nil {
 			return errors.Wrap(err, "produce account fail")
 		}
 	}

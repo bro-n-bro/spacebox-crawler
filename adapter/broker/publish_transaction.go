@@ -3,28 +3,19 @@ package broker
 import (
 	"context"
 
-	"github.com/pkg/errors"
-
-	"bro-n-bro-osmosis/adapter/broker/model"
-
+	"github.com/hexy-dev/spacebox/broker/model"
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/pkg/errors"
 )
 
 func (b *Broker) PublishTransaction(ctx context.Context, tx model.Transaction) error {
-	return nil
 
 	data, err := jsoniter.Marshal(tx) // FIXME: maybe user another way to encode data
 	if err != nil {
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
-	err = b.p.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: TransactionTopic, Partition: kafka.PartitionAny},
-		Value:          data,
-		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
-	}, nil)
-	if err != nil {
+
+	if err := b.produce(Transaction, data); err != nil {
 		return errors.Wrap(err, "produce transaction fail")
 	}
 	return nil

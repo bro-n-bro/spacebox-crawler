@@ -12,13 +12,14 @@ import (
 )
 
 func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx *types.Tx) error {
+	if len(tx.Logs) == 0 { // TODO: maybe not needed
+		return nil
+	}
 
 	switch msg := cosmosMsg.(type) {
+	// TODO: todo to handle block
 	case *distrtypes.MsgFundCommunityPool:
-		if len(tx.Logs) == 0 { // TODO: maybe not needed
-			return nil
-		}
-		return utils.UpdateCommunityPool(ctx, tx.Height, m.client.DistributionQueryClient)
+		return utils.UpdateCommunityPool(ctx, tx.Height, m.client.DistributionQueryClient, m.broker, m.tbM)
 	case *distrtypes.MsgWithdrawDelegatorReward:
 		resp, err := m.client.DistributionQueryClient.DelegationRewards(
 			ctx,

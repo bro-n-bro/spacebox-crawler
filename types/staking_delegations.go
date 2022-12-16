@@ -43,7 +43,7 @@ type (
 		DelegatorAddress string
 		SrcValidator     string
 		DstValidator     string
-		Coin             sdk.Coin
+		Coin             Coin
 		CompletionTime   time.Time
 		Height           int64
 	}
@@ -118,7 +118,7 @@ func NewRedelegation(delegator, srcValidator, dstValidator string, amount sdk.Co
 		DelegatorAddress: delegator,
 		SrcValidator:     srcValidator,
 		DstValidator:     dstValidator,
-		Coin:             amount,
+		Coin:             NewCoinFromCdk(amount),
 		CompletionTime:   completionTime,
 		Height:           height,
 	}

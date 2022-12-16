@@ -36,6 +36,8 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 	//}
 	//_ = inflationResp
 
+	// m.client.MintQueryClient.AnnualProvisions()
+
 	// TODO: maybe check diff from mongo in my side?
 	params := types.NewMintParams(paramsResp.Params, block.Height)
 	// TODO: test it

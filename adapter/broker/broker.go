@@ -24,11 +24,6 @@ func New(cfg Config) *Broker {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("cmp", "broker").Logger()
 
-	//w := &kafka.Writer{
-	//	Addr:                   kafka.TCP("localhost:9092"),
-	//	AllowAutoTopicCreation: true,
-	//}
-
 	return &Broker{
 		//writer: w,
 		log: &l,
@@ -37,6 +32,10 @@ func New(cfg Config) *Broker {
 }
 
 func (b *Broker) Start(ctx context.Context) error {
+	if !b.cfg.Enabled {
+		return nil
+	}
+
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": b.cfg.ServerURL})
 
 	if err != nil {
@@ -49,7 +48,25 @@ func (b *Broker) Start(ctx context.Context) error {
 }
 
 func (b *Broker) Stop(ctx context.Context) error {
+	if !b.cfg.Enabled {
+		return nil
+	}
 	b.p.Close()
 	//return b.writer.Close()
+	return nil
+}
+
+func (b *Broker) produce(topic Topic, data []byte) error {
+	if !b.cfg.Enabled {
+		return nil
+	}
+	err := b.p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
+		Value:          data,
+		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
+	}, nil)
+	if err != nil {
+		return err
+	}
 	return nil
 }

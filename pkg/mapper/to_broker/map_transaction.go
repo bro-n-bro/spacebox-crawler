@@ -1,7 +1,8 @@
 package to_broker
 
 import (
-	"bro-n-bro-osmosis/adapter/broker/model"
+	"github.com/hexy-dev/spacebox/broker/model"
+
 	"bro-n-bro-osmosis/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"

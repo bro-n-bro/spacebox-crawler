@@ -219,7 +219,7 @@ func updateProposalValidatorStatusesSnapshot(
 
 	votingPowers := stakingutils.GetValidatorsVotingPowers(height, blockVals)
 
-	statuses, err := stakingutils.GetValidatorsStatuses(height, validators, cdc)
+	statuses, _, err := stakingutils.GetValidatorsStatuses(height, validators, cdc)
 	if err != nil {
 		return err
 	}

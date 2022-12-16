@@ -36,6 +36,11 @@ type (
 		Height           int64
 		TxHash           string
 	}
+
+	CommunityPool struct {
+		Height int64
+		Coins  Coins
+	}
 )
 
 // NewDistributionParams allows to build a new DistributionParams instance
@@ -77,5 +82,13 @@ func NewDelegationRewardMessage(delAddr, valAddr, txHash string, height int64, c
 		Coins:            coins,
 		TxHash:           txHash,
 		Height:           height,
+	}
+}
+
+// NewCommunityPool returns the new instance of CommunityPool
+func NewCommunityPool(height int64, coins sdk.DecCoins) CommunityPool {
+	return CommunityPool{
+		Height: height,
+		Coins:  NewCoinsFromCdkDec(coins),
 	}
 }

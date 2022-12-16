@@ -12,7 +12,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
+	"bro-n-bro-osmosis/internal/rep"
 	"bro-n-bro-osmosis/modules/staking/utils"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 )
 
@@ -31,13 +33,13 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	}
 
 	// Parse genesis transactions
-	err = parseGenesisTransactions(doc, appState, m.cdc)
+	err = parseGenesisTransactions(ctx, doc, appState, m.cdc, m.broker, m.tbM)
 	if err != nil {
 		return fmt.Errorf("error while storing genesis transactions: %s", err)
 	}
 
 	// Save the validators
-	err = saveValidators(doc, genState.Validators, m.cdc)
+	err = saveValidators(ctx, doc, genState.Validators, m.cdc, m.broker, m.tbM)
 	if err != nil {
 		return fmt.Errorf("error while storing staking genesis validators: %s", err)
 	}
@@ -55,7 +57,7 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	}
 
 	// Save the re-delegations
-	err = saveRedelegations(doc, genState)
+	err = m.saveRedelegations(ctx, doc, genState)
 	if err != nil {
 		return fmt.Errorf("error while storing staking genesis redelegations: %s", err)
 	}
@@ -74,7 +76,9 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	return nil
 }
 
-func parseGenesisTransactions(doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage, cdc codec.Codec) error {
+func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
+	appState map[string]json.RawMessage, cdc codec.Codec, broker rep.Broker, mapper tb.ToBroker) error {
+
 	var genUtilState genutiltypes.GenesisState
 	err := cdc.UnmarshalJSON(appState[genutiltypes.ModuleName], &genUtilState)
 	if err != nil {
@@ -95,7 +99,7 @@ func parseGenesisTransactions(doc *tmtypes.GenesisDoc, appState map[string]json.
 				continue
 			}
 
-			err = utils.StoreValidatorFromMsgCreateValidator(doc.InitialHeight, createValMsg, cdc)
+			err = utils.StoreValidatorFromMsgCreateValidator(ctx, doc.InitialHeight, createValMsg, cdc, broker, mapper)
 			if err != nil {
 				return err
 			}
@@ -117,7 +121,8 @@ func saveParams(height int64, params stakingtypes.Params) error {
 // --------------------------------------------------------------------------------------------------------------------
 
 // saveValidators stores the validators data present inside the given genesis state
-func saveValidators(doc *tmtypes.GenesisDoc, validators stakingtypes.Validators, cdc codec.Codec) error {
+func saveValidators(ctx context.Context, doc *tmtypes.GenesisDoc, validators stakingtypes.Validators,
+	cdc codec.Codec, broker rep.Broker, mapper tb.ToBroker) error {
 	vals := make([]types.StakingValidator, len(validators))
 	for i, val := range validators {
 		validator, err := utils.ConvertValidator(cdc, val, doc.InitialHeight)
@@ -128,9 +133,11 @@ func saveValidators(doc *tmtypes.GenesisDoc, validators stakingtypes.Validators,
 		vals[i] = validator
 	}
 
-	//return db.SaveValidatorsData(vals)
-	// TODO
-	_ = vals
+	// TODO: save to mongo?
+	// TODO test it
+	if err := utils.PublishValidatorsData(ctx, vals, broker, mapper); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -181,11 +188,8 @@ func (m *Module) saveDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, g
 		}
 	}
 
-	for _, delegation := range delegations {
-		// TODO: test it
-		if err := m.broker.PublishDelegation(ctx, m.tbM.MapDelegation(delegation)); err != nil {
-			return err
-		}
+	if err := utils.PublishDelegations(ctx, delegations, m.broker, m.tbM); err != nil {
+		return err
 	}
 
 	return nil
@@ -248,24 +252,26 @@ func findUnbondingDelegations(genData stakingtypes.UnbondingDelegations, valAddr
 // --------------------------------------------------------------------------------------------------------------------
 
 // saveRedelegations stores the redelegations data present inside the given genesis state
-func saveRedelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
-	redelegations := make([]types.Redelegation, 0)
-	for _, redelegation := range genState.Redelegations {
-		for _, entry := range redelegation.Entries {
-			redelegations = append(redelegations, types.NewRedelegation(
-				redelegation.DelegatorAddress,
-				redelegation.ValidatorSrcAddress,
-				redelegation.ValidatorDstAddress,
+func (m *Module) saveRedelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+	for _, genRedelegation := range genState.Redelegations {
+		for _, entry := range genRedelegation.Entries {
+			redelegation := types.NewRedelegation(
+				genRedelegation.DelegatorAddress,
+				genRedelegation.ValidatorSrcAddress,
+				genRedelegation.ValidatorDstAddress,
 				sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance),
 				entry.CompletionTime,
 				doc.InitialHeight,
-			))
+			)
+
+			// TODO: save to mongo?
+			// TODO: test it
+			if err := m.broker.PublishRedelegation(ctx, m.tbM.MapRedelegation(redelegation)); err != nil {
+				return err
+			}
 		}
 	}
 
-	// db.SaveRedelegations(redelegations)
-	// TODO:
-	_ = redelegations
 	return nil
 }
 
@@ -274,11 +280,12 @@ func saveRedelegations(doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisSta
 // saveValidatorsCommissions save the initial commission for each validator
 func saveValidatorsCommissions(height int64, validators stakingtypes.Validators) error {
 	validatorCommissions := make([]types.ValidatorCommission, len(validators))
-	for i, account := range validators {
+	for i, validator := range validators {
 		validatorCommissions[i] = types.NewValidatorCommission(
-			account.OperatorAddress,
-			&account.Commission.Rate,
-			&account.MinSelfDelegation,
+			validator.OperatorAddress,
+			&validator.Commission.Rate,
+			&validator.Commission.MaxChangeRate,
+			&validator.Commission.MaxRate,
 			height,
 		)
 		//err := db.SaveValidatorCommission()

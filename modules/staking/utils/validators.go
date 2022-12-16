@@ -11,7 +11,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	"bro-n-bro-osmosis/adapter/broker/model"
+	"github.com/hexy-dev/spacebox/broker/model"
+
 	grpcClient "bro-n-bro-osmosis/client/grpc"
 	"bro-n-bro-osmosis/internal/rep"
 	"bro-n-bro-osmosis/modules/staking/keybase"
@@ -139,7 +140,7 @@ func UpdateValidators(ctx context.Context, height int64, client stakingtypes.Que
 
 	// TODO: save to mongo?
 	// TODO: test it
-	if err = publishValidatorsData(ctx, validators, broker, mapper); err != nil {
+	if err = PublishValidatorsData(ctx, validators, broker, mapper); err != nil {
 		return nil, err
 	}
 
@@ -156,29 +157,34 @@ func UpdateValidators(ctx context.Context, height int64, client stakingtypes.Que
 
 // --------------------------------------------------------------------------------------------------------------------
 
-func GetValidatorsStatuses(height int64, validators []stakingtypes.Validator, cdc codec.Codec) ([]types.ValidatorStatus, error) {
+func GetValidatorsStatuses(height int64, validators []stakingtypes.Validator,
+	cdc codec.Codec) ([]types.ValidatorStatus, types.Validators, error) {
+
 	statuses := make([]types.ValidatorStatus, len(validators))
-	for index, validator := range validators {
+	vals := make(types.Validators, len(validators))
+	for i, validator := range validators {
 		consAddr, err := GetValidatorConsAddr(cdc, validator)
 		if err != nil {
-			return nil, fmt.Errorf("error while getting validator consensus address: %s", err)
+			return nil, nil, fmt.Errorf("error while getting validator consensus address: %s", err)
 		}
 
 		consPubKey, err := GetValidatorConsPubKey(cdc, validator)
 		if err != nil {
-			return nil, fmt.Errorf("error while getting validator consensus public key: %s", err)
+			return nil, nil, fmt.Errorf("error while getting validator consensus public key: %s", err)
 		}
 
-		statuses[index] = types.NewValidatorStatus(
+		statuses[i] = types.NewValidatorStatus(
 			consAddr.String(),
 			consPubKey.String(),
 			int(validator.GetStatus()),
 			validator.IsJailed(),
 			height,
 		)
+
+		vals[i] = types.NewValidator(consAddr.String(), consPubKey.String())
 	}
 
-	return statuses, nil
+	return statuses, nil, nil
 }
 
 func GetValidatorsVotingPowers(height int64, vals *tmctypes.ResultValidators) []types.ValidatorVotingPower {
@@ -195,7 +201,7 @@ func GetValidatorsVotingPowers(height int64, vals *tmctypes.ResultValidators) []
 	return votingPowers
 }
 
-func publishValidatorsData(ctx context.Context, sVals []types.StakingValidator, broker rep.Broker,
+func PublishValidatorsData(ctx context.Context, sVals []types.StakingValidator, broker rep.Broker,
 	mapper tb.ToBroker) error {
 
 	vals := make(types.Validators, len(sVals))

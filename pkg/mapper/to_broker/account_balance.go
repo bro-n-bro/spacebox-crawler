@@ -1,8 +1,9 @@
 package to_broker
 
 import (
-	"bro-n-bro-osmosis/adapter/broker/model"
 	"bro-n-bro-osmosis/types"
+
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (tb ToBroker) MapAccountBalance(ab types.AccountBalance) model.AccountBalance {

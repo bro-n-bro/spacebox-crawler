@@ -3,21 +3,24 @@ package rep
 import (
 	"context"
 
-	"bro-n-bro-osmosis/adapter/broker/model"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 type Broker interface {
 	PublishAccounts(context.Context, []model.Account) error
 	PublishValidators(ctx context.Context, vals []model.Validator) error
 	PublishValidatorsInfo(ctx context.Context, infos []model.ValidatorInfo) error
+	PublishValidatorsStatuses(ctx context.Context, statuses []model.ValidatorStatus) error
 
 	PublishBlock(context.Context, model.Block) error
+	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
 	PublishSupply(context.Context, model.Supply) error
 	PublishSendMessage(context.Context, model.SendMessage) error
 	PublishDelegationRewardMessage(context.Context, model.DelegationRewardMessage) error
 	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
 	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
+	PublishRedelegation(context.Context, model.Redelegation) error
 	PublishMultiSendMessage(ctx context.Context, msm model.MultiSendMessage) error
 	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
 

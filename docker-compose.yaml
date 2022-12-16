@@ -1,5 +1,16 @@
-version: "3"
+version: "3.4"
+
 services:
+  crawler:
+    build:
+      context: ../
+      dockerfile: .
+    environment:
+      ENV_FILE: "../.env"
+    depends_on:
+      - zookeeper
+      - kafka
+#      - mongo
   zookeeper:
     image: 'bitnami/zookeeper:latest'
     ports:

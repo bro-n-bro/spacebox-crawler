@@ -108,21 +108,21 @@ func NewValidatorDescription(
 
 // ValidatorCommission contains the data of a validator commission at a given height
 type ValidatorCommission struct {
-	ValAddress        string
-	Commission        *sdk.Dec
-	MinSelfDelegation *sdk.Int
-	Height            int64
+	ValAddress    string
+	Commission    *sdk.Dec
+	MaxChangeRate *sdk.Dec
+	MaxRate       *sdk.Dec
+	Height        int64
 }
 
 // NewValidatorCommission return a new validator commission instance
-func NewValidatorCommission(
-	valAddress string, rate *sdk.Dec, minSelfDelegation *sdk.Int, height int64,
-) ValidatorCommission {
+func NewValidatorCommission(valAddress string, rate, maxChangeRate, maxRate *sdk.Dec, height int64) ValidatorCommission {
 	return ValidatorCommission{
-		ValAddress:        valAddress,
-		Commission:        rate,
-		MinSelfDelegation: minSelfDelegation,
-		Height:            height,
+		ValAddress:    valAddress,
+		Commission:    rate,
+		MaxChangeRate: maxChangeRate,
+		MaxRate:       maxRate,
+		Height:        height,
 	}
 }
 

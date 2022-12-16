@@ -172,7 +172,7 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) {
 		for i, msg := range tx.Body.Messages {
 			var stdMsg sdk.Msg
 
-			err := w.marshaler.UnpackAny(msg, &stdMsg)
+			err := w.cdc.UnpackAny(msg, &stdMsg)
 			if err != nil {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
 				continue

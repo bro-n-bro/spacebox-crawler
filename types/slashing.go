@@ -29,15 +29,8 @@ func (v ValidatorSigningInfo) Equal(w ValidatorSigningInfo) bool {
 }
 
 // ValidatorSigningInfo allows to build a new ValidatorSigningInfo
-func NewValidatorSigningInfo(
-	validatorAddress string,
-	startHeight int64,
-	indexOffset int64,
-	jailedUntil time.Time,
-	tombstoned bool,
-	missedBlocksCounter int64,
-	height int64,
-) ValidatorSigningInfo {
+func NewValidatorSigningInfo(validatorAddress string, height, startHeight, indexOffset, missedBlocksCounter int64,
+	jailedUntil time.Time, tombstoned bool) ValidatorSigningInfo {
 	return ValidatorSigningInfo{
 		ValidatorAddress:    validatorAddress,
 		StartHeight:         startHeight,

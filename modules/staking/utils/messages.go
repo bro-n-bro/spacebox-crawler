@@ -16,7 +16,8 @@ import (
 
 // StoreValidatorFromMsgCreateValidator handles properly a MsgCreateValidator instance by
 // saving into the database all the data associated to such validator
-func StoreValidatorFromMsgCreateValidator(height int64, msg *stakingtypes.MsgCreateValidator, cdc codec.Codec) error {
+func StoreValidatorFromMsgCreateValidator(ctx context.Context, height int64, msg *stakingtypes.MsgCreateValidator,
+	cdc codec.Codec, broker rep.Broker, mapper tb.ToBroker) error {
 	var pubKey cryptotypes.PubKey
 	err := cdc.UnpackAny(msg.Pubkey, &pubKey)
 	if err != nil {
@@ -43,32 +44,33 @@ func StoreValidatorFromMsgCreateValidator(height int64, msg *stakingtypes.MsgCre
 		return err
 	}
 
-	_, _ = validator, desc
+	_ = desc
+
+	// TODO: save to mongo?
+	// TODO: test it
+	if err = PublishValidatorsData(ctx, []types.StakingValidator{validator}, broker, mapper); err != nil {
+		return err
+	}
+
+	// TODO: save to mongo?
+	// TODO: test it
+	// Save the first self-delegation
+	if err = broker.PublishDelegation(ctx, mapper.MapDelegation(types.NewDelegation(
+		msg.DelegatorAddress,
+		msg.ValidatorAddress,
+		msg.Value,
+		height,
+	))); err != nil {
+		return err
+	}
+
 	// TODO:!!!!!
-	// Save the validator
-	//err = db.SaveValidatorsData([]types.Validator{validator})
-	//if err != nil {
-	//	return err
-	//}
-	//
 	// Save the description
 	//err = db.SaveValidatorDescription(desc)
 	//if err != nil {
 	//	return err
 	//}
 	//
-	// Save the first self-delegation
-	//err = db.SaveDelegations([]types.Delegation{
-	//	types.NewDelegation(
-	//		msg.DelegatorAddress,
-	//		msg.ValidatorAddress,
-	//		msg.Value,
-	//		height,
-	//	),
-	//})
-	//if err != nil {
-	//	return err
-	//}
 
 	// Save the commission
 	//err = db.SaveValidatorCommission(types.NewValidatorCommission(
@@ -161,13 +163,18 @@ func StoreRedelegationFromMessage(ctx context.Context, tx *types.Tx, index int, 
 		completionTime,
 		tx.Height)
 
+	// TODO: save to mongo?
+	// TODO: test it
+	err = broker.PublishRedelegation(ctx, mapper.MapRedelegation(redelegation))
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: test it
 	err = broker.PublishRedelegationMessage(ctx, mapper.MapRedelegationMessage(redelegationMessage))
 	if err != nil {
 		return nil, err
 	}
-	// TODO:
-	//err = db.SaveRedelegations([]types.Redelegation{redelegation})
 
 	return &redelegation, err
 }

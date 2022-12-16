@@ -3,17 +3,12 @@ package broker
 import (
 	"context"
 
-	"github.com/pkg/errors"
-
-	"bro-n-bro-osmosis/adapter/broker/model"
-
+	"github.com/hexy-dev/spacebox/broker/model"
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/pkg/errors"
 )
 
 func (b *Broker) PublishValidators(ctx context.Context, vals []model.Validator) error {
-	return nil
 
 	for i := 0; i < len(vals); i++ {
 		select {
@@ -25,12 +20,8 @@ func (b *Broker) PublishValidators(ctx context.Context, vals []model.Validator) 
 		if err != nil {
 			return errors.Wrap(err, MsgErrJsonMarshalFail)
 		}
-		err = b.p.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{Topic: Validator, Partition: kafka.PartitionAny},
-			Value:          data,
-			//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
-		}, nil)
-		if err != nil {
+
+		if err := b.produce(Validator, data); err != nil {
 			return errors.Wrap(err, "produce account fail")
 		}
 	}

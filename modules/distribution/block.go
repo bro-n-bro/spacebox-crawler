@@ -20,6 +20,8 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, vals *tmct
 
 	// Update the delegators commissions amounts
 	go utils.UpdateDelegatorsRewardsAmounts(block.Height, m.client.DistributionQueryClient)
+
+	// TODO: client.community pull
 	return nil
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
@@ -10,13 +11,24 @@ import (
 	executor "bro-n-bro-osmosis/pkg/app"
 )
 
+const (
+	DefaultEnvFile = ".env"
+	EnvFile        = "ENV_FILE"
+)
+
 func main() {
 	_main()
 }
 
 func _main() {
-	// load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
+	// try to get .env file from Environments
+	fileName, ok := os.LookupEnv(EnvFile)
+	if !ok {
+		fileName = DefaultEnvFile
+	}
+
+	// load environment variables based on .env file
+	if err := godotenv.Load(fileName); err != nil {
 		panic(err)
 	}
 

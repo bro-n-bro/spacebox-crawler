@@ -1,5 +1,6 @@
 package broker
 
 type Config struct {
-	ServerURL string `json:"BROKER_SERVER"`
+	ServerURL string `env:"BROKER_SERVER"`
+	Enabled   bool   `env:"BROKER_ENABLED"`
 }

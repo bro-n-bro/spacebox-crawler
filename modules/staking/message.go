@@ -15,13 +15,13 @@ import (
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
-
 	if len(tx.Logs) == 0 {
 		return nil
 	}
+
 	switch msg := cosmosMsg.(type) {
 	case *stakingtypes.MsgCreateValidator:
-		return handleMsgCreateValidator(tx.Height, msg, m.cdc)
+		return handleMsgCreateValidator(ctx, tx.Height, msg, m.cdc, m.broker, m.tbM)
 
 	case *stakingtypes.MsgEditValidator:
 		return handleEditValidator(tx.Height, msg)
@@ -41,8 +41,10 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 // handleMsgCreateValidator handles properly a MsgCreateValidator instance by
 // saving into the database all the data associated to such validator
-func handleMsgCreateValidator(height int64, msg *stakingtypes.MsgCreateValidator, cdc codec.Codec) error {
-	err := stakingutils.StoreValidatorFromMsgCreateValidator(height, msg, cdc)
+func handleMsgCreateValidator(ctx context.Context, height int64, msg *stakingtypes.MsgCreateValidator, cdc codec.Codec,
+	broker rep.Broker, mapper tb.ToBroker) error {
+
+	err := stakingutils.StoreValidatorFromMsgCreateValidator(ctx, height, msg, cdc, broker, mapper)
 	if err != nil {
 		return err
 	}

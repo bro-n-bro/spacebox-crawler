@@ -34,7 +34,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, vals *tmct
 	go updateValidatorVotingPower(block.Height, vals)
 
 	// Update the validators statuses
-	go updateValidatorsStatus(block.Height, validators, m.cdc)
+	go updateValidatorsStatus(ctx, block.Height, validators, m.cdc, m.broker, m.tbM)
 
 	// Updated the double sign evidences
 	go updateDoubleSignEvidence(block.Height, block.Evidence.Evidence)
@@ -84,11 +84,13 @@ func (m *Module) updateParams(ctx context.Context, height int64) {
 }
 
 // updateValidatorsStatus updates all validators' statuses
-func updateValidatorsStatus(height int64, validators []stakingtypes.Validator, cdc codec.Codec) {
-	//log.Debug().Str("module", "staking").Int64("height", height).
-	//	Msg("updating validators statuses")
+func updateValidatorsStatus(ctx context.Context, height int64, stakingValidators []stakingtypes.Validator,
+	cdc codec.Codec, broker rep.Broker, mapper tb.ToBroker) {
 
-	statuses, err := stakingutils.GetValidatorsStatuses(height, validators, cdc)
+	//log.Debug().Str("module", "staking").Int64("height", height).
+	//	Msg("updating stakingValidators statuses")
+
+	statuses, validators, err := stakingutils.GetValidatorsStatuses(height, stakingValidators, cdc)
 	if err != nil {
 		//log.Error().Str("module", "staking").Err(err).
 		//	Int64("height", height).
@@ -96,13 +98,21 @@ func updateValidatorsStatus(height int64, validators []stakingtypes.Validator, c
 		return
 	}
 
-	_ = statuses
-	// TODO:
-	//err = db.SaveValidatorsStatuses(statuses)
+	// TODO: save to mongo?
+	// TODO: test it
+	if err := broker.PublishValidators(ctx, mapper.MapValidators(validators)); err != nil {
+		return
+	}
+
+	// TODO: test it
+	if err := broker.PublishValidatorsStatuses(ctx, mapper.MapValidatorsStatuses(statuses)); err != nil {
+		return
+	}
+
 	//if err != nil {
 	//	log.Error().Str("module", "staking").Err(err).
 	//		Int64("height", height).
-	//		Msg("error while saving validators statuses")
+	//		Msg("error while saving stakingValidators statuses")
 	//}
 }
 

@@ -1,7 +1,6 @@
 package worker
 
 import (
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"context"
 	"fmt"
 	"os"
@@ -11,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"bro-n-bro-osmosis/internal/rep"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 )
 
@@ -21,10 +21,12 @@ type Worker struct {
 	broker     rep.Broker
 	rpcClient  rep.RPCClient
 	grpcClient rep.GrpcClient
-	modules    []types.Module
-	marshaler  codec.Codec
-	cfg        Config
+	cdc        codec.Codec
 	tbM        tb.ToBroker
+
+	cfg Config
+
+	modules []types.Module
 
 	cancel   func()
 	heightCh chan int64
@@ -42,7 +44,7 @@ func New(cfg Config, b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient,
 		rpcClient:  rpcCli,
 		grpcClient: grpcCli,
 		modules:    modules,
-		marshaler:  marshaler,
+		cdc:        marshaler,
 		tbM:        tbM,
 		wg:         &sync.WaitGroup{},
 		heightCh:   make(chan int64, cfg.ChanSize),

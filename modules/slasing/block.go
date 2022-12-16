@@ -88,12 +88,12 @@ func (m *Module) getSigningInfos(height int64) ([]types.ValidatorSigningInfo, er
 	for index, info := range signingInfos {
 		infos[index] = types.NewValidatorSigningInfo(
 			info.Address,
+			height,
 			info.StartHeight,
 			info.IndexOffset,
+			info.MissedBlocksCounter,
 			info.JailedUntil,
 			info.Tombstoned,
-			info.MissedBlocksCounter,
-			height,
 		)
 	}
 	return infos, nil

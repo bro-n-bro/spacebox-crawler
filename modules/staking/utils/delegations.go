@@ -144,3 +144,25 @@ func RefreshDelegations(ctx context.Context, height int64, delegator string, cli
 		}
 	}
 }
+
+func PublishDelegations(ctx context.Context, delegations []types.Delegation, broker rep.Broker, mapper tb.ToBroker) error {
+	accounts := make([]types.Account, len(delegations))
+	for i, delegation := range delegations {
+		accounts[i] = types.NewAccount(delegation.DelegatorAddress, delegation.Height)
+	}
+
+	// TODO: test it?
+	if err := broker.PublishAccounts(ctx, mapper.MapAccounts(accounts)); err != nil {
+		return err
+	}
+
+	// TODO: save to mongo?
+	// TODO: MapDelegations
+	// TODO: test it
+	for _, delegation := range delegations {
+		if err := broker.PublishDelegation(ctx, mapper.MapDelegation(delegation)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
