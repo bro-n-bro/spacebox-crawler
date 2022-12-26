@@ -36,7 +36,7 @@ type (
 
 	Validator struct {
 		ConsAddr   string
-		ConsPubKey string
+		ConsPubkey string
 	}
 
 	MessageStruct struct {
@@ -95,7 +95,7 @@ func NewValidatorsFromTmValidator(tmVals *tmctypes.ResultValidators) Validators 
 func NewValidator(consAddr string, consPubKey string) *Validator {
 	return &Validator{
 		ConsAddr:   consAddr,
-		ConsPubKey: consPubKey,
+		ConsPubkey: consPubKey,
 	}
 }
 

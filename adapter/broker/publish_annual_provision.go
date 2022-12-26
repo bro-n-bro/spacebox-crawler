@@ -9,16 +9,15 @@ import (
 	"github.com/hexy-dev/spacebox/broker/model"
 )
 
-func (b *Broker) PublishBlock(ctx context.Context, block model.Block) error {
+func (b *Broker) PublishAnnualProvision(ctx context.Context, ap model.AnnualProvision) error {
 
-	data, err := jsoniter.Marshal(block) // FIXME: maybe user another way to encode data
+	data, err := jsoniter.Marshal(ap) // FIXME: maybe user another way to encode data
 	if err != nil {
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 
-	if err := b.produce(Block, data); err != nil {
+	if err := b.produce(AnnualProvision, data); err != nil {
 		return errors.Wrap(err, "produce block fail")
 	}
-
 	return nil
 }

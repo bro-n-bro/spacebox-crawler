@@ -21,12 +21,8 @@ import (
 	"bro-n-bro-osmosis/types"
 )
 
-var moduleStrMap = map[string]types.Module{
-	"bank": &bankModule.Module{},
-}
-
 func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, addressesParser messages.MessageAddressesParser, cdc codec.Codec,
-	modules ...string) []types.Module {
+	modules []string) []types.Module {
 
 	res := make([]types.Module, 0)
 	for _, m := range modules {
@@ -43,20 +39,16 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, ad
 		case "slashing":
 			res = append(res, slashingModule.New(b, cli))
 		case "staking":
-			res = append(res, stakingModule.New(b, cli, tbMapper, cdc, modules))
+			s := stakingModule.New(b, cli, tbMapper, cdc, modules)
+			res = append(res, s)
 		case "distribution":
 			res = append(res, distributionModule.New(b, cli, tbMapper, cdc, addressesParser))
 		case "core":
 			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
-
 		default:
+			// TODO: log
 			continue
 		}
-		//module, ok := moduleStrMap[m]
-		//if !ok {
-		//	// todo: log
-		//	continue
-		//}
 	}
 	return res
 }

@@ -7,10 +7,26 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func (w *Worker) enqueueHeight() {
-	for i := w.cfg.StartHeight; i < w.cfg.StopHeight; i++ {
-		w.heightCh <- i // put height to channel for processing the block
+func (w *Worker) enqueueHeight(ctx context.Context) {
+	for height := w.cfg.StartHeight; height < w.cfg.StopHeight; height++ {
+		w.heightCh <- height // put height to channel for processing the block
 	}
+
+	if w.cfg.ProcessErrorBlocks {
+		heights, err := w.storage.GetErrorBlockHeights(ctx)
+		if err != nil {
+			w.log.Error().Err(err).Msg("GetErrorBlockHeights error")
+		} else {
+			for _, height := range heights {
+				w.heightCh <- height
+			}
+		}
+	}
+
+	if !w.cfg.ProcessNewBlocks || !w.rpcClient.WsEnabled() {
+		// TODO: stop program
+	}
+
 }
 
 func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan tmtcoreypes.ResultEvent) {

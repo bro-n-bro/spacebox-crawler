@@ -13,6 +13,9 @@ import (
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
 	params, err := m.getGovParams(ctx, block.Height)
+	if err != nil {
+		return err
+	}
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
 	if err := m.broker.PublishGovParams(ctx, m.tbM.MapGovParams(params)); err != nil {

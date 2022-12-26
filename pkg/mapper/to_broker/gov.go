@@ -7,6 +7,10 @@ import (
 )
 
 func (tb ToBroker) MapGovParams(params *types.GovParams) model.GovParams {
+	if params == nil {
+		println()
+		return model.GovParams{}
+	}
 	return model.GovParams{
 		DepositParams: model.DepositParams{
 			MinDeposit:       tb.MapCoins(params.DepositParams.MinDeposit),

@@ -2,9 +2,11 @@ package app
 
 import (
 	"bro-n-bro-osmosis/adapter/broker"
+	"bro-n-bro-osmosis/adapter/storage"
 	"bro-n-bro-osmosis/client/grpc"
 	"bro-n-bro-osmosis/client/rpc"
 	"bro-n-bro-osmosis/pkg/worker"
+	"time"
 )
 
 // CHAIN_PREFIX=prefix # префикс индексируемой сети
@@ -24,11 +26,15 @@ import (
 // START_FROM_SNAPSHOT=False # флан на случай старта неполной ноды, а со снапшота
 // WS_ENABLED=False # обработка новых блоков
 type Config struct {
+	StartTimeout time.Duration `env:"START_TIMEOUT"`
+	StopTimeout  time.Duration `env:"STOP_TIMEOUT"`
+
 	ChainPrefix string   `env:"CHAIN_PREFIX"`
 	Modules     []string `env:"MODULES" required:"true"`
 
-	RpcConfig    rpc.Config
-	GrpcConfig   grpc.Config
-	BrokerConfig broker.Config
-	WorkerConfig worker.Config
+	RpcConfig     rpc.Config
+	GrpcConfig    grpc.Config
+	BrokerConfig  broker.Config
+	WorkerConfig  worker.Config
+	StorageConfig storage.Config
 }

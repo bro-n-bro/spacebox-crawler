@@ -3,6 +3,8 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,121 +22,151 @@ const (
 func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 	var parsedCount int
 	defer w.wg.Done()
-	//defer func() {
-	//	log.Printf("worker: %d. parsed %d blocks", wNumber, parsedCount)
-	//}()
+	defer func() {
+		log.Printf("worker: %d. parsed %d blocks", workerIndex, parsedCount)
+	}()
 
-	for {
+	for height := range w.heightCh {
 		select {
 		case <-ctx.Done():
-			w.log.Info().Int("worker_number", workerIndex).Msg("done worker")
+			w.log.Info().Int("worker_index", workerIndex).Msg("done worker")
 			return
-		case height := <-w.heightCh:
-			if height == 0 {
-				// TODO: in bdjuno genesis can be gets from local path
-				w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
+		default:
+		}
 
-				_genesisDur := time.Now()
-				genesis, err := w.rpcClient.Genesis(ctx)
-				if err != nil {
-					w.log.Error().Err(err).Msgf("get genesis error: %v", err)
-					continue
-				}
-				w.log.Info().
-					Int("worker_number", workerIndex).
-					Msgf("Get genesis dur: %v", time.Since(_genesisDur))
+		// for debug
+		parsedCount++
 
-				if err = w.processGenesis(ctx, genesis); err != nil {
-					w.log.Fatal().Err(err).Msgf("processHeight genesis error %v:", err)
-					continue
-				}
+		if height == 0 {
+			// TODO: in bdjuno genesis can be gets from local path
+			w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
 
-				continue
-			}
-
-			w.log.Info().Int("worker_number", workerIndex).Msgf("Parse block № %d", height)
-
-			g, _ctx := errgroup.WithContext(ctx)
-
-			var (
-				block *tmtcoreypes.ResultBlock
-				vals  *tmtcoreypes.ResultValidators
-			)
-
-			g.Go(func() error {
-				var err error
-
-				_blockDur := time.Now()
-				block, err = w.grpcClient.Block(_ctx, height)
-				if err != nil {
-					return err
-				}
-				w.log.Info().
-					Int("worker_number", workerIndex).
-					Int64("block_height", height).
-					Dur("parse_block_dur", time.Since(_blockDur)).
-					Msg("Get block info")
-				return nil
-			})
-
-			g.Go(func() error {
-				var err error
-
-				_validatorsDur := time.Now()
-				vals, err = w.grpcClient.Validators(_ctx, height)
-				if err != nil {
-					return err
-				}
-				w.log.Info().
-					Int("worker_number", workerIndex).
-					Int64("block_height", height).
-					Dur("parse_block_dur", time.Since(_validatorsDur)).
-					Msg("Get validators info")
-				return nil
-			})
-
-			if err := g.Wait(); err != nil {
-				w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
-				continue
-			}
-
-			_txsDur := time.Now()
-			// with async
-			// 2022/11/03 17:29:29 worker 7. height: 6710901. get block dur: 854.136709ms
-			// 2022/11/03 17:29:35 worker 7. height: 6710901. get txs dur: 5.954485916s
-			// 2022/11/03 17:29:36 worker 7. height: 6710901. get validators dur: 536.417667ms
-
-			// sync
-			// 2022/11/03 17:30:02 worker 7. height: 6710901. get block dur: 645.112792ms
-			// 2022/11/03 17:30:08 worker 7. height: 6710901. get txs dur: 5.895915416s
-			// 2022/11/03 17:30:08 worker 7. height: 6710901. get validators dur: 434.883833ms
-
-			// Async: 2022/11/03 19:11:21 duration sec: 208.474833083
-			// Sync: 2022/11/03 19:14:38 duration sec: 165.029986125
-
-			txsRes, err := w.grpcClient.TxsOld(ctx, block.Block.Data.Txs)
+			_genesisDur := time.Now()
+			genesis, err := w.rpcClient.Genesis(ctx)
 			if err != nil {
-				w.log.Error().Err(err).Msgf("get txs error: %v", err)
+				w.log.Error().Err(err).Msgf("get genesis error: %v", err)
 				continue
 			}
 			w.log.Info().
 				Int("worker_number", workerIndex).
+				Msgf("Get genesis dur: %v", time.Since(_genesisDur))
+
+			if err = w.processGenesis(ctx, genesis); err != nil {
+				w.log.Fatal().Err(err).Msgf("processHeight genesis error %v:", err)
+				continue
+			}
+
+			continue
+		} // TODO: what about storage?
+
+		if err := w.checkOrCreateBlockInStorage(ctx, height); err != nil {
+			if errors.Is(err, ErrBlockProcessed) {
+				w.log.Debug().Int64("height", height).Msg("block already processed. skip height")
+			} else if errors.Is(err, ErrBlockProcessing) {
+				w.log.Debug().Int64("height", height).Msg("block is already processing now. skip height")
+			} else if errors.Is(err, ErrBlockError) {
+				w.log.Debug().Int64("height", height).Msg("block processed with error. " +
+					"if you want to process this height again see PROCESS_ERROR_BLOCKS ENV")
+			}
+
+			continue
+		}
+
+		w.log.Info().Int("worker_number", workerIndex).Msgf("Parse block № %d", height)
+
+		g, _ctx := errgroup.WithContext(ctx)
+
+		var (
+			block *tmtcoreypes.ResultBlock
+			vals  *tmtcoreypes.ResultValidators
+		)
+
+		g.Go(func() error {
+			var err error
+
+			_blockDur := time.Now()
+			block, err = w.grpcClient.Block(_ctx, height)
+			if err != nil {
+				return err
+			}
+			w.log.Debug().
+				Int("worker_number", workerIndex).
 				Int64("block_height", height).
-				Dur("txs_dur", time.Since(_txsDur)).
-				Msg("Get txs info")
+				Dur("parse_block_dur", time.Since(_blockDur)).
+				Msg("Get block info")
+			return nil
+		})
 
-			txs := types.NewTxsFromTmTxs(txsRes)
-			b := types.NewBlockFromTmBlock(block, txs.TotalGas())
+		g.Go(func() error {
+			var err error
 
-			// handle block first
-			w.processBlock(ctx, b, vals)
-			w.processTxs(ctx, txs)
+			_validatorsDur := time.Now()
+			vals, err = w.grpcClient.Validators(_ctx, height)
+			if err != nil {
+				return err
+			}
+			w.log.Debug().
+				Int("worker_number", workerIndex).
+				Int64("block_height", height).
+				Dur("parse_block_dur", time.Since(_validatorsDur)).
+				Msg("Get validators info")
+			return nil
+		})
 
-			_ = vals
-			_ = txs
-			parsedCount++
+		if err := g.Wait(); err != nil {
+			w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
+			w.setErrorStatusWithLogging(ctx, height)
+			continue
+		}
+
+		_txsDur := time.Now()
+		// with async
+		// 2022/11/03 17:29:29 worker 7. height: 6710901. get block dur: 854.136709ms
+		// 2022/11/03 17:29:35 worker 7. height: 6710901. get txs dur: 5.954485916s
+		// 2022/11/03 17:29:36 worker 7. height: 6710901. get validators dur: 536.417667ms
+
+		// sync
+		// 2022/11/03 17:30:02 worker 7. height: 6710901. get block dur: 645.112792ms
+		// 2022/11/03 17:30:08 worker 7. height: 6710901. get txs dur: 5.895915416s
+		// 2022/11/03 17:30:08 worker 7. height: 6710901. get validators dur: 434.883833ms
+
+		// Async: 2022/11/03 19:11:21 duration sec: 208.474833083
+		// Sync: 2022/11/03 19:14:38 duration sec: 165.029986125
+
+		txsRes, err := w.grpcClient.TxsOld(ctx, block.Block.Data.Txs)
+		if err != nil {
+			w.log.Error().Err(err).Msgf("get txs error: %v", err)
+			w.setErrorStatusWithLogging(ctx, height)
+			continue
+		}
+		w.log.Debug().
+			Int("worker_number", workerIndex).
+			Int64("block_height", height).
+			Dur("txs_dur", time.Since(_txsDur)).
+			Msg("Get txs info")
+
+		txs := types.NewTxsFromTmTxs(txsRes)
+		b := types.NewBlockFromTmBlock(block, txs.TotalGas())
+
+		g, _ctx = errgroup.WithContext(ctx)
+
+		g.Go(func() error {
+			return w.processBlock(_ctx, b, vals)
+		})
+		g.Go(func() error {
+			return w.processTxs(_ctx, txs)
+		})
+
+		if err := g.Wait(); err != nil {
+			w.setErrorStatusWithLogging(ctx, height)
+			continue
+		}
+
+		if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
+			w.log.Error().Err(err).Int64("height", height).Msgf("cant set processed status in storage %v:", err)
 		}
 	}
+
 }
 
 func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc) error {
@@ -152,20 +184,22 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc
 	return nil
 }
 
-func (w *Worker) processBlock(ctx context.Context, block *types.Block, vals *tmtcoreypes.ResultValidators) {
+func (w *Worker) processBlock(ctx context.Context, block *types.Block, vals *tmtcoreypes.ResultValidators) error {
 	for _, m := range blockHandlers {
 		if err := m.HandleBlock(ctx, block, vals); err != nil {
 			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleBlock error:", err)
+			return err
 		}
 	}
+	return nil
 }
 
-func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) {
+func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 	for _, tx := range txs {
 		for _, m := range transactionHandlers {
 			if err := m.HandleTx(ctx, tx); err != nil {
 				w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleTX error:", err)
-				continue
+				return err
 			}
 		}
 
@@ -175,15 +209,16 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) {
 			err := w.cdc.UnpackAny(msg, &stdMsg)
 			if err != nil {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
-				continue
+				return err
 			}
 
 			for _, m := range messageHandlers {
 				if err = m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
 					w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleMessage error:", err)
-					continue
+					return err
 				}
 			}
 		}
 	}
+	return nil
 }

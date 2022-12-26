@@ -1,11 +1,11 @@
 package to_broker
 
 import (
-	"github.com/hexy-dev/spacebox/broker/model"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"bro-n-bro-osmosis/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (tb ToBroker) MapTransaction(tx *types.Tx) model.Transaction {

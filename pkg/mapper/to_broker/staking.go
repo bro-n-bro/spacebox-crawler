@@ -11,7 +11,7 @@ func (tb ToBroker) MapUnbondingDelegation(ud types.UnbondingDelegation) model.Un
 		CompletionTimestamp: ud.CompletionTimestamp,
 		Coin:                tb.MapCoin(ud.Coin),
 		DelegatorAddress:    ud.DelegatorAddress,
-		ValidatorOperAddr:   ud.ValidatorOperAddr,
+		ValidatorAddress:    ud.ValidatorOperAddr,
 		Height:              ud.Height,
 	}
 }
@@ -40,6 +40,21 @@ func (tb ToBroker) MapStakingParams(sp types.StakingParams) model.StakingParams 
 		Height: sp.Height,
 	}
 }
+
+func (tb ToBroker) MapStakingPool(sp *types.Pool) model.StakingPool {
+	pool := model.StakingPool{
+		Height: sp.Height,
+	}
+	if !sp.BondedTokens.IsNil() {
+		pool.BondedTokens = sp.BondedTokens.Int64()
+	}
+
+	if !sp.NotBondedTokens.IsNil() {
+		pool.NotBondedTokens = sp.NotBondedTokens.Int64()
+	}
+	return pool
+}
+
 func (tb ToBroker) MapDelegation(d types.Delegation) model.Delegation {
 	return model.Delegation{
 		OperatorAddress:  d.ValidatorOperAddr,

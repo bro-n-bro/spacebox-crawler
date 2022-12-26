@@ -45,5 +45,26 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 	if err != nil {
 		return errors.Wrap(err, "PublishMintParams error")
 	}
+
+	// TODO: go panic: invalid Go type types.Dec for field cosmos.mint.v1beta1.QueryAnnualProvisionsResponse.annual_provisions
+	//annualProvResp, err := m.client.MintQueryClient.AnnualProvisions(
+	//	ctx,
+	//	&minttypes.QueryAnnualProvisionsRequest{},
+	//	grpcClient.GetHeightRequestHeader(block.Height),
+	//)
+	//if err != nil {
+	//	m.log.Error().Err(err).Int64("height", block.Height).Msg("error while annual provision")
+	//	return err
+	//}
+
+	//var annualProvision float64
+	//if !annualProvResp.AnnualProvisions.IsNil() {
+	//	annualProvision = annualProvResp.AnnualProvisions.MustFloat64()
+	//}
+
+	//if err := m.broker.PublishAnnualProvision(ctx, m.tbM.MapAnnualProvision(block.Height, annualProvision)); err != nil {
+	//	return errors.Wrap(err, "PublishAnnualProvision error")
+	//}
+
 	return nil
 }

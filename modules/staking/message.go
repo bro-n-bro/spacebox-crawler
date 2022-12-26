@@ -1,16 +1,15 @@
 package staking
 
 import (
-	"bro-n-bro-osmosis/internal/rep"
-	stakingutils "bro-n-bro-osmosis/modules/staking/utils"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"bro-n-bro-osmosis/internal/rep"
+	stakingutils "bro-n-bro-osmosis/modules/staking/utils"
+	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"bro-n-bro-osmosis/types"
 )
 

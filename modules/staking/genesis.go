@@ -27,7 +27,7 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	}
 
 	// Save the params
-	err = saveParams(doc.InitialHeight, genState.Params)
+	err = m.saveParams(ctx, doc.InitialHeight, genState.Params)
 	if err != nil {
 		return fmt.Errorf("error while storing staking genesis params: %s", err)
 	}
@@ -112,9 +112,12 @@ func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
 // -------------------------------------------------------------------------------------------------------------------
 
 // saveParams saves the given params into the database
-func saveParams(height int64, params stakingtypes.Params) error {
-	//return db.SaveStakingParams(types.NewStakingParams(params, height))
-	_ = types.NewStakingParams(params, height)
+func (m *Module) saveParams(ctx context.Context, height int64, params stakingtypes.Params) error {
+	// TODO: test it
+	err := m.broker.PublishStakingParams(ctx, m.tbM.MapStakingParams(types.NewStakingParams(params, height)))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

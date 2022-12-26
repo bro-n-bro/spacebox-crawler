@@ -15,7 +15,7 @@ func (b *Broker) PublishSupply(ctx context.Context, supply model.Supply) error {
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 
-	if err := b.produce(SupplyTopic, data); err != nil {
+	if err := b.produce(Supply, data); err != nil {
 		return errors.Wrap(err, "produce supply fail")
 	}
 	return nil

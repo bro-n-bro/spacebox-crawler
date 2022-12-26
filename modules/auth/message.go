@@ -17,7 +17,6 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *type
 	}
 
 	// TODO:
-
 	err = m.broker.PublishAccounts(ctx, m.tbM.MapAccounts(utils.GetAccounts(addresses, tx.Height)))
 	if err != nil {
 		return err

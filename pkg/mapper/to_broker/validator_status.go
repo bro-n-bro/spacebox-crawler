@@ -10,7 +10,7 @@ func (tb ToBroker) MapValidatorStatus(s types.ValidatorStatus) model.ValidatorSt
 	return model.ValidatorStatus{
 		Height:           s.Height,
 		ValidatorAddress: s.ConsensusAddress,
-		Status:           uint32(s.Status),
+		Status:           int64(s.Status),
 		Jailed:           s.Jailed,
 	}
 }

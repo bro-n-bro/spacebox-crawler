@@ -9,7 +9,7 @@ import (
 func (tb ToBroker) MapValidator(val *types.Validator) model.Validator {
 	return model.Validator{
 		ConsensusAddress: val.ConsAddr,
-		ConsensusPubKey:  val.ConsPubKey,
+		ConsensusPubkey:  val.ConsPubkey,
 	}
 }
 

@@ -1,15 +1,13 @@
 package staking
 
 import (
-	"bro-n-bro-osmosis/internal/rep"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
 	"context"
 	"encoding/hex"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"golang.org/x/sync/errgroup"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -27,30 +25,44 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, vals *tmct
 		return err
 	}
 
-	// Get the params
-	go m.updateParams(ctx, block.Height)
+	g, _ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		// Update the params
+		return m.updateParams(_ctx, block.Height)
+	})
 
 	// Update the voting powers
-	go updateValidatorVotingPower(block.Height, vals)
+	// go updateValidatorVotingPower(block.Height, vals)
 
-	// Update the validators statuses
-	go updateValidatorsStatus(ctx, block.Height, validators, m.cdc, m.broker, m.tbM)
+	g.Go(func() error {
+		// Update the validators statuses
+		return m.updateValidatorsStatus(_ctx, block.Height, validators)
+	})
 
 	// Updated the double sign evidences
-	go updateDoubleSignEvidence(block.Height, block.Evidence.Evidence)
+	// go updateDoubleSignEvidence(block.Height, block.Evidence.Evidence)
 
-	// Update the staking pool
-	go updateStakingPool(block.Height, m.client.StakingQueryClient)
+	g.Go(func() error {
+		// Update the staking pool
+		return m.updateStakingPool(_ctx, block.Height, m.client.StakingQueryClient)
+	})
 
-	// Update redelegations and unbonding delegations
-	go updateElapsedDelegations(ctx, block.Height, block.Timestamp, m.client.StakingQueryClient, m.client.BankQueryClient,
-		m.enabledModules, m.broker, m.tbM)
+	g.Go(func() error {
+		// Update redelegations and unbonding delegations
+		// TODO
+		return m.updateElapsedDelegations(_ctx, block.Height, block.Timestamp, m.enabledModules)
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 // updateParams gets the updated params and stores them inside the database
-func (m *Module) updateParams(ctx context.Context, height int64) {
+func (m *Module) updateParams(ctx context.Context, height int64) error {
 	//log.Debug().Str("module", "staking").Int64("height", height).
 	//	Msg("updating params")
 	//
@@ -63,14 +75,14 @@ func (m *Module) updateParams(ctx context.Context, height int64) {
 		//log.Error().Str("module", "staking").Err(err).
 		//	Int64("height", height).
 		//	Msg("error while getting params")
-		return
+		return err
 	}
 
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
 	err = m.broker.PublishStakingParams(ctx, m.tbM.MapStakingParams(types.NewStakingParams(res.Params, height)))
 	if err != nil {
-		return
+		return err
 	}
 
 	// TODO:
@@ -81,32 +93,33 @@ func (m *Module) updateParams(ctx context.Context, height int64) {
 	//	Msg("error while saving params")
 	//return
 	//}
+
+	return nil
 }
 
 // updateValidatorsStatus updates all validators' statuses
-func updateValidatorsStatus(ctx context.Context, height int64, stakingValidators []stakingtypes.Validator,
-	cdc codec.Codec, broker rep.Broker, mapper tb.ToBroker) {
+func (m *Module) updateValidatorsStatus(ctx context.Context, height int64, stakingValidators []stakingtypes.Validator) error {
 
 	//log.Debug().Str("module", "staking").Int64("height", height).
 	//	Msg("updating stakingValidators statuses")
 
-	statuses, validators, err := stakingutils.GetValidatorsStatuses(height, stakingValidators, cdc)
+	statuses, validators, err := stakingutils.GetValidatorsStatuses(height, stakingValidators, m.cdc)
 	if err != nil {
 		//log.Error().Str("module", "staking").Err(err).
 		//	Int64("height", height).
 		//	Send()
-		return
+		return err
 	}
 
 	// TODO: save to mongo?
 	// TODO: test it
-	if err := broker.PublishValidators(ctx, mapper.MapValidators(validators)); err != nil {
-		return
+	if err := m.broker.PublishValidators(ctx, m.tbM.MapValidators(validators)); err != nil {
+		return err
 	}
 
 	// TODO: test it
-	if err := broker.PublishValidatorsStatuses(ctx, mapper.MapValidatorsStatuses(statuses)); err != nil {
-		return
+	if err := m.broker.PublishValidatorsStatuses(ctx, m.tbM.MapValidatorsStatuses(statuses)); err != nil {
+		return err
 	}
 
 	//if err != nil {
@@ -114,6 +127,7 @@ func updateValidatorsStatus(ctx context.Context, height int64, stakingValidators
 	//		Int64("height", height).
 	//		Msg("error while saving stakingValidators statuses")
 	//}
+	return nil
 }
 
 // updateValidatorVotingPower fetches and stores into the database all the current validators' voting powers
@@ -177,7 +191,7 @@ func updateDoubleSignEvidence(height int64, evidenceList tmtypes.EvidenceList) {
 }
 
 // updateStakingPool reads from the LCD the current staking pool and stores its value inside the database
-func updateStakingPool(height int64, stakingClient stakingtypes.QueryClient) {
+func (m *Module) updateStakingPool(ctx context.Context, height int64, stakingClient stakingtypes.QueryClient) error {
 	//log.Debug().Str("module", "staking").Int64("height", height).
 	//	Msg("updating staking pool")
 
@@ -185,25 +199,22 @@ func updateStakingPool(height int64, stakingClient stakingtypes.QueryClient) {
 	if err != nil {
 		//log.Error().Str("module", "staking").Err(err).Int64("height", height).
 		//	Msg("error while getting staking pool")
-		return
+		return err
 	}
 
-	_ = pool
-	// TODO:
-	//err = db.SaveStakingPool(pool)
-	//if err != nil {
-	//	log.Error().Str("module", "staking").Err(err).Int64("height", height).
-	//		Msg("error while saving staking pool")
-	//	return
-	//}
+	// TODO: test IT
+	if err := m.broker.PublishStakingPool(ctx, m.tbM.MapStakingPool(pool)); err != nil {
+		//log.Error().Str("module", "staking").Err(err).Int64("height", height).
+		//	Msg("error while saving staking pool")
+		return err
+	}
+	return nil
 }
 
 // updateElapsedDelegations updates the redelegations and unbonding delegations that have elapsed
-func updateElapsedDelegations(
-	ctx context.Context, height int64, timestamp time.Time,
-	stakingClient stakingtypes.QueryClient, bankClient banktypes.QueryClient, enabledModules []string,
-	broker rep.Broker, mapper tb.ToBroker,
-) {
+func (m *Module) updateElapsedDelegations(
+	ctx context.Context, height int64, timestamp time.Time, enabledModules []string,
+) error {
 	//log.Debug().Str("module", "staking").Int64("height", height).
 	//	Msg("updating elapsed redelegations and unbonding delegations")
 	//
@@ -239,8 +250,10 @@ func updateElapsedDelegations(
 
 	// Update the delegations and balances of all the delegators
 	for delegator := range delegators {
-		stakingutils.RefreshDelegations(ctx, height, delegator, stakingClient, broker, mapper)
-		stakingutils.RefreshBalance(delegator, bankClient)
+		stakingutils.RefreshDelegations(ctx, height, delegator, m.client.StakingQueryClient, m.broker, m.tbM)
+
+		// TODO
+		//stakingutils.RefreshBalance(delegator, m.client.BankQueryClient)
 
 		if utils.ContainAny(enabledModules, "history") {
 			// TODO:
@@ -253,4 +266,6 @@ func updateElapsedDelegations(
 			//}
 		}
 	}
+
+	return nil
 }

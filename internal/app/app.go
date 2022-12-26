@@ -3,31 +3,30 @@ package app
 import (
 	"context"
 	"os"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
-
-	"github.com/cosmos/cosmos-sdk/simapp/params"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	cdc "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/std"
-	cosmomodule "github.com/cosmos/cosmos-sdk/types/module"
-	ibcstypes "github.com/cosmos/ibc-go/v5/modules/core/types"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
-	"golang.org/x/sync/errgroup"
+	"time"
 
 	"bro-n-bro-osmosis/adapter/broker"
+	"bro-n-bro-osmosis/adapter/storage"
 	grpcClient "bro-n-bro-osmosis/client/grpc"
 	rpcClient "bro-n-bro-osmosis/client/rpc"
 	"bro-n-bro-osmosis/internal/rep"
 	"bro-n-bro-osmosis/modules"
 	"bro-n-bro-osmosis/modules/messages"
 	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
+	ts "bro-n-bro-osmosis/pkg/mapper/to_storage"
 	"bro-n-bro-osmosis/pkg/worker"
+
+	"github.com/cosmos/cosmos-sdk/codec"
+	cdc "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/cosmos/cosmos-sdk/simapp/params"
+	"github.com/cosmos/cosmos-sdk/std"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmomodule "github.com/cosmos/cosmos-sdk/types/module"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibcstypes "github.com/cosmos/ibc-go/v5/modules/core/types"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 )
 
 const (
@@ -65,26 +64,26 @@ func (a *App) Start(ctx context.Context) error {
 
 	grpcCli := grpcClient.New(a.cfg.GrpcConfig)
 	rpcCli := rpcClient.New(a.cfg.RpcConfig)
-	b := broker.New(a.cfg.BrokerConfig)
+	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules)
+	s := storage.New(a.cfg.StorageConfig)
 
 	//encoding := MakeEncodingConfig(getBasicManagers())
 	cdc := MakeEncodingConfigV2()
 
 	tb := tb.NewToBroker(cdc)
 	parser := messages.JoinMessageParsers(messages.CosmosMessageAddressesParser)
-	modules := modules.BuildModules(b, grpcCli, *tb, parser, cdc, a.cfg.Modules...)
-
-	w := worker.New(a.cfg.WorkerConfig, b, rpcCli, grpcCli, modules, cdc, *tb)
+	modules := modules.BuildModules(b, grpcCli, *tb, parser, cdc, a.cfg.Modules)
+	ts := ts.NewToStorage()
+	w := worker.New(a.cfg.WorkerConfig, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 
 	MakeSdkConfig(a.cfg, sdk.GetConfig())
 
-	// TODO: mongo
-
 	a.cmps = append(
 		a.cmps,
+		cmp{s, "storage"},
+		cmp{b, "broker"},
 		cmp{grpcCli, "grpcClient"},
 		cmp{rpcCli, "rpcClient"},
-		cmp{b, "broker"},
 		cmp{w, "worker"},
 	)
 
@@ -107,6 +106,7 @@ func (a *App) Start(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-okCh:
+		a.log.Info().Msg("Application started!")
 		return nil
 	}
 }
@@ -114,27 +114,26 @@ func (a *App) Start(ctx context.Context) error {
 func (a *App) Stop(ctx context.Context) error {
 	a.log.Info().Msg("shutting down service...")
 
-	errCh := make(chan error)
+	okCh, errCh := make(chan struct{}), make(chan error)
 	go func() {
-		gr, ctx := errgroup.WithContext(ctx)
-		var c cmp
-		for i := len(a.cmps) - 1; i >= 0; i-- {
-			c = a.cmps[i]
+		for _, c := range a.cmps {
 			a.log.Info().Msgf("stopping %q...", c.Name)
 			if err := c.Service.Stop(ctx); err != nil {
 				a.log.Error().Err(err).Msgf("cannot stop %q", c.Name)
+				errCh <- err
 			}
 		}
-		errCh <- gr.Wait()
+
+		okCh <- struct{}{}
 	}()
 
 	select {
 	case <-ctx.Done():
 		return ErrShutdownTimeout
 	case err := <-errCh:
-		if err != nil {
-			return err
-		}
+		return err
+	case <-okCh:
+		a.log.Info().Msg("Application stopped!")
 		return nil
 	}
 }
@@ -179,6 +178,7 @@ func MakeEncodingConfigV2() codec.Codec {
 	std.RegisterLegacyAminoCodec(codec.NewAminoCodec(codec.NewLegacyAmino()).LegacyAmino) // FIXME: not needed?
 	ibcstypes.RegisterInterfaces(ir)
 	ibctransfertypes.RegisterInterfaces(ir)
+	//liquiditytypes.RegisterInterfaces(ir)
 
 	return codec.NewProtoCodec(ir)
 }
@@ -211,3 +211,6 @@ func MakeSdkConfig(cfg Config, sdkConfig *sdk.Config) {
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,
 	)
 }
+
+func (a *App) GetStartTimeout() time.Duration { return a.cfg.StartTimeout }
+func (a *App) GetStopTimeout() time.Duration  { return a.cfg.StopTimeout }

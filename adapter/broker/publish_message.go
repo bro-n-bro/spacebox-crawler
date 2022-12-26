@@ -15,7 +15,7 @@ func (b *Broker) PublishMessage(ctx context.Context, message model.Message) erro
 		return errors.Wrap(err, MsgErrJsonMarshalFail)
 	}
 
-	if err := b.produce(MessageTopic, data); err != nil {
+	if err := b.produce(Message, data); err != nil {
 		return errors.Wrap(err, "produce message fail")
 	}
 	return nil
