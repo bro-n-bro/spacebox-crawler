@@ -3,29 +3,42 @@ package to_broker
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"bro-n-bro-osmosis/types"
-
+	"github.com/hexy-dev/spacebox-crawler/types"
 	"github.com/hexy-dev/spacebox/broker/model"
 )
 
-func (tb ToBroker) MapTransaction(tx *types.Tx) model.Transaction {
+func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 	signatures := make([]string, len(tx.Signatures))
 	for i, s := range tx.Signatures {
 		signatures[i] = string(s)
+	}
+
+	var msgs = make([][]byte, len(tx.Body.Messages))
+	for i, msg := range tx.Body.Messages {
+		msgBytes, err := tb.cdc.MarshalJSON(msg)
+		if err != nil {
+			return model.Transaction{}, err
+		}
+		msgs[i] = msgBytes
+	}
+
+	logs, err := tb.amino.MarshalJSON(tx.Logs)
+	if err != nil {
+		return model.Transaction{}, err
 	}
 
 	t := model.Transaction{
 		Hash:       tx.TxHash,
 		Height:     tx.Height,
 		Success:    tx.Successful(),
-		Messages:   nil, // TODO
+		Messages:   msgs,
 		Memo:       tx.Body.Memo,
 		Signatures: signatures,
-		Signer:     "", // TODO
+		Signer:     tx.Signer,
 		GasWanted:  tx.GasWanted,
 		GasUsed:    tx.GasUsed,
 		RawLog:     tx.RawLog,
-		Logs:       nil, // TODO
+		Logs:       logs,
 	}
 
 	if tx.AuthInfo != nil {
@@ -43,7 +56,7 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) model.Transaction {
 
 		if tx.AuthInfo.Fee != nil {
 			var payer string
-			if tx.AuthInfo.Fee.Payer == "" {
+			if tx.AuthInfo.Fee.Payer == "" && len(tx.Body.Messages) > 0 {
 				// XXX
 				// without this we will get a panic if transaction cannot contain a feePayer
 				var stdMsg sdk.Msg
@@ -60,12 +73,8 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) model.Transaction {
 				Granter:  tx.FeeGranter().String(),
 				Payer:    payer,
 			}
-
-			if payer := tx.AuthInfo.Fee.Payer; payer != "" {
-				t.Fee.Payer = payer
-			}
 		}
 	}
 
-	return t
+	return t, nil
 }

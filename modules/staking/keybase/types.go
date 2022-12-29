@@ -2,9 +2,9 @@ package keybase
 
 // QueryStatus contains the details of the status of a request
 type QueryStatus struct {
-	Code    int64  `json:"code"`
 	Name    string `json:"name"`
 	ErrDesc string `json:"desc"`
+	Code    int64  `json:"code"`
 }
 
 // IdentityQueryResponse represents the response to an identity query
@@ -15,8 +15,8 @@ type IdentityQueryResponse struct {
 
 // AccountDetails contains the data of a single account details
 type AccountDetails struct {
-	ID       string           `json:"id"`
 	Pictures *AccountPictures `json:"pictures"`
+	ID       string           `json:"id"`
 }
 
 // AccountPictures contains the info of an account's pictures

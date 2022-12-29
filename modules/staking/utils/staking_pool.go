@@ -5,8 +5,8 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func GetStakingPool(height int64, stakingClient stakingtypes.QueryClient) (*types.Pool, error) {

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -13,14 +16,18 @@ import (
 )
 
 type (
+	PubKey interface {
+		Bytes() []byte
+	}
+
 	Block struct {
-		Height          int64
+		Timestamp       time.Time
 		Hash            string
+		ProposerAddress string
+		Evidence        tmtypes.EvidenceData
 		TxNum           int
 		TotalGas        uint64
-		ProposerAddress string
-		Timestamp       time.Time
-		Evidence        tmtypes.EvidenceData
+		Height          int64
 	}
 
 	// Txs - slice of transactions
@@ -30,6 +37,7 @@ type (
 	Tx struct {
 		*sdktx.Tx
 		*sdk.TxResponse
+		Signer string
 	}
 
 	Validators []*Validator
@@ -68,12 +76,28 @@ func NewBlockFromTmBlock(blk *tmctypes.ResultBlock, totalGas uint64) *Block {
 		blk.Block.Evidence,
 	)
 }
-func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse) Txs {
+
+func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse, cdc codec.Codec) Txs {
 	res := make(Txs, len(txs))
 	for i, tx := range txs {
+		var signer string
+		if tx.Tx.AuthInfo != nil {
+			if len(tx.Tx.AuthInfo.SignerInfos) > 0 {
+				if tx.TxResponse.TxHash == "46798FFA86453A448D0FB0484F5345317F6DA6B2715A769EF5981FE5897A8648" {
+					println("@")
+				}
+				var pk cryptotypes.PubKey
+				if err := cdc.UnpackAny(tx.Tx.AuthInfo.SignerInfos[0].PublicKey, &pk); err == nil {
+					signer, _ = ConvertPubKeyToBech32String(pk)
+				}
+				// hash46798FFA86453A448D0FB0484F5345317F6DA6B2715A769EF5981FE5897A8648
+			}
+		}
+
 		res[i] = &Tx{
 			Tx:         tx.Tx,
 			TxResponse: tx.TxResponse,
+			Signer:     signer,
 		}
 	}
 	return res
@@ -99,7 +123,11 @@ func NewValidator(consAddr string, consPubKey string) *Validator {
 	}
 }
 
-// ConvertValidatorPubKeyToBech32String converts the given pubKey to a Bech32 string
+func ConvertPubKeyToBech32String(pubKey cryptotypes.PubKey) (string, error) {
+	return bech32.ConvertAndEncode("cosmos", pubKey.Bytes()) // TODO
+}
+
+// ConvertValidatorPubKeyToBech32String converts the given pubKey to Bech32 string
 func ConvertValidatorPubKeyToBech32String(pubKey tmcrypto.PubKey) (string, error) {
 	bech32Prefix := sdk.GetConfig().GetBech32ConsensusPubPrefix()
 	return bech32.ConvertAndEncode(bech32Prefix, pubKey.Bytes())

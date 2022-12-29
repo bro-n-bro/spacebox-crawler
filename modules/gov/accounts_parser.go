@@ -1,7 +1,7 @@
 package bank
 
 import (
-	"bro-n-bro-osmosis/modules/messages"
+	"github.com/hexy-dev/spacebox-crawler/modules/messages"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,8 +24,7 @@ func GovMessagesParser(cdc codec.Codec, sdkMsg sdk.Msg) ([]string, error) {
 		}
 
 		// Get addresses from contents
-		switch content := content.(type) {
-		case *distrtypes.CommunityPoolSpendProposal:
+		if content, ok := content.(*distrtypes.CommunityPoolSpendProposal); ok {
 			addresses = append(addresses, content.Recipient)
 		}
 

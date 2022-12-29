@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 // ConvertRedelegationResponse converts the given response into a slice of BDJuno redelegation objects
@@ -76,11 +76,11 @@ func getRedelegations(
 			delegations = append(delegations, redelegations...)
 		}
 		// TODO:
-		//err = db.SaveRedelegations(delegations)
-		//if err != nil {
+		// err = db.SaveRedelegations(delegations)
+		// if err != nil {
 		//
 		//	return
-		//}
+		// }
 
 		nextKey = res.Pagination.NextKey
 		stop = len(res.Pagination.NextKey) == 0
@@ -132,10 +132,10 @@ func DeleteRedelegation(redelegation types.Redelegation) func() {
 	return func() {
 		// Remove existing redelegations
 		// TODO:
-		//err := db.DeleteRedelegation(redelegation)
-		//if err != nil {
+		// err := db.DeleteRedelegation(redelegation)
+		// if err != nil {
 		//
 		//	return
-		//}
+		// }
 	}
 }

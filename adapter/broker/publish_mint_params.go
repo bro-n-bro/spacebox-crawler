@@ -13,7 +13,7 @@ func (b *Broker) PublishMintParams(ctx context.Context, mp model.MintParams) err
 
 	data, err := jsoniter.Marshal(mp) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(MintParams, data); err != nil {

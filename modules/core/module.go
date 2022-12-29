@@ -1,11 +1,12 @@
 package core
 
 import (
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/modules/messages"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
 	"os"
+
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules/messages"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
@@ -27,7 +28,6 @@ type Module struct {
 }
 
 func New(b rep.Broker, tbM tb.ToBroker, cdc codec.Codec, parser messages.MessageAddressesParser) *Module {
-
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "core").Logger()
 

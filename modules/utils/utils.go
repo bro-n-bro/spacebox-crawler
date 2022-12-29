@@ -2,12 +2,12 @@ package utils
 
 import (
 	"encoding/json"
-	"golang.org/x/exp/constraints"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	authttypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"golang.org/x/exp/constraints"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 // GetGenesisAccounts parses the given appState and returns the genesis accounts

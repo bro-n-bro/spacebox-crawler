@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"os"
 
 	"github.com/rs/zerolog"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -16,10 +15,8 @@ type Storage struct {
 	cfg        Config
 }
 
-func New(cfg Config) *Storage {
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("cmp", "mongo").Logger()
-
+func New(cfg Config, l zerolog.Logger) *Storage {
+	l = l.With().Str("cmp", "mongo").Logger()
 	return &Storage{
 		cfg: cfg,
 		log: &l,
@@ -47,7 +44,7 @@ func (s *Storage) Start(ctx context.Context) error {
 	}
 	s.cli = client
 
-	if err := s.cli.Ping(ctx, nil); err != nil {
+	if err := s.Ping(ctx); err != nil {
 		return err
 	}
 
@@ -69,4 +66,8 @@ func (s *Storage) Stop(ctx context.Context) error {
 		return err
 	}
 	return s.cli.Disconnect(ctx)
+}
+
+func (s *Storage) Ping(ctx context.Context) error {
+	return s.cli.Ping(ctx, nil)
 }

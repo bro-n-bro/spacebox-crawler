@@ -41,7 +41,7 @@ func GetAvatarURL(identity string) (string, error) {
 	return data.Pictures.Primary.URL, nil
 }
 
-// queryKeyBase queries the Keybase APIs for the given endpoint, and de-serializes
+// queryKeyBase queries the Keybase APIs for the given endpoint, and deserializes
 // the response as a JSON object inside the given ptr
 func queryKeyBase(endpoint string, ptr interface{}) error {
 	resp, err := http.Get("https://keybase.io/_/api/1.0" + endpoint)

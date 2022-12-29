@@ -1,14 +1,13 @@
 package bank
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
 	"context"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {

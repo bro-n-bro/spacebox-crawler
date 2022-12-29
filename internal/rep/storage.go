@@ -3,7 +3,7 @@ package rep
 import (
 	"context"
 
-	"bro-n-bro-osmosis/adapter/storage/model"
+	"github.com/hexy-dev/spacebox-crawler/adapter/storage/model"
 )
 
 // Storage implementation needed for store some tmp data for correct processing
@@ -15,4 +15,6 @@ type Storage interface {
 	SetErrorStatus(ctx context.Context, height int64) error
 	UpdateStatus(ctx context.Context, height int64, status model.Status) error
 	GetErrorBlockHeights(ctx context.Context) ([]int64, error)
+
+	Ping(ctx context.Context) error
 }

@@ -12,7 +12,7 @@ func (b *Broker) PublishDelegationRewardMessage(ctx context.Context, drm model.D
 
 	data, err := jsoniter.Marshal(drm) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(DelegationRewardMessage, data); err != nil {

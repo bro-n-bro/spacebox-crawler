@@ -12,7 +12,7 @@ func (b *Broker) PublishTransaction(ctx context.Context, tx model.Transaction) e
 
 	data, err := jsoniter.Marshal(tx) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(Transaction, data); err != nil {

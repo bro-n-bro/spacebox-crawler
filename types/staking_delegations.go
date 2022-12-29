@@ -18,41 +18,41 @@ type (
 	}
 
 	DelegationMessage struct {
-		Delegation
 		TxHash string
+		Delegation
 	}
 
 	// UnbondingDelegation represents a single unbonding delegation
 	UnbondingDelegation struct {
+		CompletionTimestamp time.Time
 		DelegatorAddress    string
 		ValidatorOperAddr   string
 		Coin                Coin
-		CompletionTimestamp time.Time
 		Height              int64
 	}
 
 	// UnbondingDelegationMessage
 	UnbondingDelegationMessage struct {
-		UnbondingDelegation
-		Coin   Coin
 		TxHash string
+		Coin   Coin
+		UnbondingDelegation
 	}
 
 	// Redelegation represents a single re-delegations
 	Redelegation struct {
+		CompletionTime   time.Time
 		DelegatorAddress string
 		SrcValidator     string
 		DstValidator     string
 		Coin             Coin
-		CompletionTime   time.Time
 		Height           int64
 	}
 
 	// RedelegationMessage
 	RedelegationMessage struct {
-		Redelegation
-		Coin   Coin
 		TxHash string
+		Coin   Coin
+		Redelegation
 	}
 )
 

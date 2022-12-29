@@ -12,7 +12,7 @@ func (b *Broker) PublishUnbondingDelegation(ctx context.Context, ud model.Unbond
 
 	data, err := jsoniter.Marshal(ud) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(UnbondingDelegation, data); err != nil {
@@ -25,7 +25,7 @@ func (b *Broker) PublishUnbondingDelegationMessage(ctx context.Context, udm mode
 
 	data, err := jsoniter.Marshal(udm) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(UnbondingDelegationMessage, data); err != nil {
@@ -38,7 +38,7 @@ func (b *Broker) PublishStakingParams(ctx context.Context, sp model.StakingParam
 
 	data, err := jsoniter.Marshal(sp) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(StakingParams, data); err != nil {
@@ -51,7 +51,7 @@ func (b *Broker) PublishDelegation(ctx context.Context, d model.Delegation) erro
 
 	data, err := jsoniter.Marshal(d) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(Delegation, data); err != nil {
@@ -64,7 +64,7 @@ func (b *Broker) PublishDelegationMessage(ctx context.Context, dm model.Delegati
 
 	data, err := jsoniter.Marshal(dm) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(DelegationMessage, data); err != nil {

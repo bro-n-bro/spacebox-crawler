@@ -6,7 +6,7 @@ import (
 
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"bro-n-bro-osmosis/modules/utils"
+	"github.com/hexy-dev/spacebox-crawler/modules/utils"
 )
 
 func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {

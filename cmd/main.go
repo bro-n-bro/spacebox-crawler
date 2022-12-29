@@ -4,11 +4,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/rs/zerolog"
+
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
 
-	"bro-n-bro-osmosis/internal/app"
-	executor "bro-n-bro-osmosis/pkg/app"
+	"github.com/hexy-dev/spacebox-crawler/internal/app"
+	executor "github.com/hexy-dev/spacebox-crawler/pkg/app"
 )
 
 const (
@@ -17,10 +19,6 @@ const (
 )
 
 func main() {
-	_main()
-}
-
-func _main() {
 	// try to get .env file from Environments
 	fileName, ok := os.LookupEnv(EnvFile)
 	if !ok {
@@ -38,8 +36,22 @@ func _main() {
 		panic(err)
 	}
 
+	// parse log level
+	logLevel, err := zerolog.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		panic(err)
+	}
+
+	// create a logger instance
+	logger := zerolog.New(os.Stderr).
+		Level(logLevel).
+		Output(zerolog.ConsoleWriter{Out: os.Stderr}).
+		With().
+		Timestamp().
+		Logger()
+
 	// create an application
-	a := app.New(cfg)
+	a := app.New(cfg, logger)
 
 	// run service
 	if err := executor.Run(a); err != nil {

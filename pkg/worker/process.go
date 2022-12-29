@@ -12,7 +12,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 const (
@@ -60,11 +60,12 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		} // TODO: what about storage?
 
 		if err := w.checkOrCreateBlockInStorage(ctx, height); err != nil {
-			if errors.Is(err, ErrBlockProcessed) {
+			switch {
+			case errors.Is(err, ErrBlockProcessed):
 				w.log.Debug().Int64("height", height).Msg("block already processed. skip height")
-			} else if errors.Is(err, ErrBlockProcessing) {
+			case errors.Is(err, ErrBlockProcessing):
 				w.log.Debug().Int64("height", height).Msg("block is already processing now. skip height")
-			} else if errors.Is(err, ErrBlockError) {
+			case errors.Is(err, ErrBlockError):
 				w.log.Debug().Int64("height", height).Msg("block processed with error. " +
 					"if you want to process this height again see PROCESS_ERROR_BLOCKS ENV")
 			}
@@ -145,7 +146,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			Dur("txs_dur", time.Since(_txsDur)).
 			Msg("Get txs info")
 
-		txs := types.NewTxsFromTmTxs(txsRes)
+		txs := types.NewTxsFromTmTxs(txsRes, w.cdc)
 		b := types.NewBlockFromTmBlock(block, txs.TotalGas())
 
 		g, _ctx = errgroup.WithContext(ctx)
@@ -187,7 +188,7 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc
 func (w *Worker) processBlock(ctx context.Context, block *types.Block, vals *tmtcoreypes.ResultValidators) error {
 	for _, m := range blockHandlers {
 		if err := m.HandleBlock(ctx, block, vals); err != nil {
-			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleBlock error:", err)
+			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleBlock error: %v", err)
 			return err
 		}
 	}
@@ -198,7 +199,7 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 	for _, tx := range txs {
 		for _, m := range transactionHandlers {
 			if err := m.HandleTx(ctx, tx); err != nil {
-				w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleTX error:", err)
+				w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleTX error %v", err)
 				return err
 			}
 		}
@@ -214,7 +215,7 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 
 			for _, m := range messageHandlers {
 				if err = m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
-					w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleMessage error:", err)
+					w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleMessage error: %v", err)
 					return err
 				}
 			}

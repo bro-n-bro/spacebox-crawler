@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleMessage(_ context.Context, _ int, cdkMsg sdk.Msg, _ *types.Tx) error {
@@ -21,12 +21,12 @@ func (m *Module) HandleMessage(_ context.Context, _ int, cdkMsg sdk.Msg, _ *type
 		return err
 	}
 
-	//return db.SaveMessage(types.NewMessage(
+	// return db.SaveMessage(types.NewMessage(
 	//	tx.TxHash,
 	//	index,
 	//	proto.MessageName(msg),
 	//	string(bz),
 	//	addresses,
-	//))
+	// ))
 	return nil
 }

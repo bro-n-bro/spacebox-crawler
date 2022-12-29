@@ -8,12 +8,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"bro-n-bro-osmosis/adapter/storage/model"
+	"github.com/hexy-dev/spacebox-crawler/adapter/storage/model"
 )
 
 func (s *Storage) HasBlock(ctx context.Context, height int64) (bool, error) {
 	block := model.Block{}
-	err := s.collection.FindOne(ctx, bson.D{{"height", height}}).Decode(&block)
+	err := s.collection.FindOne(ctx, bson.D{{Key: "height", Value: height}}).Decode(&block)
 	if err == nil {
 		return true, nil
 
@@ -26,7 +26,7 @@ func (s *Storage) HasBlock(ctx context.Context, height int64) (bool, error) {
 
 func (s *Storage) GetBlockStatus(ctx context.Context, height int64) (model.Status, error) {
 	block := model.Block{}
-	err := s.collection.FindOne(ctx, bson.D{{"height", height}}).Decode(&block)
+	err := s.collection.FindOne(ctx, bson.D{{Key: "height", Value: height}}).Decode(&block)
 	if err != nil {
 		return 0, err
 
@@ -44,11 +44,11 @@ func (s *Storage) CreateBlock(ctx context.Context, block *model.Block) error {
 
 func (s *Storage) SetProcessedStatus(ctx context.Context, height int64) error {
 	processed := time.Now()
-	filter := bson.D{{"height", height}}
+	filter := bson.D{{Key: "height", Value: height}}
 	update := bson.D{
-		{"$set", bson.D{
-			{"status", model.StatusProcessed},
-			{"processed", &processed},
+		{Key: "$set", Value: bson.D{
+			{Key: "status", Value: model.StatusProcessed},
+			{Key: "processed", Value: &processed},
 		}}}
 	_, err := s.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -58,10 +58,10 @@ func (s *Storage) SetProcessedStatus(ctx context.Context, height int64) error {
 }
 
 func (s *Storage) SetErrorStatus(ctx context.Context, height int64) error {
-	filter := bson.D{{"height", height}}
+	filter := bson.D{{Key: "height", Value: height}}
 	update := bson.D{
-		{"$set", bson.D{
-			{"status", model.StatusError},
+		{Key: "$set", Value: bson.D{
+			{Key: "status", Value: model.StatusError},
 		}}}
 	_, err := s.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -71,8 +71,8 @@ func (s *Storage) SetErrorStatus(ctx context.Context, height int64) error {
 }
 
 func (s *Storage) UpdateStatus(ctx context.Context, height int64, status model.Status) error {
-	filter := bson.D{{"height", height}}
-	update := bson.D{{"$set", bson.D{{"status", status}}}}
+	filter := bson.D{{Key: "height", Value: height}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "status", Value: status}}}}
 	_, err := s.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (s *Storage) UpdateStatus(ctx context.Context, height int64, status model.S
 }
 
 func (s *Storage) GetErrorBlockHeights(ctx context.Context) ([]int64, error) {
-	cursor, err := s.collection.Find(ctx, bson.D{{"status", model.StatusError}})
+	cursor, err := s.collection.Find(ctx, bson.D{{Key: "status", Value: model.StatusError}})
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +99,8 @@ func (s *Storage) GetErrorBlockHeights(ctx context.Context) ([]int64, error) {
 	return res, nil
 }
 func (s *Storage) setErrorStatusForProcessing(ctx context.Context) error {
-	filter := bson.D{{"status", model.StatusProcessing}}
-	update := bson.D{{"$set", bson.D{{"status", model.StatusError}}}}
+	filter := bson.D{{Key: "status", Value: model.StatusProcessing}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "status", Value: model.StatusError}}}}
 	_, err := s.collection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		return err

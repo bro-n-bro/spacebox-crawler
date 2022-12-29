@@ -38,11 +38,10 @@ var (
 
 	bankTopics = Topics{Supply, AccountBalance, SendMessage, MultiSendMessage}
 
-	distributionTopics = Topics{DistributionParams, CommunityPool, /* TODO: validatorCommission, DelegationRewardMessage */
+	distributionTopics = Topics{DistributionParams, CommunityPool, /* TODO: validatorCommission, DelegationReward, */
 		DelegationRewardMessage}
 
-	govTopics = Topics{GovParams /*TODO: Proposal, ProposalDepositMessage */, ProposalTallyResult, ProposalVoteMessage,
-		MultiSendMessage}
+	govTopics = Topics{GovParams /*TODO: Proposal, ProposalDepositMessage */, ProposalTallyResult, ProposalVoteMessage}
 
 	mintTopics = Topics{MintParams, AnnualProvision}
 

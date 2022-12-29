@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -16,10 +16,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		m.log.Error().Err(err).Msg("HandleMessage getAddresses error:")
 		return nil
 	}
-	//err = m.broker.PublishBank(ctx)
 
 	switch msg := cosmosMsg.(type) {
-	// todo: 	case *banktypes.MsgMultiSend:
 	case *banktypes.MsgMultiSend:
 		// todo: collect input/output and coins
 		// todo: think about how to collect total amount from outputs

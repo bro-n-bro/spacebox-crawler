@@ -1,13 +1,14 @@
 package utils
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	stakingutils "bro-n-bro-osmosis/modules/staking/utils"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
 	"context"
 	"fmt"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	stakingutils "github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -45,7 +46,7 @@ func UpdateProposal(
 	if err != nil {
 		// Get the error code
 		var code string
-		_, err := fmt.Sscanf(err.Error(), ErrProposalNotFound, &code, &code, &id)
+		_, err = fmt.Sscanf(err.Error(), ErrProposalNotFound, &code, &code, &id)
 		if err != nil {
 			return err
 		}
@@ -89,45 +90,45 @@ func UpdateProposal(
 // updateDeletedProposalStatus updates the proposal having the given id by setting its status
 // to the one that represents a deleted proposal
 func updateDeletedProposalStatus(id uint64) error {
-	//stored, err := db.GetProposal(id)
-	//if err != nil {
+	// stored, err := db.GetProposal(id)
+	// if err != nil {
 	//	return err
-	//}
+	// }
 	//
 	// TODO:
 	return nil
-	//return db.UpdateProposal(
+	// return db.UpdateProposal(
 	//	types.NewProposalUpdate(
 	//		stored.ProposalID,
 	//		types.ProposalStatusInvalid,
 	//		stored.VotingStartTime,
 	//		stored.VotingEndTime,
 	//	),
-	//)
+	// )
 }
 
 // updateProposalStatus updates the given proposal status
 func updateProposalStatus(proposal govtypes.Proposal) error {
 	// TODO:
 	return nil
-	//return db.UpdateProposal(
+	// return db.UpdateProposal(
 	//	types.NewProposalUpdate(
 	//		proposal.ProposalId,
 	//		proposal.Status.String(),
 	//		proposal.VotingStartTime,
 	//		proposal.VotingEndTime,
 	//	),
-	//)
+	// )
 }
 
 // updateProposalTallyResult updates the tally result associated with the given proposal
 func updateProposalTallyResult(ctx context.Context, height int64, proposal govtypes.Proposal, govClient govtypes.QueryClient,
 	broker rep.Broker, mapper tb.ToBroker) error {
 
-	//height, err := db.GetLastBlockHeight()
-	//if err != nil {
+	// height, err := db.GetLastBlockHeight()
+	// if err != nil {
 	//	return err
-	//}
+	// }
 
 	header := grpcClient.GetHeightRequestHeader(height)
 	res, err := govClient.TallyResult(
@@ -155,7 +156,7 @@ func updateProposalTallyResult(ctx context.Context, height int64, proposal govty
 	}
 	return nil
 
-	//return db.SaveTallyResults([]types.TallyResult{
+	// return db.SaveTallyResults([]types.TallyResult{
 	//	types.NewTallyResult(
 	//		proposal.ProposalId,
 	//		res.Tally.Yes.Int64(),
@@ -164,14 +165,14 @@ func updateProposalTallyResult(ctx context.Context, height int64, proposal govty
 	//		res.Tally.NoWithVeto.Int64(),
 	//		height,
 	//	),
-	//})
+	// })
 }
 
 // updateAccounts updates any account that might be involved in the proposal (eg. fund community recipient)
 func updateAccounts(proposal govtypes.Proposal, bankClient banktypes.QueryClient) error {
 	// TODO:
-	//content, ok := proposal.Content.GetCachedValue().(*distrtypes.CommunityPoolSpendProposal)
-	//if ok {
+	// content, ok := proposal.Content.GetCachedValue().(*distrtypes.CommunityPoolSpendProposal)
+	// if ok {
 	//	height, err := db.GetLastBlockHeight()
 	//	if err != nil {
 	//		return err
@@ -185,7 +186,7 @@ func updateAccounts(proposal govtypes.Proposal, bankClient banktypes.QueryClient
 	//	}
 	//
 	//	return bankutils.UpdateBalances(addresses, height, bankClient, db)
-	//}
+	// }
 	return nil
 }
 
@@ -202,9 +203,9 @@ func updateProposalStakingPoolSnapshot(
 	// TODO:
 	_ = pool
 	return nil
-	//return db.SaveProposalStakingPoolSnapshot(
+	// return db.SaveProposalStakingPoolSnapshot(
 	//	types.NewProposalStakingPoolSnapshot(proposalID, pool),
-	//)
+	// )
 }
 
 // updateProposalValidatorStatusesSnapshot updates the snapshots of the various validators for
@@ -253,7 +254,7 @@ func updateProposalValidatorStatusesSnapshot(
 
 	// TODO:
 	return nil
-	//return db.SaveProposalValidatorsStatusesSnapshots(snapshots)
+	// return db.SaveProposalValidatorsStatusesSnapshots(snapshots)
 }
 
 func findVotingPower(consAddr string, powers []types.ValidatorVotingPower) (types.ValidatorVotingPower, error) {

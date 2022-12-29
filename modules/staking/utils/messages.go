@@ -1,12 +1,13 @@
 package utils
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
 	"context"
 	"time"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -66,19 +67,19 @@ func StoreValidatorFromMsgCreateValidator(ctx context.Context, height int64, msg
 
 	// TODO:!!!!!
 	// Save the description
-	//err = db.SaveValidatorDescription(desc)
-	//if err != nil {
+	// err = db.SaveValidatorDescription(desc)
+	// if err != nil {
 	//	return err
-	//}
+	// }
 	//
 
 	// Save the commission
-	//err = db.SaveValidatorCommission(types.NewValidatorCommission(
+	// err = db.SaveValidatorCommission(types.NewValidatorCommission(
 	//	msg.ValidatorAddress,
 	//	&msg.Commission.Rate,
 	//	&msg.MinSelfDelegation,
 	//	height,
-	//))
+	// ))
 	return err
 }
 

@@ -12,8 +12,8 @@ type Client struct {
 	*jsonrpcclient.WSClient
 	*tmHttp.WSEvents
 
-	RpcClient  *tmHttp.HTTP
-	HttpClient *http.Client
+	RPCClient  *tmHttp.HTTP
+	HTTPClient *http.Client
 
 	cfg Config
 }
@@ -28,37 +28,38 @@ func (c *Client) Start(ctx context.Context) error {
 		return err
 	}
 
-	c.HttpClient = httpCli
+	c.HTTPClient = httpCli
 
-	// FIXME: does not work without websocket
+	// FIXME: does not work without websocket connection
+	var rpcCli *tmHttp.HTTP
 	if c.cfg.WSEnabled {
-		cli, err := tmHttp.NewWithClient(c.cfg.Host, "/websocket", httpCli)
+		rpcCli, err = tmHttp.NewWithClient(c.cfg.Host, "/websocket", httpCli)
 		if err != nil {
 			return err
 		}
-		if err = cli.Start(); err != nil {
+		if err = rpcCli.Start(); err != nil {
 			return err
 		}
-		c.RpcClient = cli
 	} else {
-		//return nil
-		cli, err := tmHttp.NewWithClient(c.cfg.Host, "", httpCli)
+		// return nil
+		rpcCli, err = tmHttp.NewWithClient(c.cfg.Host, "", httpCli)
 		if err != nil {
 			return err
 		}
-		if err = cli.Start(); err != nil {
+		if err = rpcCli.Start(); err != nil {
 			return err
 		}
-		c.RpcClient = cli
 	}
+
+	c.RPCClient = rpcCli
 
 	return nil
 }
 
 func (c *Client) Stop(ctx context.Context) error {
-	c.HttpClient.CloseIdleConnections()
+	c.HTTPClient.CloseIdleConnections()
 	if c.cfg.WSEnabled {
-		if err := c.RpcClient.Stop(); err != nil {
+		if err := c.RPCClient.Stop(); err != nil {
 			return err
 		}
 	}

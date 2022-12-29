@@ -7,10 +7,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 // ConvertDelegationResponse converts the given response to a BDJuno Delegation instance
@@ -72,10 +72,10 @@ func getDelegationsFromGrpc(
 		}
 
 		// TODO:
-		//err = db.SaveDelegations(delegations)
-		//if err != nil {
+		// err = db.SaveDelegations(delegations)
+		// if err != nil {
 		//	return
-		//}
+		// }
 
 		nextKey = res.Pagination.NextKey
 		stop = len(res.Pagination.NextKey) == 0
@@ -112,10 +112,10 @@ func GetDelegatorDelegations(height int64, delegator string, client stakingtypes
 func UpdateDelegationsAndReplaceExisting(ctx context.Context, height int64, delegator string,
 	client stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker) error {
 	// Remove existing delegations
-	//err := db.DeleteDelegatorDelegations(delegator)
-	//if err != nil {
+	// err := db.DeleteDelegatorDelegations(delegator)
+	// if err != nil {
 	//	return err
-	//}
+	// }
 
 	delegations, err := GetDelegatorDelegations(height, delegator, client)
 	if err != nil {
@@ -139,7 +139,7 @@ func RefreshDelegations(ctx context.Context, height int64, delegator string, cli
 	return func() {
 		err := UpdateDelegationsAndReplaceExisting(ctx, height, delegator, client, broker, mapper)
 		if err != nil {
-			//log.Error().Str("module", "staking").Err(err).
+			// log.Error().Str("module", "staking").Err(err).
 			//	Str("operation", "refresh delegations").Msg("error while refreshing delegations")
 		}
 	}

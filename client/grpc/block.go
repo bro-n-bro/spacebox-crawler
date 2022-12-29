@@ -19,7 +19,7 @@ func (c *Client) Block(ctx context.Context, height int64) (*tmccoretypes.ResultB
 		return nil, err
 	}
 
-	block, err := tmctypes.BlockFromProto(resp.Block)
+	block, err := tmctypes.BlockFromProto(resp.Block) // nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}

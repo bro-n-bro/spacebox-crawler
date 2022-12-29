@@ -12,7 +12,7 @@ func (b *Broker) PublishMultiSendMessage(ctx context.Context, msm model.MultiSen
 
 	data, err := jsoniter.Marshal(msm) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(MultiSendMessage, data); err != nil {

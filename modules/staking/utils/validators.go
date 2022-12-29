@@ -13,11 +13,11 @@ import (
 
 	"github.com/hexy-dev/spacebox/broker/model"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/modules/staking/keybase"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules/staking/keybase"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 // GetValidatorConsPubKey returns the consensus public key of the given validator
@@ -51,8 +51,7 @@ func ConvertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 		return nil, err
 	}
 
-	var operator sdk.ValAddress
-	operator = validator.GetOperator() // FIXME: here was a panic: invalid Bech32 prefix; expected cosmosvaloper, got bostromvaloper
+	operator := validator.GetOperator() // FIXME: here was a panic: invalid Bech32 prefix; expected cosmosvaloper, got bostromvaloper
 	return types.NewStakingValidator(
 		consAddr.String(),
 		validator.OperatorAddress,
@@ -144,10 +143,10 @@ func UpdateValidators(ctx context.Context, height int64, client stakingtypes.Que
 		return nil, err
 	}
 
-	//err = db.SaveValidatorsData(validators)
-	//if err != nil {
+	// err = db.SaveValidatorsData(validators)
+	// if err != nil {
 	//	return nil, err
-	//}
+	// }
 
 	// TODO:
 	_ = validators
@@ -192,9 +191,9 @@ func GetValidatorsVotingPowers(height int64, vals *tmctypes.ResultValidators) []
 	for index, validator := range vals.Validators {
 		consAddr := sdk.ConsAddress(validator.Address).String()
 		// FIXME: how to check it?
-		//if found, _ := db.HasValidator(consAddr); !found {
+		// if found, _ := db.HasValidator(consAddr); !found {
 		//	continue
-		//}
+		// }
 
 		votingPowers[index] = types.NewValidatorVotingPower(consAddr, validator.VotingPower, height)
 	}

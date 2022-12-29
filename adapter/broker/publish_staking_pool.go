@@ -12,7 +12,7 @@ import (
 func (b *Broker) PublishStakingPool(ctx context.Context, sp model.StakingPool) error {
 	data, err := jsoniter.Marshal(sp) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(StakingPool, data); err != nil {

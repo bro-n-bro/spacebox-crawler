@@ -1,12 +1,15 @@
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
 COMMIT  := $(shell git log -1 --format='%H')
 
-LD_FLAGS = -X github.com/bro-n-bro/osjuno/version.Version=$(VERSION) \
-	-X github.com/bro-n-bro/osjuno/version.Commit=$(COMMIT)
+LD_FLAGS = -X github.com/hexy-dev/spacebox/spacebox-crawler/version.Version=$(VERSION) \
+	-X github.com/hexy-dev/spacebox/soacebox-crawler/version.Commit=$(COMMIT)
 
 BUILD_FLAGS := -ldflags '$(LD_FLAGS)'
 
-.PHONY: dep build test race lint
+.PHONY: fix dep build test race lint
+
+fix: ## Fix fieldalignment
+	fieldalignment -fix ./...
 
 dep: ## Get the dependencies
 	@go get -v -d ./...

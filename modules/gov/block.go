@@ -1,14 +1,14 @@
 package bank
 
 import (
-	govutils "bro-n-bro-osmosis/modules/gov/utils"
 	"context"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govutils "github.com/hexy-dev/spacebox-crawler/modules/gov/utils"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
@@ -18,7 +18,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 	}
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
-	if err := m.broker.PublishGovParams(ctx, m.tbM.MapGovParams(params)); err != nil {
+	if err = m.broker.PublishGovParams(ctx, m.tbM.MapGovParams(params)); err != nil {
 		return err
 	}
 
@@ -68,10 +68,10 @@ func (m *Module) getGovParams(ctx context.Context, height int64) (*types.GovPara
 // updateProposals updates the proposals
 func (m *Module) updateProposals(ctx context.Context, height int64, blockVals *tmctypes.ResultValidators) error {
 	var ids []uint64
-	//ids, err := db.GetOpenProposalsIds()
-	//if err != nil {
+	// ids, err := db.GetOpenProposalsIds()
+	// if err != nil {
 	//	log.Error().Err(err).Str("module", "gov").Msg("error while getting open ids")
-	//}
+	// }
 
 	if len(ids) > 0 {
 		clients := govutils.NewUpdateProposalClients(m.client.GovQueryClient, m.client.BankQueryClient,

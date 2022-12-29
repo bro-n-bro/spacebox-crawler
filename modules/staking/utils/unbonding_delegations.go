@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 // ConvertUnbondingResponse converts the given UnbondingDelegation response into a slice of BDJuno UnbondingDelegation
@@ -80,10 +80,10 @@ func getUnbondingDelegations(
 		}
 
 		// TODO:
-		//err = db.SaveUnbondingDelegations(delegations)
-		//if err != nil {
+		// err = db.SaveUnbondingDelegations(delegations)
+		// if err != nil {
 		//	return
-		//}
+		// }
 
 		nextKey = res.Pagination.NextKey
 		stop = len(res.Pagination.NextKey) == 0
@@ -133,9 +133,9 @@ func GetDelegatorUnbondingDelegations(
 func DeleteUnbondingDelegation(delegation types.UnbondingDelegation) func() {
 	return func() {
 		// TODO:
-		//err := db.DeleteUnbondingDelegation(delegation)
-		//if err != nil {
+		// err := db.DeleteUnbondingDelegation(delegation)
+		// if err != nil {
 		//
-		//}
+		// }
 	}
 }

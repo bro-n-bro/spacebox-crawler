@@ -32,14 +32,14 @@ type (
 	DelegationRewardMessage struct {
 		DelegatorAddress string
 		ValidatorAddress string
+		TxHash           string
 		Coins            Coins
 		Height           int64
-		TxHash           string
 	}
 
 	CommunityPool struct {
-		Height int64
 		Coins  Coins
+		Height int64
 	}
 )
 

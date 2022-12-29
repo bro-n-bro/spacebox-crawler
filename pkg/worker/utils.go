@@ -24,6 +24,7 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 		w.log.Fatal().Err(err).Int64("height", height).Msgf("cant check block in storage %v:", err)
 		return err
 	}
+
 	if hasBlock {
 		status, err := w.storage.GetBlockStatus(ctx, height)
 		if err != nil {
@@ -31,14 +32,18 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 			return err
 		}
 
+		switch {
 		// block info already in kafka
-		if status.IsProcessed() {
+		case status.IsProcessed():
 			return ErrBlockProcessed
-		} else if status.IsProcessing() {
+		// block now is processing
+		case status.IsProcessing():
 			return ErrBlockProcessing
-		} else if status.IsError() && !w.cfg.ProcessErrorBlocks {
+		// block processed with error, skip if needed
+		case status.IsError() && !w.cfg.ProcessErrorBlocks:
 			return ErrBlockError
 		}
+
 	} else {
 		if err := w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
 			w.log.Error().Err(err).Int64("height", height).Msgf("cant create new block in storage %v:", err)

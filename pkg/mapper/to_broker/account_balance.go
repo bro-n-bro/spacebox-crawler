@@ -1,7 +1,7 @@
 package to_broker
 
 import (
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/hexy-dev/spacebox/broker/model"
 )

@@ -9,7 +9,7 @@ import (
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	govutils "bro-n-bro-osmosis/modules/gov/utils"
+	govutils "github.com/hexy-dev/spacebox-crawler/modules/gov/utils"
 )
 
 func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {

@@ -14,7 +14,7 @@ func (b *Broker) PublishRedelegation(ctx context.Context, r model.Redelegation) 
 
 	data, err := jsoniter.Marshal(r) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(Redelegation, data); err != nil {

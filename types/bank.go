@@ -11,23 +11,23 @@ type (
 	}
 
 	TotalSupply struct {
-		Height int64
 		Coins  Coins
+		Height int64
 	}
 
 	MsgSend struct {
-		Coins       Coins
 		AddressFrom string
 		AddressTo   string
 		TxHash      string
+		Coins       Coins
 		Height      int64
 	}
 
 	MsgMultiSend struct {
-		Coins       Coins
 		AddressFrom string
 		AddressTo   string
 		TxHash      string
+		Coins       Coins
 		Height      int64
 	}
 )

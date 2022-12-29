@@ -33,47 +33,47 @@ type (
 
 	// GovParams contains the data of the x/gov module parameters
 	GovParams struct {
+		TallyParams   TallyParams   `json:"tally_params" yaml:"tally_params"`
 		DepositParams DepositParams `json:"deposit_params" yaml:"deposit_params"`
 		VotingParams  VotingParams  `json:"voting_params" yaml:"voting_params"`
-		TallyParams   TallyParams   `json:"tally_params" yaml:"tally_params"`
 		Height        int64         `json:"height" ymal:"height"`
 	}
 
 	// Proposal represents a single governance proposal
 	Proposal struct {
-		ProposalRoute   string
-		ProposalType    string
-		ProposalID      uint64
-		Content         govtypes.Content
-		Status          string
-		SubmitTime      time.Time
 		DepositEndTime  time.Time
 		VotingStartTime time.Time
 		VotingEndTime   time.Time
+		SubmitTime      time.Time
+		Content         govtypes.Content
+		Status          string
+		ProposalRoute   string
+		ProposalType    string
 		Proposer        string
+		ProposalID      uint64
 	}
 
 	// ProposalUpdate contains the data that should be used when updating a governance proposal
 	ProposalUpdate struct {
-		ProposalID      uint64
-		Status          string
 		VotingStartTime time.Time
 		VotingEndTime   time.Time
+		Status          string
+		ProposalID      uint64
 	}
 
 	// ProposalVoteMessage contains the data of a single proposal vote
 	ProposalVoteMessage struct {
-		ProposalID uint64
 		Voter      string
-		Option     govtypes.VoteOption
+		ProposalID uint64
 		Height     int64
+		Option     govtypes.VoteOption
 	}
 
 	// ProposalDeposit contains the data of a single deposit made towards a proposal
 	ProposalDeposit struct {
-		ProposalID uint64
 		Depositor  string
 		Amount     sdk.Coins
+		ProposalID uint64
 		Height     int64
 	}
 
@@ -90,12 +90,12 @@ type (
 	// ProposalValidatorStatusSnapshot represents a single snapshot of the status of a validator associated
 	// with a single proposal
 	ProposalValidatorStatusSnapshot struct {
-		ProposalID           uint64
 		ValidatorConsAddress string
+		ProposalID           uint64
 		ValidatorVotingPower int64
 		ValidatorStatus      int
-		ValidatorJailed      bool
 		Height               int64
+		ValidatorJailed      bool
 	}
 )
 
@@ -208,18 +208,18 @@ func NewTallyResult(proposalID uint64, yes, abstain, no, noWithVeto, height int6
 }
 
 //// ProposalStakingPoolSnapshot contains the data about a single staking pool snapshot to be associated with a proposal
-//type ProposalStakingPoolSnapshot struct {
+// type ProposalStakingPoolSnapshot struct {
 //	ProposalID uint64
 //	Pool       *Pool
-//}
+// }
 //
 //// NewProposalStakingPoolSnapshot returns a new ProposalStakingPoolSnapshot instance
-//func NewProposalStakingPoolSnapshot(proposalID uint64, pool *Pool) ProposalStakingPoolSnapshot {
+// func NewProposalStakingPoolSnapshot(proposalID uint64, pool *Pool) ProposalStakingPoolSnapshot {
 //	return ProposalStakingPoolSnapshot{
 //		ProposalID: proposalID,
 //		Pool:       pool,
 //	}
-//}
+// }
 
 // NewProposalValidatorStatusSnapshot returns a new ProposalValidatorStatusSnapshot instance
 func NewProposalValidatorStatusSnapshot(proposalID uint64, validatorConsAddr string, validatorStatus int,

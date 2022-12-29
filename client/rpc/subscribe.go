@@ -7,6 +7,6 @@ import (
 )
 
 func (c *Client) SubscribeNewBlocks(ctx context.Context) (<-chan tmctypes.ResultEvent, error) {
-	eventCh, err := c.RpcClient.Subscribe(ctx, "", "tm.event = 'NewBlock'")
+	eventCh, err := c.RPCClient.Subscribe(ctx, "", "tm.event = 'NewBlock'")
 	return eventCh, err
 }

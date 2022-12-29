@@ -12,10 +12,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/modules/staking/utils"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
@@ -88,7 +88,7 @@ func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
 	for _, genTxBz := range genUtilState.GetGenTxs() {
 		// Unmarshal the transaction
 		var genTx tx.Tx
-		if err := cdc.UnmarshalJSON(genTxBz, &genTx); err != nil {
+		if err = cdc.UnmarshalJSON(genTxBz, &genTx); err != nil {
 			return err
 		}
 
@@ -158,10 +158,10 @@ func saveValidatorDescription(doc *tmtypes.GenesisDoc, validators stakingtypes.V
 		}
 		descriptions = append(descriptions, description)
 
-		//err = db.SaveValidatorDescription(description)
-		//if err != nil {
+		// err = db.SaveValidatorDescription(description)
+		// if err != nil {
 		//	return err
-		//}
+		// }
 	}
 
 	// TODO:
@@ -291,10 +291,10 @@ func saveValidatorsCommissions(height int64, validators stakingtypes.Validators)
 			&validator.Commission.MaxRate,
 			height,
 		)
-		//err := db.SaveValidatorCommission()
-		//if err != nil {
+		// err := db.SaveValidatorCommission()
+		// if err != nil {
 		//	return err
-		//}
+		// }
 	}
 
 	return nil

@@ -1,55 +1,53 @@
 package utils
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
 	"context"
 	"fmt"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 )
 
 // UpdateDelegatorsRewardsAmounts updates the delegators commission amounts
-func UpdateDelegatorsRewardsAmounts(height int64, client distrtypes.QueryClient) {
-	//log.Debug().Str("module", "distribution").Int64("height", height).
-	//	Msg("updating delegators rewards")
-
+func UpdateDelegatorsRewardsAmounts(height int64, client distrtypes.QueryClient) error {
 	// Get the delegators
-	//delegators, err := db.GetDelegators()
-	//if err != nil {
-	//log.Error().Str("module", "distribution").Err(err).Int64("height", height).
+	// delegators, err := db.GetDelegators()
+	// if err != nil {
+	// log.Error().Str("module", "distribution").Err(err).Int64("height", height).
 	//	Msg("error while getting delegators")
-	//}
+	// }
 
 	var delegators []string
 	if len(delegators) == 0 {
-		//log.Debug().Str("module", "distribution").Int64("height", height).
-		//	Msg("no delegations found, make sure you are calling this module after the staking module")
-		return
+		return nil
 	}
 
 	// Get the rewards
 	for _, delegator := range delegators {
-		go updateDelegatorCommission(height, delegator, client)
+		if err := updateDelegatorCommission(height, delegator, client); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func updateDelegatorCommission(height int64, delegator string, distrClient distrtypes.QueryClient) {
+func updateDelegatorCommission(height int64, delegator string, distrClient distrtypes.QueryClient) error {
 	rewards, err := GetDelegatorRewards(height, delegator, distrClient)
 	if err != nil {
-		//log.Error().Str("module", "distribution").Err(err).
-		//	Int64("height", height).Str("delegator", delegator).
-		//	Msg("error while getting delegator rewards")
+		return err
 	}
 
 	// TODO:
 	_ = rewards
-	//err = db.SaveDelegatorsRewardsAmounts(rewards)
-	//if err != nil {
+	// err = db.SaveDelegatorsRewardsAmounts(rewards)
+	// if err != nil {
 	//	log.Error().Str("module", "distribution").Err(err).
 	//		Int64("height", height).Str("delegator", delegator).
 	//		Msg("error while saving delegator rewards")
-	//}
+	// }
+	return nil
 }
 
 // GetDelegatorRewards returns the current rewards for the given delegator

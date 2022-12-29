@@ -1,10 +1,11 @@
 package slasing
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/types"
 	"os"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/rs/zerolog"
 )

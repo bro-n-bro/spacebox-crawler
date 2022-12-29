@@ -3,7 +3,7 @@ package to_storage
 import (
 	"time"
 
-	"bro-n-bro-osmosis/adapter/storage/model"
+	"github.com/hexy-dev/spacebox-crawler/adapter/storage/model"
 )
 
 func (ts ToStorage) NewBlock(height int64) *model.Block {

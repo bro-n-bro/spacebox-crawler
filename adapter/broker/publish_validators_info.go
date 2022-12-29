@@ -18,7 +18,7 @@ func (b *Broker) PublishValidatorsInfo(ctx context.Context, infos []model.Valida
 		}
 		data, err := jsoniter.Marshal(infos[i]) // FIXME: maybe user another way to encode data
 		if err != nil {
-			return errors.Wrap(err, MsgErrJsonMarshalFail)
+			return errors.Wrap(err, MsgErrJSONMarshalFail)
 		}
 
 		if err := b.produce(ValidatorInfo, data); err != nil {

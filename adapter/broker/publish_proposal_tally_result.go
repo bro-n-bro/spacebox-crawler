@@ -12,7 +12,7 @@ func (b *Broker) PublishProposalTallyResult(ctx context.Context, ptr model.Propo
 
 	data, err := jsoniter.Marshal(ptr) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(ProposalTallyResult, data); err != nil {

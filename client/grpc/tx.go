@@ -21,6 +21,7 @@ func (c *Client) Txs(ctx context.Context, txs types2.Txs) ([]*tx.GetTxResponse, 
 
 	g, ctx := errgroup.WithContext(ctx)
 	for _, tmTx := range txs {
+		tmTx := tmTx
 		g.Go(func() error {
 			respPb, err := c.TxService.GetTx(ctx, &tx.GetTxRequest{Hash: fmt.Sprintf("%X", tmTx.Hash())})
 			if err != nil {

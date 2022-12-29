@@ -10,10 +10,11 @@ const (
 	StatusError
 )
 
+// TODO: error message
 type Block struct {
+	Created   time.Time
 	Processed *time.Time `bson:"processed"`
 	Height    int64      `bson:"height"`
-	Created   time.Time
 	Status    Status
 }
 

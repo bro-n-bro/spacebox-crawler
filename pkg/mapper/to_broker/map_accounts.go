@@ -3,7 +3,7 @@ package to_broker
 import (
 	"github.com/hexy-dev/spacebox/broker/model"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (tb ToBroker) MapAccount(account types.Account) model.Account {

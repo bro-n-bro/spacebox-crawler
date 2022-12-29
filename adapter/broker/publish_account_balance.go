@@ -14,7 +14,7 @@ func (b *Broker) PublishAccountBalance(ctx context.Context, ab model.AccountBala
 
 	data, err := jsoniter.Marshal(ab) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 	if err := b.produce(AccountBalance, data); err != nil {
 		return errors.Wrap(err, "produce supply fail")

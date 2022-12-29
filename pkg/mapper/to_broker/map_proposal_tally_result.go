@@ -3,7 +3,7 @@ package to_broker
 import (
 	"github.com/hexy-dev/spacebox/broker/model"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (tb ToBroker) MapProposalTallyResult(ptr types.TallyResult) model.ProposalTallyResult {

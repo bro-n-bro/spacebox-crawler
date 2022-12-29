@@ -2,7 +2,6 @@ package broker
 
 import (
 	"context"
-	"os"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/pkg/errors"
@@ -10,10 +9,11 @@ import (
 )
 
 const (
-	MsgErrJsonMarshalFail   = "json marshal fail: %w"
+	MsgErrJSONMarshalFail   = "json marshal fail: %w"
 	MsgErrCreateProducer    = "cant create producer connection to broker: %w "
 	MsgErrCreateAdminClient = "cant create admin client connection to broker: %w"
 	MsgErrCreateTopics      = "cant create topics in broker: %w"
+	MsgErrCreatePartitions  = "cant create partitions in broker: %w"
 )
 
 type Broker struct {
@@ -24,10 +24,8 @@ type Broker struct {
 	modules []string
 }
 
-func New(cfg Config, modules []string) *Broker {
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("cmp", "broker").Logger()
-
+func New(cfg Config, modules []string, l zerolog.Logger) *Broker {
+	l = l.With().Str("cmp", "broker").Logger()
 	return &Broker{
 		log:     &l,
 		cfg:     cfg,
@@ -43,33 +41,58 @@ func (b *Broker) Start(ctx context.Context) error {
 	// create an admin client connection
 	ac, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": b.cfg.ServerURL})
 	if err != nil {
-		b.log.Error().Err(err).Msgf(MsgErrCreateAdminClient, err)
+		b.log.Error().Err(err).Msg(MsgErrCreateAdminClient)
 		return errors.Wrap(err, MsgErrCreateAdminClient)
 	}
 
 	// get enabled topics based on enabled modules
 	topics := b.getCurrentTopics(b.modules)
 	kafkaTopics := make([]kafka.TopicSpecification, len(topics))
+	// kafkaPartitions := make([]kafka.PartitionsSpecification, len(topics))
 	for i, topic := range topics {
 		kafkaTopics[i] = kafka.TopicSpecification{
 			Topic:         topic,
 			NumPartitions: 1,
 		}
+		// kafkaPartitions[i] = kafka.PartitionsSpecification{
+		//	Topic:      topic,
+		//	IncreaseTo: 2,
+		// }
 	}
 
 	// create init topics if needed
 	_, err = ac.CreateTopics(ctx, kafkaTopics)
 	if err != nil {
-		b.log.Error().Err(err).Msgf(MsgErrCreateTopics, err)
+		b.log.Error().Err(err).Msg(MsgErrCreateTopics)
 		return errors.Wrap(err, MsgErrCreateTopics)
 	}
+
+	// create init partitions if needed
+	// res, err := ac.CreatePartitions(ctx, kafkaPartitions)
+	// _ = res
+	// if err != nil {
+	//	b.log.Error().Err(err).Msgf(MsgErrCreatePartitions, err)
+	//	return errors.Wrap(err, MsgErrCreatePartitions)
+	// }
 
 	// create a producer connection
 	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": b.cfg.ServerURL})
 	if err != nil {
-		b.log.Error().Err(err).Msgf(MsgErrCreateProducer, err)
+		b.log.Error().Err(err).Msg(MsgErrCreateProducer)
 		return errors.New(MsgErrCreateProducer)
 	}
+
+	go func(drs chan kafka.Event) {
+		for ev := range drs {
+			m, ok := ev.(*kafka.Message)
+			if !ok {
+				continue
+			}
+			if err := m.TopicPartition.Error; err != nil {
+				b.log.Error().Err(err).Msgf("Delivery error: %v", m.TopicPartition)
+			}
+		}
+	}(p.Events())
 
 	b.p = p
 	b.ac = ac
@@ -97,6 +120,15 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 		Value:          data,
 		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)
+
+	if kafkaError, ok := err.(kafka.Error); ok && kafkaError.Code() == kafka.ErrQueueFull {
+		b.log.Info().Str("topic", *topic).Msg("Kafka local queue full error - Going to Flush then retry...")
+		flushedMessages := b.p.Flush(30 * 1000)
+		b.log.Info().Str("topic", *topic).
+			Msgf("Flushed kafka messages. Outstanding events still un-flushed: %d", flushedMessages)
+		return b.produce(topic, data)
+	}
+
 	if err != nil {
 		return err
 	}

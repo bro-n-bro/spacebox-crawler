@@ -1,12 +1,13 @@
 package distribution
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/modules/messages"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
 	"os"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules/messages"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"

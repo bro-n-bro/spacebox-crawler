@@ -3,17 +3,13 @@ package to_broker
 import (
 	"github.com/hexy-dev/spacebox/broker/model"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (tb ToBroker) MapDistributionParams(params types.DistributionParams) model.DistributionParams {
-	return model.DistributionParams{
-		Height: params.Height,
-		Params: model.DParams{
-			CommunityTax:        params.Params.CommunityTax.MustFloat64(),
-			BaseProposerReward:  params.Params.BaseProposerReward.MustFloat64(),
-			BonusProposerReward: params.Params.BonusProposerReward.MustFloat64(),
-			WithdrawAddrEnabled: params.Params.WithdrawAddrEnabled,
-		},
-	}
+	return model.NewDistributionParams(params.Height,
+		params.CommunityTax.MustFloat64(),
+		params.BaseProposerReward.MustFloat64(),
+		params.BonusProposerReward.MustFloat64(),
+		params.WithdrawAddrEnabled)
 }

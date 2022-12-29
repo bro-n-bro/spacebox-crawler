@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"bro-n-bro-osmosis/internal/rep"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
 	"context"
+
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
@@ -57,18 +58,18 @@ func SaveProposals(ctx context.Context, sdkProposals govtypesv1beta1.Proposals, 
 	// TODO:
 
 	//// Save the proposals
-	//err := db.SaveProposals(proposals)
-	//if err != nil {
+	// err := db.SaveProposals(proposals)
+	// if err != nil {
 	//	return nil
-	//}
+	// }
 	//
 	//// Save the deposits
-	//err = db.SaveDeposits(deposits)
-	//if err != nil {
+	// err = db.SaveDeposits(deposits)
+	// if err != nil {
 	//	return nil
-	//}
+	// }
 	//
 	//// Save the tally results
-	//return db.SaveTallyResults(tallyResults)
+	// return db.SaveTallyResults(tallyResults)
 	return nil
 }

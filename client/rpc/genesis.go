@@ -8,7 +8,7 @@ import (
 
 func (c *Client) Genesis(ctx context.Context) (*tmtypes.GenesisDoc, error) {
 	// FIXME
-	g, err := c.RpcClient.Genesis(ctx)
+	g, err := c.RPCClient.Genesis(ctx)
 	if err != nil {
 		return nil, err
 	}

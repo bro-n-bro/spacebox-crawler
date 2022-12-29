@@ -13,7 +13,7 @@ func (b *Broker) PublishDistributionParams(ctx context.Context, dp model.Distrib
 
 	data, err := jsoniter.Marshal(dp) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(DistributionParams, data); err != nil {

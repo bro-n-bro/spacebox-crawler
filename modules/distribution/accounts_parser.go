@@ -1,7 +1,7 @@
 package distribution
 
 import (
-	"bro-n-bro-osmosis/modules/messages"
+	"github.com/hexy-dev/spacebox-crawler/modules/messages"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

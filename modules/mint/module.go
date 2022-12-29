@@ -1,12 +1,13 @@
 package mint
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/types"
 	"os"
 
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/types"
+
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 
 	"github.com/rs/zerolog"
 )

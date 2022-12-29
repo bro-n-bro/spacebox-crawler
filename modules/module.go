@@ -4,21 +4,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/internal/rep"
-	authModule "bro-n-bro-osmosis/modules/auth"
-	bankModule "bro-n-bro-osmosis/modules/bank"
-	coreModule "bro-n-bro-osmosis/modules/core"
-	crisisModule "bro-n-bro-osmosis/modules/crisis"
-	distributionModule "bro-n-bro-osmosis/modules/distribution"
-	evidenceModule "bro-n-bro-osmosis/modules/evidence"
-	govModule "bro-n-bro-osmosis/modules/gov"
-	"bro-n-bro-osmosis/modules/messages"
-	mintModule "bro-n-bro-osmosis/modules/mint"
-	slashingModule "bro-n-bro-osmosis/modules/slasing"
-	stakingModule "bro-n-bro-osmosis/modules/staking"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	authModule "github.com/hexy-dev/spacebox-crawler/modules/auth"
+	bankModule "github.com/hexy-dev/spacebox-crawler/modules/bank"
+	coreModule "github.com/hexy-dev/spacebox-crawler/modules/core"
+	crisisModule "github.com/hexy-dev/spacebox-crawler/modules/crisis"
+	distributionModule "github.com/hexy-dev/spacebox-crawler/modules/distribution"
+	evidenceModule "github.com/hexy-dev/spacebox-crawler/modules/evidence"
+	govModule "github.com/hexy-dev/spacebox-crawler/modules/gov"
+	"github.com/hexy-dev/spacebox-crawler/modules/messages"
+	mintModule "github.com/hexy-dev/spacebox-crawler/modules/mint"
+	slashingModule "github.com/hexy-dev/spacebox-crawler/modules/slasing"
+	stakingModule "github.com/hexy-dev/spacebox-crawler/modules/staking"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, addressesParser messages.MessageAddressesParser, cdc codec.Codec,
@@ -75,11 +75,11 @@ func BuildAddressesParser(modules ...string) AddressesParser {
 		default:
 			continue
 		}
-		//module, ok := moduleStrMap[m]
-		//if !ok {
+		// module, ok := moduleStrMap[m]
+		// if !ok {
 		//	// todo: log
 		//	continue
-		//}
+		// }
 	}
 
 	return func(cdc codec.Codec, msg sdk.Msg) ([]string, error) {

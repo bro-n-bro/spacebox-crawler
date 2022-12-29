@@ -8,8 +8,8 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
@@ -25,16 +25,16 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 
 	// not used in bdjuno
 	// todo: call panic: invalid Go type types.Dec for field cosmos.mint.v1beta1.QueryInflationResponse.inflation
-	//inflationResp, err := m.client.MintQueryClient.Inflation(
+	// inflationResp, err := m.client.MintQueryClient.Inflation(
 	//	ctx,
 	//	&minttypes.QueryInflationRequest{},
 	//	grpcClient.GetHeightRequestHeader(block.Height),
-	//)
-	//if err != nil {
+	// )
+	// if err != nil {
 	//	m.log.Error().Err(err).Int64("height", block.Height).Msg("error while getting inflation")
 	//	return err
-	//}
-	//_ = inflationResp
+	// }
+	// _ = inflationResp
 
 	// m.client.MintQueryClient.AnnualProvisions()
 
@@ -47,24 +47,24 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 	}
 
 	// TODO: go panic: invalid Go type types.Dec for field cosmos.mint.v1beta1.QueryAnnualProvisionsResponse.annual_provisions
-	//annualProvResp, err := m.client.MintQueryClient.AnnualProvisions(
+	// annualProvResp, err := m.client.MintQueryClient.AnnualProvisions(
 	//	ctx,
 	//	&minttypes.QueryAnnualProvisionsRequest{},
 	//	grpcClient.GetHeightRequestHeader(block.Height),
-	//)
-	//if err != nil {
+	// )
+	// if err != nil {
 	//	m.log.Error().Err(err).Int64("height", block.Height).Msg("error while annual provision")
 	//	return err
-	//}
+	// }
 
-	//var annualProvision float64
-	//if !annualProvResp.AnnualProvisions.IsNil() {
+	// var annualProvision float64
+	// if !annualProvResp.AnnualProvisions.IsNil() {
 	//	annualProvision = annualProvResp.AnnualProvisions.MustFloat64()
-	//}
+	// }
 
-	//if err := m.broker.PublishAnnualProvision(ctx, m.tbM.MapAnnualProvision(block.Height, annualProvision)); err != nil {
+	// if err := m.broker.PublishAnnualProvision(ctx, m.tbM.MapAnnualProvision(block.Height, annualProvision)); err != nil {
 	//	return errors.Wrap(err, "PublishAnnualProvision error")
-	//}
+	// }
 
 	return nil
 }

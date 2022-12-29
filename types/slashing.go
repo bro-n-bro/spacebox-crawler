@@ -8,13 +8,13 @@ import (
 
 // ValidatorSigningInfo contains the signing info of a validator at a given height
 type ValidatorSigningInfo struct {
+	JailedUntil         time.Time
 	ValidatorAddress    string
 	StartHeight         int64
 	IndexOffset         int64
-	JailedUntil         time.Time
-	Tombstoned          bool
 	MissedBlocksCounter int64
 	Height              int64
+	Tombstoned          bool
 }
 
 // Equal tells whether v and w represent the same rows

@@ -1,9 +1,10 @@
 package utils
 
 import (
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
 	"context"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -12,16 +13,16 @@ import (
 func RefreshBalance(address string, client banktypes.QueryClient) func() {
 	return func() {
 		var height int64
-		//height, err := db.GetLastBlockHeight()
-		//if err != nil {
+		// height, err := db.GetLastBlockHeight()
+		// if err != nil {
 		//	log.Error().Err(err).Str("module", "bank").
 		//		Str("operation", "refresh balance").Msg("error while getting latest block height")
 		//	return
-		//}
+		// }
 
 		err := UpdateBalances([]string{address}, height, client)
 		if err != nil {
-			//log.Error().Err(err).Str("module", "bank").
+			// log.Error().Err(err).Str("module", "bank").
 			//	Str("operation", "refresh balance").Msg("error while updating balance")
 		}
 	}
@@ -30,7 +31,6 @@ func RefreshBalance(address string, client banktypes.QueryClient) func() {
 // UpdateBalances updates the balances of the accounts having the given addresses,
 // taking the data at the provided height
 func UpdateBalances(addresses []string, height int64, bankClient banktypes.QueryClient) error {
-	//log.Debug().Str("module", "bank").Int64("height", height).Msg("updating balances")
 	header := grpcClient.GetHeightRequestHeader(height)
 
 	var balances []types.AccountBalance
@@ -52,6 +52,6 @@ func UpdateBalances(addresses []string, height int64, bankClient banktypes.Query
 	}
 
 	// TODO:
-	//err :=  db.SaveAccountBalances(balances)
+	// err :=  db.SaveAccountBalances(balances)
 	return nil
 }

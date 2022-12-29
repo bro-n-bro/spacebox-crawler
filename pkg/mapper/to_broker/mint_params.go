@@ -3,19 +3,10 @@ package to_broker
 import (
 	"github.com/hexy-dev/spacebox/broker/model"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (tb ToBroker) MapMingParams(mp types.MintParams) model.MintParams {
-	return model.MintParams{
-		Height: mp.Height,
-		Params: model.MParams{
-			MintDenom:           mp.MintDenom,
-			InflationRateChange: mp.InflationRateChange.MustFloat64(),
-			InflationMax:        mp.InflationMax.MustFloat64(),
-			InflationMin:        mp.InflationMin.MustFloat64(),
-			GoalBonded:          mp.GoalBonded.MustFloat64(),
-			BlocksPerYear:       mp.BlocksPerYear,
-		},
-	}
+	return model.NewMintParams(mp.Height, mp.MintDenom, mp.InflationRateChange.MustFloat64(),
+		mp.InflationMax.MustFloat64(), mp.InflationMin.MustFloat64(), mp.GoalBonded.MustFloat64(), mp.BlocksPerYear)
 }

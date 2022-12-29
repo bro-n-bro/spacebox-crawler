@@ -13,7 +13,7 @@ func (b *Broker) PublishGovParams(ctx context.Context, params model.GovParams) e
 
 	data, err := jsoniter.Marshal(params) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(GovParams, data); err != nil {

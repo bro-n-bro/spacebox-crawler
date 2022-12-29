@@ -1,10 +1,11 @@
 package messages
 
 import (
-	"bro-n-bro-osmosis/adapter/broker"
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	"bro-n-bro-osmosis/types"
 	"os"
+
+	"github.com/hexy-dev/spacebox-crawler/adapter/broker"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"

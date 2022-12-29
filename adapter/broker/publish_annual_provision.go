@@ -13,7 +13,7 @@ func (b *Broker) PublishAnnualProvision(ctx context.Context, ap model.AnnualProv
 
 	data, err := jsoniter.Marshal(ap) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(AnnualProvision, data); err != nil {

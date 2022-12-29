@@ -7,8 +7,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"bro-n-bro-osmosis/modules/utils"
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/modules/utils"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 // HandleGenesis handles the genesis state of the x/bank module in order to store the initial values

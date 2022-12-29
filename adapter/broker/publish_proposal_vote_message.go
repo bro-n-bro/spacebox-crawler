@@ -12,7 +12,7 @@ func (b *Broker) PublishProposalVoteMessage(ctx context.Context, pvm model.Propo
 
 	data, err := jsoniter.Marshal(pvm) // FIXME: maybe user another way to encode data
 	if err != nil {
-		return errors.Wrap(err, MsgErrJsonMarshalFail)
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
 	if err := b.produce(ProposalVoteMessage, data); err != nil {

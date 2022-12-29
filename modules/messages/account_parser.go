@@ -18,12 +18,12 @@ import (
 
 // MessageNotSupported returns an error telling that the given message is not supported
 func MessageNotSupported(msg sdk.Msg) error {
-	defer func(msg sdk.Msg) { // FIXME
+	defer func() { // FIXME
 		if r := recover(); r != nil {
 			println("message type not supported:", r)
 		}
-	}(msg)
-	//return fmt.Errorf("message type not supported: %s", msg.String())
+	}()
+	// return fmt.Errorf("message type not supported: %s", msg.String())
 	return nil
 }
 
@@ -96,11 +96,10 @@ func BankMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 // CrisisMessagesParser returns the list of all the accounts involved in the given
 // message if it's related to the x/crisis module
 func CrisisMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
+	// nolint:gocritic
 	switch msg := cosmosMsg.(type) {
-
 	case *crisistypes.MsgVerifyInvariant:
 		return []string{msg.Sender}, nil
-
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)
@@ -131,11 +130,10 @@ func DistributionMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, err
 // EvidenceMessagesParser returns the list of all the accounts involved in the given
 // message if it's related to the x/evidence module
 func EvidenceMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
+	// nolint:gocritic
 	switch msg := cosmosMsg.(type) {
-
 	case *evidencetypes.MsgSubmitEvidence:
 		return []string{msg.Submitter}, nil
-
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)
@@ -155,6 +153,7 @@ func GovMessagesParser(cdc codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 			return nil, err
 		}
 
+		// nolint:gocritic
 		// Get addresses from contents
 		switch content := content.(type) {
 		case *distrtypes.CommunityPoolSpendProposal:
@@ -177,7 +176,7 @@ func GovMessagesParser(cdc codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 //
 //// IBCTransferMessagesParser returns the list of all the accounts involved in the given
 //// message if it's related to the x/iBCTransfer module
-//func IBCTransferMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
+// func IBCTransferMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 //	switch msg := cosmosMsg.(type) {
 //
 //	case *ibctransfertypes.MsgTransfer:
@@ -186,13 +185,13 @@ func GovMessagesParser(cdc codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 //	}
 //
 //	return nil, MessageNotSupported(cosmosMsg)
-//}
+// }
 
 // SlashingMessagesParser returns the list of all the accounts involved in the given
 // message if it's related to the x/slashing module
 func SlashingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
+	// nolint:gocritic
 	switch msg := cosmosMsg.(type) {
-
 	case *slashingtypes.MsgUnjail:
 		return []string{msg.ValidatorAddr}, nil
 
@@ -229,8 +228,8 @@ func StakingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 // IBCTransferMessagesParser returns the list of all the accounts involved in the given
 // message if it's related to the x/iBCTransfer module
 func IBCTransferMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
+	// nolint:gocritic
 	switch msg := cosmosMsg.(type) {
-
 	case *ibctransfertypes.MsgTransfer:
 		return []string{msg.Sender, msg.Receiver}, nil
 	}

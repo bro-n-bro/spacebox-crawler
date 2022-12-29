@@ -20,18 +20,16 @@ import (
 )
 
 type Client struct {
-	cfg Config
-
+	SlashingQueryClient     slashingtypes.QueryClient
 	TmsService              tmservice.ServiceClient
 	TxService               tx.ServiceClient
 	BankQueryClient         banktypes.QueryClient
 	GovQueryClient          govtypes.QueryClient
 	MintQueryClient         minttypes.QueryClient
-	SlashingQueryClient     slashingtypes.QueryClient
 	StakingQueryClient      stakingtypes.QueryClient
 	DistributionQueryClient distributiontypes.QueryClient
-
-	conn *grpc.ClientConn
+	conn                    *grpc.ClientConn
+	cfg                     Config
 }
 
 func New(cfg Config) *Client {

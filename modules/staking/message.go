@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"bro-n-bro-osmosis/internal/rep"
-	stakingutils "bro-n-bro-osmosis/modules/staking/utils"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	stakingutils "github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -58,33 +58,33 @@ func handleMsgCreateValidator(ctx context.Context, height int64, msg *stakingtyp
 		return err
 	}
 
-	//err = db.SaveValidatorDescription(description)
-	//if err != nil {
+	// err = db.SaveValidatorDescription(description)
+	// if err != nil {
 	//	return err
-	//}
+	// }
 
 	// Save validator commission
-	//return db.SaveValidatorCommission(types.NewValidatorCommission(
+	// return db.SaveValidatorCommission(types.NewValidatorCommission(
 	//	msg.ValidatorAddress,
 	//	&msg.Commission.Rate,
 	//	&msg.MinSelfDelegation,
 	//	height,
-	//))
+	// ))
 	return nil
 }
 
 // handleEditValidator handles MsgEditValidator utils, updating the validator info and commission
 func handleEditValidator(height int64, msg *stakingtypes.MsgEditValidator) error {
 	// Save validator commission
-	//err := db.SaveValidatorCommission(types.NewValidatorCommission(
+	// err := db.SaveValidatorCommission(types.NewValidatorCommission(
 	//	msg.ValidatorAddress,
 	//	msg.CommissionRate,
 	//	msg.MinSelfDelegation,
 	//	height,
-	//))
-	//if err != nil {
+	// ))
+	// if err != nil {
 	//	return err
-	//}
+	// }
 
 	// Save validator description
 	_, err := stakingutils.ConvertValidatorDescription(

@@ -2,19 +2,18 @@ package app
 
 import (
 	"context"
-	"os"
 	"time"
 
-	"bro-n-bro-osmosis/adapter/broker"
-	"bro-n-bro-osmosis/adapter/storage"
-	grpcClient "bro-n-bro-osmosis/client/grpc"
-	rpcClient "bro-n-bro-osmosis/client/rpc"
-	"bro-n-bro-osmosis/internal/rep"
-	"bro-n-bro-osmosis/modules"
-	"bro-n-bro-osmosis/modules/messages"
-	tb "bro-n-bro-osmosis/pkg/mapper/to_broker"
-	ts "bro-n-bro-osmosis/pkg/mapper/to_storage"
-	"bro-n-bro-osmosis/pkg/worker"
+	"github.com/hexy-dev/spacebox-crawler/adapter/broker"
+	"github.com/hexy-dev/spacebox-crawler/adapter/storage"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	rpcClient "github.com/hexy-dev/spacebox-crawler/client/rpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules"
+	"github.com/hexy-dev/spacebox-crawler/modules/messages"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	ts "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_storage"
+	"github.com/hexy-dev/spacebox-crawler/pkg/worker"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
@@ -50,9 +49,8 @@ type (
 	}
 )
 
-func New(cfg Config) *App {
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("cmp", "app").Logger()
+func New(cfg Config, l zerolog.Logger) *App {
+	l = l.With().Str("cmp", "app").Logger()
 	return &App{
 		log: &l,
 		cfg: cfg,
@@ -62,19 +60,19 @@ func New(cfg Config) *App {
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
-	grpcCli := grpcClient.New(a.cfg.GrpcConfig)
-	rpcCli := rpcClient.New(a.cfg.RpcConfig)
-	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules)
-	s := storage.New(a.cfg.StorageConfig)
+	grpcCli := grpcClient.New(a.cfg.GRPCConfig)
+	rpcCli := rpcClient.New(a.cfg.RPCConfig)
+	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log)
+	s := storage.New(a.cfg.StorageConfig, *a.log)
 
-	//encoding := MakeEncodingConfig(getBasicManagers())
-	cdc := MakeEncodingConfigV2()
+	// encoding := MakeEncodingConfig(getBasicManagers())
+	cdc, amino := MakeEncodingConfigV2()
 
-	tb := tb.NewToBroker(cdc)
+	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
 	parser := messages.JoinMessageParsers(messages.CosmosMessageAddressesParser)
 	modules := modules.BuildModules(b, grpcCli, *tb, parser, cdc, a.cfg.Modules)
 	ts := ts.NewToStorage()
-	w := worker.New(a.cfg.WorkerConfig, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
+	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 
 	MakeSdkConfig(a.cfg, sdk.GetConfig())
 
@@ -96,7 +94,6 @@ func (a *App) Start(ctx context.Context) error {
 				errCh <- errors.Wrapf(err, FmtCannotStart, c.Name)
 			}
 		}
-
 		okCh <- struct{}{}
 	}()
 
@@ -123,7 +120,6 @@ func (a *App) Stop(ctx context.Context) error {
 				errCh <- err
 			}
 		}
-
 		okCh <- struct{}{}
 	}()
 
@@ -138,27 +134,14 @@ func (a *App) Stop(ctx context.Context) error {
 	}
 }
 
-// TODO: move out it
-// getBasicManagers returns the various basic managers that are used to register the encoding to
-// support custom messages.
-// This should be edited by custom implementations if needed.
-func getBasicManagers() []cosmomodule.BasicManager {
-	return []cosmomodule.BasicManager{
-		simapp.ModuleBasics,
-		//ibcsimapp.ModuleBasics,
-		//{ibc.AppModuleBasic{}.Name(): ibc.AppModuleBasic{}},
-		//{ibctransfer.AppModuleBasic{}.Name(): ibctransfer.AppModuleBasic{}},
-		//{ibctmc.AppModuleBasic{}.Name(): ibctmc.AppModuleBasic{}},
-	}
-}
-
+// nolint:deadcode
 // MakeEncodingConfig creates an EncodingConfig to properly handle all the messages
 func MakeEncodingConfig(managers []cosmomodule.BasicManager) params.EncodingConfig {
 	encodingConfig := params.MakeTestEncodingConfig()
 
-	//ibctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	//ibctransfertypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	//ibctmctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	// ibctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	// ibctransfertypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	// ibctmctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
@@ -170,17 +153,18 @@ func MakeEncodingConfig(managers []cosmomodule.BasicManager) params.EncodingConf
 	return encodingConfig
 }
 
-func MakeEncodingConfigV2() codec.Codec {
+func MakeEncodingConfigV2() (codec.Codec, *codec.AminoCodec) {
 
 	ir := cdc.NewInterfaceRegistry()
 	simapp.ModuleBasics.RegisterInterfaces(ir)
 	std.RegisterInterfaces(ir)
-	std.RegisterLegacyAminoCodec(codec.NewAminoCodec(codec.NewLegacyAmino()).LegacyAmino) // FIXME: not needed?
+	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
+	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibcstypes.RegisterInterfaces(ir)
 	ibctransfertypes.RegisterInterfaces(ir)
-	//liquiditytypes.RegisterInterfaces(ir)
+	// liquiditytypes.RegisterInterfaces(ir)
 
-	return codec.NewProtoCodec(ir)
+	return codec.NewProtoCodec(ir), amino
 }
 
 // mergeBasicManagers merges the given managers into a single module.BasicManager

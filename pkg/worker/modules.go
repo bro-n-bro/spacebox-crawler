@@ -1,6 +1,6 @@
 package worker
 
-import "bro-n-bro-osmosis/types"
+import "github.com/hexy-dev/spacebox-crawler/types"
 
 var (
 	transactionHandlers []types.TransactionModule

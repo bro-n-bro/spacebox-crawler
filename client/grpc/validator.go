@@ -52,7 +52,6 @@ func (c *Client) Validators(ctx context.Context, height int64) (*tmccoretypes.Re
 }
 
 func convertValidator(c *tmservice.Validator) *tmctypes.Validator {
-	//v, err := types2.ValidatorFromProto(c.())
 	pk := ed25519.PubKey(c.PubKey.Value)
 
 	return &tmctypes.Validator{

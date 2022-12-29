@@ -3,7 +3,7 @@ package to_broker
 import (
 	"github.com/hexy-dev/spacebox/broker/model"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (tb ToBroker) MapUnbondingDelegation(ud types.UnbondingDelegation) model.UnbondingDelegation {
@@ -23,22 +23,12 @@ func (tb ToBroker) MapUnbondingDelegationMessage(udm types.UnbondingDelegationMe
 	}
 }
 func (tb ToBroker) MapStakingParams(sp types.StakingParams) model.StakingParams {
-	params := model.SParams{
-		UnbondingTime:     sp.UnbondingTime,
-		MaxValidators:     sp.MaxValidators,
-		MaxEntries:        sp.MaxEntries,
-		HistoricalEntries: sp.HistoricalEntries,
-		BondDenom:         sp.BondDenom,
-	}
-
+	var commissionRate float64
 	if !sp.MinCommissionRate.IsNil() {
-		params.MinCommissionRate = sp.MinCommissionRate.MustFloat64()
+		commissionRate = sp.MinCommissionRate.MustFloat64()
 	}
-
-	return model.StakingParams{
-		Params: params,
-		Height: sp.Height,
-	}
+	return model.NewStakingParams(sp.Height, sp.MaxValidators, sp.MaxEntries, sp.HistoricalEntries,
+		sp.BondDenom, commissionRate, sp.UnbondingTime)
 }
 
 func (tb ToBroker) MapStakingPool(sp *types.Pool) model.StakingPool {

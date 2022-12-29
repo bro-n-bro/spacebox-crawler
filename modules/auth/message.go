@@ -1,12 +1,13 @@
 package auth
 
 import (
-	"bro-n-bro-osmosis/modules/utils"
 	"context"
+
+	"github.com/hexy-dev/spacebox-crawler/modules/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"bro-n-bro-osmosis/types"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *types.Tx) error {
@@ -16,7 +17,7 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *type
 		return nil
 	}
 
-	// TODO:
+	// TODO: test it
 	err = m.broker.PublishAccounts(ctx, m.tbM.MapAccounts(utils.GetAccounts(addresses, tx.Height)))
 	if err != nil {
 		return err
