@@ -3,9 +3,8 @@ package broker
 import (
 	"context"
 
-	"github.com/pkg/errors"
-
 	jsoniter "github.com/json-iterator/go"
+	"github.com/pkg/errors"
 
 	"github.com/hexy-dev/spacebox/broker/model"
 )

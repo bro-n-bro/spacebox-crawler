@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	_ types.Module      = &Module{}
-	_ types.BlockModule = &Module{}
+	_ types.Module       = &Module{}
+	_ types.BlockHandler = &Module{}
 )
 
 type Module struct {
 	log    *zerolog.Logger
-	broker rep.Broker
 	client *grpcClient.Client
+	broker broker
 	tbM    tb.ToBroker
 }
 

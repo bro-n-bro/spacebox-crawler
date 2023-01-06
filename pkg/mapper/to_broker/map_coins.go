@@ -1,4 +1,4 @@
-package to_broker
+package tobroker
 
 import (
 	"github.com/hexy-dev/spacebox/broker/model"

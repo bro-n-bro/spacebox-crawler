@@ -12,8 +12,8 @@ var (
 	ErrBlockError      = errors.New("block processed with error")
 )
 
-func (w *Worker) setErrorStatusWithLogging(ctx context.Context, height int64) {
-	if err := w.storage.SetErrorStatus(ctx, height); err != nil {
+func (w *Worker) setErrorStatusWithLogging(ctx context.Context, height int64, msg string) {
+	if err := w.storage.SetErrorStatus(ctx, height, msg); err != nil {
 		w.log.Error().Err(err).Int64("height", height).Msgf("cant set error status in storage %v:", err)
 	}
 }
@@ -25,7 +25,7 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 		return err
 	}
 
-	if hasBlock {
+	if hasBlock { // exists block
 		status, err := w.storage.GetBlockStatus(ctx, height)
 		if err != nil {
 			w.log.Error().Err(err).Int64("height", height).Msgf("cant get block status in storage %v:", err)
@@ -44,7 +44,7 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 			return ErrBlockError
 		}
 
-	} else {
+	} else { // new block
 		if err := w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
 			w.log.Error().Err(err).Int64("height", height).Msgf("cant create new block in storage %v:", err)
 			return err

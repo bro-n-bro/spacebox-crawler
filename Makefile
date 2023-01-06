@@ -6,7 +6,7 @@ LD_FLAGS = -X github.com/hexy-dev/spacebox/spacebox-crawler/version.Version=$(VE
 
 BUILD_FLAGS := -ldflags '$(LD_FLAGS)'
 
-.PHONY: fix dep build test race lint
+.PHONY: fix dep build test race lint stats
 
 fix: ## Fix fieldalignment
 	fieldalignment -fix ./...
@@ -25,3 +25,6 @@ race: dep ## Run data race detector
 
 lint: ## Lint the files
 	./scripts/golint.sh
+
+stats: ## Code analytics
+	scc .

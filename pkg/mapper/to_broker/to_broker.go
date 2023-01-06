@@ -1,4 +1,4 @@
-package to_broker
+package tobroker
 
 import "github.com/cosmos/cosmos-sdk/codec"
 

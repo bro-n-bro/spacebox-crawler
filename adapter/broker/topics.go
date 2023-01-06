@@ -12,6 +12,7 @@ var (
 	Block                      Topic = newTopic("block")
 	CommunityPool              Topic = newTopic("community_pool")
 	DistributionParams         Topic = newTopic("distribution_params")
+	DelegationReward           Topic = newTopic("delegation_reward")
 	DelegationRewardMessage    Topic = newTopic("delegation_reward_message")
 	Delegation                 Topic = newTopic("delegation")
 	DelegationMessage          Topic = newTopic("delegation_message")
@@ -19,8 +20,11 @@ var (
 	Message                    Topic = newTopic("message")
 	MintParams                 Topic = newTopic("mint_params")
 	MultiSendMessage           Topic = newTopic("multisend_message")
+	Proposal                   Topic = newTopic("proposal")
 	ProposalVoteMessage        Topic = newTopic("proposal_vote_message")
 	ProposalTallyResult        Topic = newTopic("proposal_tally_result")
+	ProposalDeposit            Topic = newTopic("proposal_deposit")
+	ProposalDepositMessage     Topic = newTopic("proposal_deposit_message")
 	Redelegation               Topic = newTopic("redelegation")
 	RedelegationMessage        Topic = newTopic("redelegation_message")
 	SendMessage                Topic = newTopic("send_message")
@@ -28,8 +32,8 @@ var (
 	StakingPool                Topic = newTopic("staking_pool")
 	Supply                     Topic = newTopic("supply")
 	Transaction                Topic = newTopic("tx")
-	UnbondingDelegationMessage Topic = newTopic("unbonding_delegation_message")
 	UnbondingDelegation        Topic = newTopic("unbonding_delegation")
+	UnbondingDelegationMessage Topic = newTopic("unbonding_delegation_message")
 	ValidatorInfo              Topic = newTopic("validator_info")
 	ValidatorStatus            Topic = newTopic("validator_status")
 	Validator                  Topic = newTopic("validator")
@@ -41,7 +45,7 @@ var (
 	distributionTopics = Topics{DistributionParams, CommunityPool, /* TODO: validatorCommission, DelegationReward, */
 		DelegationRewardMessage}
 
-	govTopics = Topics{GovParams /*TODO: Proposal, ProposalDepositMessage */, ProposalTallyResult, ProposalVoteMessage}
+	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage}
 
 	mintTopics = Topics{MintParams, AnnualProvision}
 

@@ -3,11 +3,10 @@ package broker
 import (
 	"context"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/hexy-dev/spacebox/broker/model"
-
-	jsoniter "github.com/json-iterator/go"
 )
 
 func (b *Broker) PublishRedelegation(ctx context.Context, r model.Redelegation) error {

@@ -28,7 +28,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.46.1
 	github.com/cosmos/ibc-go/v5 v5.0.0
 	github.com/gogo/protobuf v1.3.3
-	github.com/hexy-dev/spacebox v0.0.0-20221229094633-fa4c65ab962c
+	github.com/hexy-dev/spacebox v0.0.0-20230103110220-567efafaa432
 	github.com/joho/godotenv v1.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1

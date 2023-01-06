@@ -46,7 +46,7 @@ func (c *Client) Start(ctx context.Context) error {
 
 	// Add required secure grpc option based on config parameter
 	if c.cfg.SecureConnection {
-		options = append(options, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
+		options = append(options, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{}))) // nolint:gosec
 	} else {
 		options = append(options, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}

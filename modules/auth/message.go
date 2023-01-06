@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox-crawler/modules/utils"
+	"github.com/hexy-dev/spacebox/broker/model"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -17,10 +17,13 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *type
 		return nil
 	}
 
-	// TODO: test it
-	err = m.broker.PublishAccounts(ctx, m.tbM.MapAccounts(utils.GetAccounts(addresses, tx.Height)))
-	if err != nil {
-		return err
+	for _, addr := range addresses {
+		// TODO: test it
+		err = m.broker.PublishAccounts(ctx, []model.Account{model.NewAccount(addr, tx.Height)})
+		if err != nil {
+			return err
+		}
 	}
+
 	return nil
 }

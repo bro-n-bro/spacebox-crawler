@@ -5,13 +5,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
-
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
-func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
+func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// Update the signing infos
 	err := m.updateSigningInfo(block.Height)
 	if err != nil {
@@ -19,7 +17,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 			Err(err).Msg("error while updating signing info")
 	}
 
-	err = m.updateSlashingParams(block.Height)
+	err = m.updateSlashingParams(ctx, block.Height)
 	if err != nil {
 		m.log.Error().Int64("height", block.Height).Err(err).Msg("error while updating params")
 	}
@@ -41,10 +39,10 @@ func (m *Module) updateSigningInfo(height int64) error {
 }
 
 // updateSlashingParams gets the slashing params for the given height, and stores them inside the database
-func (m *Module) updateSlashingParams(height int64) error {
+func (m *Module) updateSlashingParams(ctx context.Context, height int64) error {
 
 	res, err := m.client.SlashingQueryClient.Params(
-		context.Background(),
+		ctx,
 		&slashingtypes.QueryParamsRequest{},
 		grpcClient.GetHeightRequestHeader(height),
 	)

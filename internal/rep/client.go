@@ -22,4 +22,5 @@ type RPCClient interface {
 
 	SubscribeNewBlocks(ctx context.Context) (<-chan tmcoretypes.ResultEvent, error)
 	Genesis(ctx context.Context) (*tmtypes.GenesisDoc, error)
+	GetLastBlockHeight(ctx context.Context) (int64, error)
 }

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/hexy-dev/spacebox/broker/model"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -21,14 +22,19 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 	switch msg := cosmosMsg.(type) {
 	case *govtypesv1beta1.MsgSubmitProposal:
-		return handleMsgSubmitProposal(ctx, tx, index, msg, m.client.GovQueryClient, m.cdc)
+		return m.handleMsgSubmitProposal(ctx, tx, index, msg)
 
 	case *govtypesv1beta1.MsgDeposit:
-		return handleMsgDeposit(ctx, tx, msg, m.client.GovQueryClient)
+		return m.handleMsgDeposit(ctx, tx, msg)
 
 	case *govtypesv1beta1.MsgVote:
-		pvm := m.tbM.MapProposalVoteMessage(types.NewProposalVoteMessage(msg.ProposalId, msg.Voter, msg.Option,
-			tx.Height))
+		pvm := model.NewProposalVoteMessage(
+			msg.ProposalId,
+			tx.Height,
+			msg.Voter,
+			msg.Option.String(),
+		)
+
 		// TODO: TEST IT
 		return m.broker.PublishProposalVoteMessage(ctx, pvm)
 	}
@@ -36,11 +42,10 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	return nil
 }
 
-// handleMsgSubmitProposal allows to properly handle a handleMsgSubmitProposal
-func handleMsgSubmitProposal(
-	ctx context.Context, tx *types.Tx, index int, msg *govtypesv1beta1.MsgSubmitProposal,
-	govClient govtypesv1beta1.QueryClient, cdc codec.Codec,
-) error {
+// handleMsgSubmitProposal handles a handleMsgSubmitProposal
+// publishes proposal, proposalDeposit and proposalDepositMessage to the broker.
+func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, index int,
+	msg *govtypesv1beta1.MsgSubmitProposal) error {
 	// Get the proposal id
 	event, err := tx.FindEventByType(index, govtypes.EventTypeSubmitProposal)
 	if err != nil {
@@ -58,7 +63,7 @@ func handleMsgSubmitProposal(
 	}
 
 	// Get the proposal
-	res, err := govClient.Proposal(
+	resPb, err := m.client.GovQueryClient.Proposal(
 		ctx,
 		&govtypesv1beta1.QueryProposalRequest{ProposalId: proposalID},
 	)
@@ -66,40 +71,54 @@ func handleMsgSubmitProposal(
 		return err
 	}
 
-	proposal := res.Proposal
+	proposal := resPb.Proposal
 
 	// Unpack the content
 	var content govtypesv1beta1.Content
-	err = cdc.UnpackAny(proposal.Content, &content)
+	err = m.cdc.UnpackAny(proposal.Content, &content)
 	if err != nil {
 		return err
 	}
 
-	proposalObj := types.NewProposal(
-		proposal.ProposalId,
-		proposal.ProposalRoute(),
-		proposal.ProposalType(),
-		msg.Proposer,
-		proposal.Status.String(),
-		proposal.GetContent(),
-		proposal.SubmitTime,
-		proposal.DepositEndTime,
-		proposal.VotingStartTime,
-		proposal.VotingEndTime,
-	)
+	// publish the deposit
+	// TODO: test it
+	if err = m.broker.PublishProposalDeposit(ctx,
+		model.NewProposalDeposit(proposal.ProposalId, tx.Height, msg.Proposer,
+			m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)))); err != nil {
 
-	// Store the deposit
-	deposit := types.NewProposalDeposit(proposal.ProposalId, msg.Proposer, msg.InitialDeposit, tx.Height)
+		return err
+	}
 
-	// TODO:
-	_, _ = proposalObj, deposit
+	// TODO: test it
+	if err = m.broker.PublishProposalDepositMessage(ctx,
+		model.NewProposalDepositMessage(proposal.ProposalId, tx.Height, msg.Proposer, tx.TxHash,
+			m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)))); err != nil {
+
+		return err
+	}
+
+	contentBytes, err := types.GetProposalContentBytes(content, m.cdc)
+	if err != nil {
+		return err
+	}
+
+	// TODO: test it
+	if err = m.broker.PublishProposal(ctx,
+		model.NewProposal(
+			proposal.ProposalId, content.GetTitle(), content.GetDescription(),
+			proposal.ProposalRoute(), proposal.ProposalType(), msg.Proposer, proposal.Status.String(), contentBytes,
+			proposal.SubmitTime, proposal.DepositEndTime, proposal.VotingStartTime, proposal.VotingEndTime),
+	); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-// handleMsgDeposit allows to properly handle a handleMsgDeposit
-func handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgDeposit, govClient govtypesv1beta1.QueryClient) error {
-	res, err := govClient.Deposit(
+// handleMsgDeposit handles a handleMsgDeposit.
+// publishes proposalDeposit and proposalDepositMessage to the broker.
+func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgDeposit) error {
+	res, err := m.client.GovQueryClient.Deposit(
 		ctx,
 		&govtypesv1beta1.QueryDepositRequest{ProposalId: msg.ProposalId, Depositor: msg.Depositor},
 		grpcClient.GetHeightRequestHeader(tx.Height),
@@ -108,9 +127,21 @@ func handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.Ms
 		return fmt.Errorf("error while getting proposal deposit: %s", err)
 	}
 
-	deposit := types.NewProposalDeposit(msg.ProposalId, msg.Depositor, res.Deposit.Amount, tx.Height)
+	// TODO: test it
+	if err = m.broker.PublishProposalDeposit(ctx, model.NewProposalDeposit(
+		msg.ProposalId, tx.Height, msg.Depositor,
+		m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)))); err != nil {
 
-	_ = deposit
-	// TODO:
+		return err
+	}
+
+	// TODO: test it
+	if err = m.broker.PublishProposalDepositMessage(ctx, model.NewProposalDepositMessage(
+		msg.ProposalId, tx.Height, msg.Depositor, tx.TxHash,
+		m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)))); err != nil {
+
+		return err
+	}
+
 	return nil
 }

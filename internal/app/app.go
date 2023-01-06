@@ -10,7 +10,6 @@ import (
 	rpcClient "github.com/hexy-dev/spacebox-crawler/client/rpc"
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
 	"github.com/hexy-dev/spacebox-crawler/modules"
-	"github.com/hexy-dev/spacebox-crawler/modules/messages"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/hexy-dev/spacebox-crawler/pkg/worker"
@@ -18,12 +17,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmomodule "github.com/cosmos/cosmos-sdk/types/module"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibcstypes "github.com/cosmos/ibc-go/v5/modules/core/types"
+	"github.com/hexy-dev/spacebox-crawler/modules/core"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
@@ -66,10 +64,10 @@ func (a *App) Start(ctx context.Context) error {
 	s := storage.New(a.cfg.StorageConfig, *a.log)
 
 	// encoding := MakeEncodingConfig(getBasicManagers())
-	cdc, amino := MakeEncodingConfigV2()
+	cdc, amino := MakeEncodingConfig()
 
 	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
-	parser := messages.JoinMessageParsers(messages.CosmosMessageAddressesParser)
+	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
 	modules := modules.BuildModules(b, grpcCli, *tb, parser, cdc, a.cfg.Modules)
 	ts := ts.NewToStorage()
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
@@ -79,9 +77,9 @@ func (a *App) Start(ctx context.Context) error {
 	a.cmps = append(
 		a.cmps,
 		cmp{s, "storage"},
-		cmp{b, "broker"},
 		cmp{grpcCli, "grpcClient"},
 		cmp{rpcCli, "rpcClient"},
+		cmp{b, "broker"},
 		cmp{w, "worker"},
 	)
 
@@ -113,7 +111,8 @@ func (a *App) Stop(ctx context.Context) error {
 
 	okCh, errCh := make(chan struct{}), make(chan error)
 	go func() {
-		for _, c := range a.cmps {
+		for i := len(a.cmps) - 1; i > 0; i-- {
+			c := a.cmps[i]
 			a.log.Info().Msgf("stopping %q...", c.Name)
 			if err := c.Service.Stop(ctx); err != nil {
 				a.log.Error().Err(err).Msgf("cannot stop %q", c.Name)
@@ -134,48 +133,24 @@ func (a *App) Stop(ctx context.Context) error {
 	}
 }
 
-// nolint:deadcode
-// MakeEncodingConfig creates an EncodingConfig to properly handle all the messages
-func MakeEncodingConfig(managers []cosmomodule.BasicManager) params.EncodingConfig {
-	encodingConfig := params.MakeTestEncodingConfig()
+func (a *App) GetStartTimeout() time.Duration { return a.cfg.StartTimeout }
+func (a *App) GetStopTimeout() time.Duration  { return a.cfg.StopTimeout }
 
-	// ibctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	// ibctransfertypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	// ibctmctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-
-	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	ibcstypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-
-	manager := mergeBasicManagers(managers)
-	manager.RegisterLegacyAminoCodec(encodingConfig.Amino)
-	manager.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-	return encodingConfig
-}
-
-func MakeEncodingConfigV2() (codec.Codec, *codec.AminoCodec) {
-
+// MakeEncodingConfig creates an EncodingConfig to properly handle and marshal all messages
+func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	ir := cdc.NewInterfaceRegistry()
+
 	simapp.ModuleBasics.RegisterInterfaces(ir)
 	std.RegisterInterfaces(ir)
-	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
-	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibcstypes.RegisterInterfaces(ir)
 	ibctransfertypes.RegisterInterfaces(ir)
+
+	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
+	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
+	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	// liquiditytypes.RegisterInterfaces(ir)
 
 	return codec.NewProtoCodec(ir), amino
-}
-
-// mergeBasicManagers merges the given managers into a single module.BasicManager
-func mergeBasicManagers(managers []cosmomodule.BasicManager) cosmomodule.BasicManager {
-	var union = cosmomodule.BasicManager{}
-	for _, manager := range managers {
-		for k, v := range manager {
-			union[k] = v
-		}
-	}
-	return union
 }
 
 // MakeSdkConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
@@ -195,6 +170,3 @@ func MakeSdkConfig(cfg Config, sdkConfig *sdk.Config) {
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,
 	)
 }
-
-func (a *App) GetStartTimeout() time.Duration { return a.cfg.StartTimeout }
-func (a *App) GetStopTimeout() time.Duration  { return a.cfg.StopTimeout }

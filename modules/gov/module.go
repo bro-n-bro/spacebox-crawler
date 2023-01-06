@@ -13,16 +13,16 @@ import (
 )
 
 var (
-	_ types.Module        = &Module{}
-	_ types.GenesisModule = &Module{}
-	_ types.BlockModule   = &Module{}
-	_ types.MessageModule = &Module{}
+	_ types.Module         = &Module{}
+	_ types.GenesisHandler = &Module{}
+	_ types.BlockHandler   = &Module{}
+	_ types.MessageHandler = &Module{}
 )
 
 type Module struct {
 	log    *zerolog.Logger
 	client *grpcClient.Client
-	broker rep.Broker
+	broker broker
 	tbM    tb.ToBroker
 	cdc    codec.Codec
 }

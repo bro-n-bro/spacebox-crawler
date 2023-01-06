@@ -2,167 +2,58 @@ package utils
 
 import (
 	"context"
-	"sync"
 
-	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/hexy-dev/spacebox/broker/model"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
-// ConvertDelegationResponse converts the given response to a BDJuno Delegation instance
-func ConvertDelegationResponse(height int64, response stakingtypes.DelegationResponse) types.Delegation {
-	return types.NewDelegation(
-		response.Delegation.DelegatorAddress,
-		response.Delegation.ValidatorAddress,
-		response.Balance,
-		height,
-	)
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
-// UpdateValidatorsDelegations updates the delegations for all the given validators at the provided height
-func UpdateValidatorsDelegations(
-	height int64, validators []stakingtypes.Validator, client stakingtypes.QueryClient,
-) {
-	var wg sync.WaitGroup
-	for _, val := range validators {
-		wg.Add(1)
-		go getDelegationsFromGrpc(val.OperatorAddress, height, client, &wg)
-	}
-	wg.Wait()
-}
-
-// getDelegationsFromGrpc gets the list of all the delegations that the validator having the given address has
-// at the given block height (having the given timestamp).
-// All the delegations will be sent to the out channel, and wg.Done() will be called at the end.
-func getDelegationsFromGrpc(
-	validatorAddress string, height int64, stakingClient stakingtypes.QueryClient, wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-
-	header := grpcClient.GetHeightRequestHeader(height)
-
-	var nextKey []byte
-	var stop = false
-	for !stop {
-		res, err := stakingClient.ValidatorDelegations(
-			context.Background(),
-			&stakingtypes.QueryValidatorDelegationsRequest{
-				ValidatorAddr: validatorAddress,
-				Pagination: &query.PageRequest{
-					Key:   nextKey,
-					Limit: 100, // Query 100 delegations at time
-				},
-			},
-			header,
-		)
-		if err != nil {
-
-			return
-		}
-
-		var delegations = make([]types.Delegation, len(res.DelegationResponses))
-		for index, delegation := range res.DelegationResponses {
-			delegations[index] = ConvertDelegationResponse(height, delegation)
-		}
-
-		// TODO:
-		// err = db.SaveDelegations(delegations)
-		// if err != nil {
-		//	return
-		// }
-
-		nextKey = res.Pagination.NextKey
-		stop = len(res.Pagination.NextKey) == 0
-	}
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
-// GetDelegatorDelegations returns the current delegations for the given delegator
-func GetDelegatorDelegations(height int64, delegator string, client stakingtypes.QueryClient) ([]types.Delegation, error) {
-	// Get the delegations
-	res, err := client.DelegatorDelegations(
-		context.Background(),
-		&stakingtypes.QueryDelegatorDelegationsRequest{
-			DelegatorAddr: delegator,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	var delegations = make([]types.Delegation, len(res.DelegationResponses))
-	for index, delegation := range res.DelegationResponses {
-		delegations[index] = ConvertDelegationResponse(height, delegation)
-	}
-
-	return delegations, nil
-}
-
-// --------------------------------------------------------------------------------------------------------------------
-
 // UpdateDelegationsAndReplaceExisting updates the delegations of the given delegator by querying them at the
-// required height, and then stores them inside the database by replacing all existing ones.
-func UpdateDelegationsAndReplaceExisting(ctx context.Context, height int64, delegator string,
-	client stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker) error {
+// required height, and then publishes them to the broker by replacing all existing ones.
+func UpdateDelegationsAndReplaceExisting(
+	ctx context.Context,
+	height int64,
+	delegator string,
+	client stakingtypes.QueryClient,
+	mapper tb.ToBroker,
+	broker interface {
+		PublishDelegation(ctx context.Context, d model.Delegation) error
+	},
+) error {
+	// TODO:
 	// Remove existing delegations
 	// err := db.DeleteDelegatorDelegations(delegator)
 	// if err != nil {
 	//	return err
 	// }
 
-	delegations, err := GetDelegatorDelegations(height, delegator, client)
+	// Get the delegations
+	res, err := client.DelegatorDelegations(
+		ctx,
+		&stakingtypes.QueryDelegatorDelegationsRequest{
+			DelegatorAddr: delegator,
+		},
+	)
 	if err != nil {
 		return err
 	}
 
-	for _, delegation := range delegations {
+	for _, delegation := range res.DelegationResponses {
+		del := model.NewDelegation(
+			delegation.Delegation.ValidatorAddress,
+			delegation.Delegation.DelegatorAddress,
+			height,
+			mapper.MapCoin(types.NewCoinFromCdk(delegation.Balance)),
+		)
+
 		// TODO: test IT
-		if err = broker.PublishDelegation(ctx, mapper.MapDelegation(delegation)); err != nil {
+		if err = broker.PublishDelegation(ctx, del); err != nil {
 			return err
 		}
 	}
 
 	return err
-}
-
-// RefreshDelegations returns a function that when called updates the delegations of the provided delegator.
-// In order to properly update the data, it removes all the existing delegations and stores new ones querying the gRPC
-func RefreshDelegations(ctx context.Context, height int64, delegator string, client stakingtypes.QueryClient,
-	broker rep.Broker, mapper tb.ToBroker) func() {
-	return func() {
-		err := UpdateDelegationsAndReplaceExisting(ctx, height, delegator, client, broker, mapper)
-		if err != nil {
-			// log.Error().Str("module", "staking").Err(err).
-			//	Str("operation", "refresh delegations").Msg("error while refreshing delegations")
-		}
-	}
-}
-
-func PublishDelegations(ctx context.Context, delegations []types.Delegation, broker rep.Broker, mapper tb.ToBroker) error {
-	accounts := make([]types.Account, len(delegations))
-	for i, delegation := range delegations {
-		accounts[i] = types.NewAccount(delegation.DelegatorAddress, delegation.Height)
-	}
-
-	// TODO: test it?
-	if err := broker.PublishAccounts(ctx, mapper.MapAccounts(accounts)); err != nil {
-		return err
-	}
-
-	// TODO: save to mongo?
-	// TODO: MapDelegations
-	// TODO: test it
-	for _, delegation := range delegations {
-		if err := broker.PublishDelegation(ctx, mapper.MapDelegation(delegation)); err != nil {
-			return err
-		}
-	}
-	return nil
 }

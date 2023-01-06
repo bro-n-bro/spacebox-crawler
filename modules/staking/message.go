@@ -2,15 +2,16 @@ package staking
 
 import (
 	"context"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
 	stakingutils "github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -20,19 +21,20 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 	switch msg := cosmosMsg.(type) {
 	case *stakingtypes.MsgCreateValidator:
-		return handleMsgCreateValidator(ctx, tx.Height, msg, m.cdc, m.broker, m.tbM)
+		return handleMsgCreateValidator(ctx, tx.Height, msg, m.cdc, m.tbM, m.broker)
 
-	case *stakingtypes.MsgEditValidator:
-		return handleEditValidator(tx.Height, msg)
+	// TODO: does it needed?
+	// case *stakingtypes.MsgEditValidator:
+	//	return handleEditValidator(tx.Height, msg)
 
 	case *stakingtypes.MsgDelegate:
-		return stakingutils.StoreDelegationFromMessage(ctx, tx, msg, m.client.StakingQueryClient, m.broker, m.tbM)
+		return stakingutils.StoreDelegationFromMessage(ctx, tx, msg, m.client.StakingQueryClient, m.tbM, m.broker)
 
 	case *stakingtypes.MsgBeginRedelegate:
-		return handleMsgBeginRedelegate(ctx, tx, index, msg, m.client.StakingQueryClient, m.broker, m.tbM)
+		return handleMsgBeginRedelegate(ctx, tx, index, msg, m.client.StakingQueryClient, m.tbM, m.broker)
 
 	case *stakingtypes.MsgUndelegate:
-		return handleMsgUndelegate(ctx, tx, index, msg, m.client.StakingQueryClient, m.broker, m.tbM)
+		return handleMsgUndelegate(ctx, tx, index, msg, m.client.StakingQueryClient, m.tbM, m.broker)
 	}
 
 	return nil
@@ -41,86 +43,114 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 // handleMsgCreateValidator handles properly a MsgCreateValidator instance by
 // saving into the database all the data associated to such validator
 func handleMsgCreateValidator(ctx context.Context, height int64, msg *stakingtypes.MsgCreateValidator, cdc codec.Codec,
-	broker rep.Broker, mapper tb.ToBroker) error {
+	mapper tb.ToBroker, broker broker) error {
 
-	err := stakingutils.StoreValidatorFromMsgCreateValidator(ctx, height, msg, cdc, broker, mapper)
-	if err != nil {
-		return err
-	}
-
-	// Save validator description
-	_, err = stakingutils.ConvertValidatorDescription(
-		msg.ValidatorAddress,
-		msg.Description,
-		height,
-	)
-	if err != nil {
-		return err
-	}
-
-	// err = db.SaveValidatorDescription(description)
-	// if err != nil {
-	//	return err
-	// }
-
-	// Save validator commission
-	// return db.SaveValidatorCommission(types.NewValidatorCommission(
-	//	msg.ValidatorAddress,
-	//	&msg.Commission.Rate,
-	//	&msg.MinSelfDelegation,
-	//	height,
-	// ))
-	return nil
+	return stakingutils.StoreValidatorFromMsgCreateValidator(ctx, height, msg, cdc, mapper, broker)
 }
 
-// handleEditValidator handles MsgEditValidator utils, updating the validator info and commission
-func handleEditValidator(height int64, msg *stakingtypes.MsgEditValidator) error {
-	// Save validator commission
-	// err := db.SaveValidatorCommission(types.NewValidatorCommission(
-	//	msg.ValidatorAddress,
-	//	msg.CommissionRate,
-	//	msg.MinSelfDelegation,
-	//	height,
-	// ))
-	// if err != nil {
-	//	return err
-	// }
-
-	// Save validator description
-	_, err := stakingutils.ConvertValidatorDescription(
-		msg.ValidatorAddress,
-		msg.Description,
-		height,
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// handleMsgBeginRedelegate handles a MsgBeginRedelegate storing the data inside the database
+// handleMsgBeginRedelegate handles and publishes a MsgBeginRedelegate data to broker
 func handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgBeginRedelegate,
-	client stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker,
-) error {
-	_, err := stakingutils.StoreRedelegationFromMessage(ctx, tx, index, msg, broker, mapper)
+	client stakingtypes.QueryClient, mapper tb.ToBroker, broker broker) error {
+
+	event, err := tx.FindEventByType(index, stakingtypes.EventTypeRedelegate)
+	if err != nil {
+		return err
+	}
+
+	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
+	if err != nil {
+		return err
+	}
+
+	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
+	if err != nil {
+		return err
+	}
+
+	redelegation := model.NewRedelegation(
+		tx.Height,
+		msg.DelegatorAddress,
+		msg.ValidatorSrcAddress,
+		msg.ValidatorDstAddress,
+		mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		completionTime,
+	)
+
+	// TODO: save to mongo?
+	// TODO: test it
+	err = broker.PublishRedelegation(ctx, redelegation)
+	if err != nil {
+		return err
+	}
+
+	redelegationMessage := model.NewRedelegationMessage(
+		tx.Height,
+		msg.DelegatorAddress,
+		msg.ValidatorSrcAddress,
+		msg.ValidatorDstAddress,
+		tx.TxHash,
+		mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		completionTime,
+	)
+
+	// TODO: test it
+	err = broker.PublishRedelegationMessage(ctx, redelegationMessage)
 	if err != nil {
 		return err
 	}
 
 	// Update the current delegations
-	return stakingutils.UpdateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress, client, broker, mapper)
+	return stakingutils.UpdateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress, client, mapper, broker)
 }
 
-// handleMsgUndelegate handles a MsgUndelegate storing the data inside the database
+// handleMsgUndelegate handles and publishes a MsgUndelegate data to broker
 func handleMsgUndelegate(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgUndelegate,
-	stakingClient stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker,
-) error {
-	_, err := stakingutils.StoreUnbondingDelegationFromMessage(ctx, tx, index, msg, broker, mapper)
+	stakingClient stakingtypes.QueryClient, mapper tb.ToBroker, broker broker) error {
+
+	event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond)
+	if err != nil {
+		return err
+	}
+
+	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
+	if err != nil {
+		return err
+	}
+
+	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
+	if err != nil {
+		return err
+	}
+
+	unbDelegation := model.NewUnbondingDelegation(
+		tx.Height,
+		msg.DelegatorAddress,
+		msg.ValidatorAddress,
+		mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		completionTime,
+	)
+
+	// TODO: test it
+	err = broker.PublishUnbondingDelegation(ctx, unbDelegation)
+	if err != nil {
+		return err
+	}
+
+	undDelegationMessage := model.NewUnbondingDelegationMessage(
+		tx.Height,
+		msg.DelegatorAddress,
+		msg.ValidatorAddress,
+		tx.TxHash,
+		mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		completionTime,
+	)
+
+	// TODO: test it
+	err = broker.PublishUnbondingDelegationMessage(ctx, undDelegationMessage)
 	if err != nil {
 		return err
 	}
 
 	// Update the current delegations
-	return stakingutils.UpdateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress, stakingClient, broker, mapper)
+	return stakingutils.UpdateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress, stakingClient, mapper, broker)
 }

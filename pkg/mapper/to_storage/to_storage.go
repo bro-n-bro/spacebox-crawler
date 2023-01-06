@@ -1,4 +1,4 @@
-package to_storage
+package tostorage
 
 type ToStorage struct {
 }

@@ -2,23 +2,35 @@ package utils
 
 import (
 	"context"
-	"time"
-
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	"github.com/hexy-dev/spacebox-crawler/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 // StoreValidatorFromMsgCreateValidator handles properly a MsgCreateValidator instance by
 // saving into the database all the data associated to such validator
-func StoreValidatorFromMsgCreateValidator(ctx context.Context, height int64, msg *stakingtypes.MsgCreateValidator,
-	cdc codec.Codec, broker rep.Broker, mapper tb.ToBroker) error {
+func StoreValidatorFromMsgCreateValidator(
+	ctx context.Context,
+	height int64,
+	msg *stakingtypes.MsgCreateValidator,
+	cdc codec.Codec,
+	mapper tb.ToBroker,
+	broker interface {
+		PublishAccounts(ctx context.Context, accounts []model.Account) error // FIXME: auth module
+		PublishValidators(ctx context.Context, vals []model.Validator) error
+		PublishValidatorsInfo(ctx context.Context, infos []model.ValidatorInfo) error
+		PublishUnbondingDelegation(ctx context.Context, ud model.UnbondingDelegation) error
+		PublishDelegation(ctx context.Context, d model.Delegation) error
+	},
+) error {
+
 	var pubKey cryptotypes.PubKey
 	err := cdc.UnpackAny(msg.Pubkey, &pubKey)
 	if err != nil {
@@ -40,41 +52,40 @@ func StoreValidatorFromMsgCreateValidator(ctx context.Context, height int64, msg
 		return err
 	}
 
-	desc, err := ConvertValidatorDescription(msg.ValidatorAddress, msg.Description, height)
-	if err != nil {
-		return err
-	}
-
-	_ = desc
+	// TODO: does it needed?
+	// desc, err := ConvertValidatorDescription(msg.ValidatorAddress, msg.Description, height)
+	// if err != nil {
+	//	return err
+	// }
 
 	// TODO: save to mongo?
 	// TODO: test it
-	if err = PublishValidatorsData(ctx, []types.StakingValidator{validator}, broker, mapper); err != nil {
+	if err = PublishValidatorsData(ctx, []types.StakingValidator{validator}, broker); err != nil {
 		return err
 	}
 
 	// TODO: save to mongo?
 	// TODO: test it
 	// Save the first self-delegation
-	if err = broker.PublishDelegation(ctx, mapper.MapDelegation(types.NewDelegation(
-		msg.DelegatorAddress,
+	if err = broker.PublishDelegation(ctx, model.NewDelegation(
 		msg.ValidatorAddress,
-		msg.Value,
+		msg.DelegatorAddress,
 		height,
-	))); err != nil {
+		mapper.MapCoin(types.NewCoinFromCdk(msg.Value)),
+	)); err != nil {
 		return err
 	}
 
-	// TODO:!!!!!
+	// FIXME: does it needed?
 	// Save the description
-	// err = db.SaveValidatorDescription(desc)
+	// err = broker.PublishValidatorDescription(desc)
 	// if err != nil {
 	//	return err
 	// }
 	//
 
 	// Save the commission
-	// err = db.SaveValidatorCommission(types.NewValidatorCommission(
+	// err = broker.publishValidatorCommission(types.NewValidatorCommission(
 	//	msg.ValidatorAddress,
 	//	&msg.Commission.Rate,
 	//	&msg.MinSelfDelegation,
@@ -85,7 +96,10 @@ func StoreValidatorFromMsgCreateValidator(ctx context.Context, height int64, msg
 
 // StoreDelegationFromMessage handles a MsgDelegate and saves the delegation inside the database
 func StoreDelegationFromMessage(ctx context.Context, tx *types.Tx, msg *stakingtypes.MsgDelegate,
-	stakingClient stakingtypes.QueryClient, broker rep.Broker, mapper tb.ToBroker) error {
+	stakingClient stakingtypes.QueryClient, mapper tb.ToBroker, broker interface {
+		PublishDelegation(ctx context.Context, d model.Delegation) error
+		PublishDelegationMessage(ctx context.Context, dm model.DelegationMessage) error
+	}) error {
 
 	header := grpcClient.GetHeightRequestHeader(tx.Height)
 	res, err := stakingClient.Delegation(
@@ -101,132 +115,28 @@ func StoreDelegationFromMessage(ctx context.Context, tx *types.Tx, msg *stakingt
 	}
 
 	// TODO: test it
-	d := types.NewDelegation(
-		res.DelegationResponse.Delegation.DelegatorAddress,
+	d := model.NewDelegation(
 		res.DelegationResponse.Delegation.ValidatorAddress,
-		res.DelegationResponse.Balance,
+		res.DelegationResponse.Delegation.DelegatorAddress,
 		tx.Height,
+		mapper.MapCoin(types.NewCoinFromCdk(res.DelegationResponse.Balance)),
 	)
 
-	if err = broker.PublishDelegation(ctx, mapper.MapDelegation(d)); err != nil {
+	if err = broker.PublishDelegation(ctx, d); err != nil {
 		return err
 	}
 
-	dm := types.NewDelegationMessage(
+	dm := model.NewDelegationMessage(
 		res.DelegationResponse.Delegation.DelegatorAddress,
 		res.DelegationResponse.Delegation.ValidatorAddress,
 		tx.TxHash,
-		res.DelegationResponse.Balance,
 		tx.Height,
+		mapper.MapCoin(types.NewCoinFromCdk(res.DelegationResponse.Balance)),
 	)
 
-	if err = broker.PublishDelegationMessage(ctx, mapper.MapDelegationMessage(dm)); err != nil {
+	if err = broker.PublishDelegationMessage(ctx, dm); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// StoreRedelegationFromMessage handles a MsgBeginRedelegate by saving the redelegation inside the database,
-// and returns the new redelegation instance
-func StoreRedelegationFromMessage(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgBeginRedelegate,
-	broker rep.Broker, mapper tb.ToBroker) (*types.Redelegation, error) {
-	event, err := tx.FindEventByType(index, stakingtypes.EventTypeRedelegate)
-	if err != nil {
-		return nil, err
-	}
-
-	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
-	if err != nil {
-		return nil, err
-	}
-
-	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
-	if err != nil {
-		return nil, err
-	}
-
-	redelegation := types.NewRedelegation(
-		msg.DelegatorAddress,
-		msg.ValidatorSrcAddress,
-		msg.ValidatorDstAddress,
-		msg.Amount,
-		completionTime,
-		tx.Height,
-	)
-
-	redelegationMessage := types.NewRedelegationMessage(
-		msg.DelegatorAddress,
-		msg.ValidatorSrcAddress,
-		msg.ValidatorDstAddress,
-		tx.TxHash,
-		types.NewCoinFromCdk(msg.Amount),
-		completionTime,
-		tx.Height)
-
-	// TODO: save to mongo?
-	// TODO: test it
-	err = broker.PublishRedelegation(ctx, mapper.MapRedelegation(redelegation))
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: test it
-	err = broker.PublishRedelegationMessage(ctx, mapper.MapRedelegationMessage(redelegationMessage))
-	if err != nil {
-		return nil, err
-	}
-
-	return &redelegation, err
-}
-
-// StoreUnbondingDelegationFromMessage handles a MsgUndelegate storing the new unbonding delegation inside the database,
-// and returns the new unbonding delegation instance
-func StoreUnbondingDelegationFromMessage(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgUndelegate,
-	broker rep.Broker, mapper tb.ToBroker) (*types.UnbondingDelegation, error) {
-	event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond)
-	if err != nil {
-		return nil, err
-	}
-
-	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
-	if err != nil {
-		return nil, err
-	}
-
-	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
-	if err != nil {
-		return nil, err
-	}
-
-	unbDelegation := types.NewUnbondingDelegation(
-		msg.DelegatorAddress,
-		msg.ValidatorAddress,
-		msg.Amount,
-		completionTime,
-		tx.Height,
-	)
-
-	// TODO: test it
-	err = broker.PublishUnbondingDelegation(ctx, mapper.MapUnbondingDelegation(unbDelegation))
-	if err != nil {
-		return nil, err
-	}
-
-	undDelegationMessage := types.NewUnbondingDelegationMessage(
-		msg.DelegatorAddress,
-		msg.ValidatorAddress,
-		tx.TxHash,
-		types.NewCoinFromCdk(msg.Amount),
-		completionTime,
-		tx.Height,
-	)
-
-	// TODO: test it
-	err = broker.PublishUnbondingDelegationMessage(ctx, mapper.MapUnbondingDelegationMessage(undDelegationMessage))
-	if err != nil {
-		return nil, err
-	}
-
-	return &unbDelegation, err
 }

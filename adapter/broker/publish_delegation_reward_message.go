@@ -3,9 +3,10 @@ package broker
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox/broker/model"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
+
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (b *Broker) PublishDelegationRewardMessage(ctx context.Context, drm model.DelegationRewardMessage) error {

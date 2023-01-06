@@ -26,8 +26,8 @@ func New(cfg Config, l zerolog.Logger) *Storage {
 func (s *Storage) Start(ctx context.Context) error {
 	opts := []*options.ClientOptions{
 		options.Client().ApplyURI(s.cfg.URI),
-		options.Client().SetMaxPoolSize(8),
-		options.Client().SetMaxConnecting(8),
+		options.Client().SetMaxPoolSize(s.cfg.MaxPoolSize),
+		options.Client().SetMaxConnecting(s.cfg.MaxConnecting),
 		options.Client().SetAuth(options.Credential{
 			AuthMechanism:           "",
 			AuthMechanismProperties: nil,

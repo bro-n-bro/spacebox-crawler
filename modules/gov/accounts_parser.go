@@ -1,12 +1,11 @@
 package bank
 
 import (
-	"github.com/hexy-dev/spacebox-crawler/modules/messages"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/hexy-dev/spacebox-crawler/modules/core"
 )
 
 // GovMessagesParser returns the list of all the accounts involved in the given
@@ -38,5 +37,5 @@ func GovMessagesParser(cdc codec.Codec, sdkMsg sdk.Msg) ([]string, error) {
 
 	}
 
-	return nil, messages.MessageNotSupported(sdkMsg)
+	return nil, core.MessageNotSupported(sdkMsg)
 }

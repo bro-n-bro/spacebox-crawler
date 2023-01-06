@@ -49,6 +49,7 @@ func (s *Storage) SetProcessedStatus(ctx context.Context, height int64) error {
 		{Key: "$set", Value: bson.D{
 			{Key: "status", Value: model.StatusProcessed},
 			{Key: "processed", Value: &processed},
+			{Key: "error_message", Value: ""},
 		}}}
 	_, err := s.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -57,11 +58,12 @@ func (s *Storage) SetProcessedStatus(ctx context.Context, height int64) error {
 	return nil
 }
 
-func (s *Storage) SetErrorStatus(ctx context.Context, height int64) error {
+func (s *Storage) SetErrorStatus(ctx context.Context, height int64, msg string) error {
 	filter := bson.D{{Key: "height", Value: height}}
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
 			{Key: "status", Value: model.StatusError},
+			{Key: "error_message", Value: msg},
 		}}}
 	_, err := s.collection.UpdateOne(ctx, filter, update)
 	if err != nil {
@@ -100,7 +102,10 @@ func (s *Storage) GetErrorBlockHeights(ctx context.Context) ([]int64, error) {
 }
 func (s *Storage) setErrorStatusForProcessing(ctx context.Context) error {
 	filter := bson.D{{Key: "status", Value: model.StatusProcessing}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "status", Value: model.StatusError}}}}
+	update := bson.D{{Key: "$set", Value: bson.D{
+		{Key: "status", Value: model.StatusError},
+		{Key: "error_message", Value: "dont have time to process"},
+	}}}
 	_, err := s.collection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		return err

@@ -24,5 +24,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, msg sdk.Msg, tx *
 	}
 
 	// msg.GetSigners() TODO:
-	return m.broker.PublishMessage(ctx, m.tbM.MapMessage(tx.TxHash, proto.MessageName(msg), tx.Signer, index, addresses, msgValue))
+
+	return m.broker.PublishMessage(ctx, m.tbM.MapMessage(tx.TxHash, proto.MessageName(msg), tx.Signer, index,
+		addresses, msgValue))
 }

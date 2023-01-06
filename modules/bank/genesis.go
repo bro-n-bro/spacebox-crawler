@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hexy-dev/spacebox/broker/model"
+
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
@@ -36,9 +38,10 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 			// skip already published
 			continue
 		}
-		ab := types.NewAccountBalance(balance.Address, balance.Coins, doc.InitialHeight)
+
+		ab := model.NewAccountBalance(balance.Address, doc.InitialHeight, m.tbM.MapCoins(types.NewCoinsFromCdk(balance.Coins)))
 		// TODO: test it
-		if err = m.broker.PublishAccountBalance(ctx, m.tbM.MapAccountBalance(ab)); err != nil {
+		if err = m.broker.PublishAccountBalance(ctx, ab); err != nil {
 			return err
 		}
 	}

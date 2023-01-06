@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	"github.com/hexy-dev/spacebox-crawler/modules/messages"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
 
@@ -13,21 +12,22 @@ import (
 )
 
 var (
-	_ types.Module            = &Module{}
-	_ types.BlockModule       = &Module{}
-	_ types.MessageModule     = &Module{}
-	_ types.TransactionModule = &Module{}
+	_ types.Module             = &Module{}
+	_ types.BlockHandler       = &Module{}
+	_ types.MessageHandler     = &Module{}
+	_ types.TransactionHandler = &Module{}
+	_ types.ValidatorsHandler  = &Module{}
 )
 
 type Module struct {
 	log    *zerolog.Logger
 	tbM    tb.ToBroker
-	broker rep.Broker
+	broker broker
 	cdc    codec.Codec
-	parser messages.MessageAddressesParser
+	parser MessageAddressesParser
 }
 
-func New(b rep.Broker, tbM tb.ToBroker, cdc codec.Codec, parser messages.MessageAddressesParser) *Module {
+func New(b rep.Broker, tbM tb.ToBroker, cdc codec.Codec, parser MessageAddressesParser) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "core").Logger()
 

@@ -1,11 +1,15 @@
 package types
 
 import (
+	"fmt"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -72,7 +76,7 @@ type (
 	// ProposalDeposit contains the data of a single deposit made towards a proposal
 	ProposalDeposit struct {
 		Depositor  string
-		Amount     sdk.Coins
+		Amount     Coins
 		ProposalID uint64
 		Height     int64
 	}
@@ -179,7 +183,7 @@ func NewProposalDeposit(proposalID uint64, depositor string, amount sdk.Coins, h
 	return ProposalDeposit{
 		ProposalID: proposalID,
 		Depositor:  depositor,
-		Amount:     amount,
+		Amount:     NewCoinsFromCdk(amount),
 		Height:     height,
 	}
 }
@@ -232,4 +236,23 @@ func NewProposalValidatorStatusSnapshot(proposalID uint64, validatorConsAddr str
 		ValidatorJailed:      validatorJailed,
 		Height:               height,
 	}
+}
+
+func GetProposalContentBytes(content govtypes.Content, cdc codec.Codec) ([]byte, error) {
+	// Encode the content properly
+	protoContent, ok := content.(proto.Message)
+	if !ok {
+		return nil, fmt.Errorf("invalid proposal content types: %T", content)
+	}
+
+	anyContent, err := codectypes.NewAnyWithValue(protoContent)
+	if err != nil {
+		return nil, err
+	}
+
+	contentBz, err := cdc.MarshalJSON(anyContent)
+	if err != nil {
+		return nil, err
+	}
+	return contentBz, nil
 }

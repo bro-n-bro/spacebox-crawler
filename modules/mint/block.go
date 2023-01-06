@@ -3,16 +3,16 @@ package mint
 import (
 	"context"
 
+	"github.com/hexy-dev/spacebox/broker/model"
+
 	"github.com/pkg/errors"
 
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
-
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
-func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctypes.ResultValidators) error {
+func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	paramsResp, err := m.client.MintQueryClient.Params(
 		ctx,
 		&minttypes.QueryParamsRequest{},
@@ -38,10 +38,19 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block, _ *tmctype
 
 	// m.client.MintQueryClient.AnnualProvisions()
 
+	params := model.NewMintParams(
+		block.Height,
+		paramsResp.Params.MintDenom,
+		paramsResp.Params.InflationRateChange.MustFloat64(),
+		paramsResp.Params.InflationMax.MustFloat64(),
+		paramsResp.Params.InflationMin.MustFloat64(),
+		paramsResp.Params.GoalBonded.MustFloat64(),
+		paramsResp.Params.BlocksPerYear,
+	)
+
 	// TODO: maybe check diff from mongo in my side?
-	params := types.NewMintParams(paramsResp.Params, block.Height)
 	// TODO: test it
-	err = m.broker.PublishMintParams(ctx, m.tbM.MapMingParams(params))
+	err = m.broker.PublishMintParams(ctx, params)
 	if err != nil {
 		return errors.Wrap(err, "PublishMintParams error")
 	}

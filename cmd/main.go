@@ -27,19 +27,19 @@ func main() {
 
 	// load environment variables based on .env file
 	if err := godotenv.Load(fileName); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	var cfg app.Config
 	// fill these variables into a struct
 	if err := env.Parse(&cfg); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// parse log level
 	logLevel, err := zerolog.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// create a logger instance

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,7 +22,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 	var parsedCount int
 	defer w.wg.Done()
 	defer func() {
-		log.Printf("worker: %d. parsed %d blocks", workerIndex, parsedCount)
+		w.log.Debug().Msgf("worker: %d. parsed %d blocks", workerIndex, parsedCount)
 	}()
 
 	for height := range w.heightCh {
@@ -116,7 +115,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 
 		if err := g.Wait(); err != nil {
 			w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
-			w.setErrorStatusWithLogging(ctx, height)
+			w.setErrorStatusWithLogging(ctx, height, err.Error())
 			continue
 		}
 
@@ -137,7 +136,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		txsRes, err := w.grpcClient.TxsOld(ctx, block.Block.Data.Txs)
 		if err != nil {
 			w.log.Error().Err(err).Msgf("get txs error: %v", err)
-			w.setErrorStatusWithLogging(ctx, height)
+			w.setErrorStatusWithLogging(ctx, height, err.Error())
 			continue
 		}
 		w.log.Debug().
@@ -152,14 +151,17 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		g, _ctx = errgroup.WithContext(ctx)
 
 		g.Go(func() error {
-			return w.processBlock(_ctx, b, vals)
+			return w.processValidators(_ctx, vals)
+		})
+		g.Go(func() error {
+			return w.processBlock(_ctx, b)
 		})
 		g.Go(func() error {
 			return w.processTxs(_ctx, txs)
 		})
 
 		if err := g.Wait(); err != nil {
-			w.setErrorStatusWithLogging(ctx, height)
+			w.setErrorStatusWithLogging(ctx, height, err.Error())
 			continue
 		}
 
@@ -185,10 +187,20 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc
 	return nil
 }
 
-func (w *Worker) processBlock(ctx context.Context, block *types.Block, vals *tmtcoreypes.ResultValidators) error {
+func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 	for _, m := range blockHandlers {
-		if err := m.HandleBlock(ctx, block, vals); err != nil {
+		if err := m.HandleBlock(ctx, block); err != nil {
 			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleBlock error: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (w *Worker) processValidators(ctx context.Context, vals *tmtcoreypes.ResultValidators) error {
+	for _, m := range validatorsHandlers {
+		if err := m.ValidatorsHandler(ctx, vals); err != nil {
+			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("ValidatorsHandler error: %v", err)
 			return err
 		}
 	}

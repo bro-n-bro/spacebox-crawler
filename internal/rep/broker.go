@@ -7,41 +7,48 @@ import (
 )
 
 type Broker interface {
+	// auth
 	PublishAccounts(context.Context, []model.Account) error
-	PublishValidators(ctx context.Context, vals []model.Validator) error
-	PublishValidatorsInfo(ctx context.Context, infos []model.ValidatorInfo) error
-	PublishValidatorsStatuses(ctx context.Context, statuses []model.ValidatorStatus) error
 
+	// core
 	PublishBlock(context.Context, model.Block) error
-	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
+	PublishMessage(ctx context.Context, message model.Message) error
+	PublishTransaction(ctx context.Context, tx model.Transaction) error
+
+	// bank
 	PublishSupply(context.Context, model.Supply) error
 	PublishSendMessage(context.Context, model.SendMessage) error
-	PublishDelegationRewardMessage(context.Context, model.DelegationRewardMessage) error
-	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
-	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
-	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
-	PublishRedelegation(context.Context, model.Redelegation) error
 	PublishMultiSendMessage(ctx context.Context, msm model.MultiSendMessage) error
-	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
-
 	PublishAccountBalance(ctx context.Context, ab model.AccountBalance) error
 
+	// distribution
+	PublishDelegationReward(context.Context, model.DelegationReward) error
+	PublishDelegationRewardMessage(context.Context, model.DelegationRewardMessage) error
+	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
+
 	// staking
+	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
 	PublishUnbondingDelegation(context.Context, model.UnbondingDelegation) error
 	PublishUnbondingDelegationMessage(context.Context, model.UnbondingDelegationMessage) error
 	PublishStakingParams(ctx context.Context, sp model.StakingParams) error
 	PublishDelegation(ctx context.Context, d model.Delegation) error
 	PublishDelegationMessage(ctx context.Context, dm model.DelegationMessage) error
+	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
+	PublishRedelegation(context.Context, model.Redelegation) error
 	PublishStakingPool(ctx context.Context, sp model.StakingPool) error
+	PublishValidators(ctx context.Context, vals []model.Validator) error
+	PublishValidatorsInfo(ctx context.Context, infos []model.ValidatorInfo) error
+	PublishValidatorsStatuses(ctx context.Context, statuses []model.ValidatorStatus) error
 
 	// mint module
 	PublishMintParams(ctx context.Context, mp model.MintParams) error
 	PublishAnnualProvision(ctx context.Context, ap model.AnnualProvision) error
 
 	// gov module
+	PublishProposal(ctx context.Context, proposal model.Proposal) error
 	PublishGovParams(ctx context.Context, params model.GovParams) error
-
-	// block_chain custom module
-	PublishMessage(ctx context.Context, message model.Message) error
-	PublishTransaction(ctx context.Context, tx model.Transaction) error
+	PublishProposalDeposit(ctx context.Context, pvm model.ProposalDeposit) error
+	PublishProposalDepositMessage(ctx context.Context, pvm model.ProposalDepositMessage) error
+	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
+	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
 }

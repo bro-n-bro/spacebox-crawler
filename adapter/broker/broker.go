@@ -20,8 +20,8 @@ type Broker struct {
 	log     *zerolog.Logger
 	p       *kafka.Producer
 	ac      *kafka.AdminClient
-	cfg     Config
 	modules []string
+	cfg     Config
 }
 
 func New(cfg Config, modules []string, l zerolog.Logger) *Broker {
@@ -39,7 +39,9 @@ func (b *Broker) Start(ctx context.Context) error {
 	}
 
 	// create an admin client connection
-	ac, err := kafka.NewAdminClient(&kafka.ConfigMap{"bootstrap.servers": b.cfg.ServerURL})
+	ac, err := kafka.NewAdminClient(&kafka.ConfigMap{
+		"bootstrap.servers": b.cfg.ServerURL,
+	})
 	if err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateAdminClient)
 		return errors.Wrap(err, MsgErrCreateAdminClient)
@@ -52,7 +54,7 @@ func (b *Broker) Start(ctx context.Context) error {
 	for i, topic := range topics {
 		kafkaTopics[i] = kafka.TopicSpecification{
 			Topic:         topic,
-			NumPartitions: 1,
+			NumPartitions: b.cfg.PartitionsCount,
 		}
 		// kafkaPartitions[i] = kafka.PartitionsSpecification{
 		//	Topic:      topic,
@@ -66,6 +68,23 @@ func (b *Broker) Start(ctx context.Context) error {
 		b.log.Error().Err(err).Msg(MsgErrCreateTopics)
 		return errors.Wrap(err, MsgErrCreateTopics)
 	}
+	//
+	// for _, result := range topicRes {
+	//	if result.Error.Code() == kafka.ErrTopicAlreadyExists {
+	//		partRes, err := ac.CreatePartitions(ctx, []kafka.PartitionsSpecification{{
+	//			Topic:      result.Topic,
+	//			IncreaseTo: b.cfg.PartitionsCount,
+	//		},
+	//		})
+	//		if err != nil {
+	//			b.log.Error().Err(err).Msg(MsgErrCreatePartitions)
+	//			return errors.Wrap(err, MsgErrCreatePartitions)
+	//		}
+	//		if partRes[0].Error.Code() == kafka.ErrInvalidPartitions {
+	//			return errors.New("You cannot decrease partitions!")
+	//		}
+	//	}
+	// }
 
 	// create init partitions if needed
 	// res, err := ac.CreatePartitions(ctx, kafkaPartitions)
@@ -76,7 +95,9 @@ func (b *Broker) Start(ctx context.Context) error {
 	// }
 
 	// create a producer connection
-	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": b.cfg.ServerURL})
+	p, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": b.cfg.ServerURL,
+	})
 	if err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateProducer)
 		return errors.New(MsgErrCreateProducer)
@@ -118,7 +139,6 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	err := b.p.Produce(&kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: topic, Partition: kafka.PartitionAny},
 		Value:          data,
-		//Headers:        []kafka.Header{{Key: "myTestHeader", Value: []byte("header values are binary")}},
 	}, nil)
 
 	if kafkaError, ok := err.(kafka.Error); ok && kafkaError.Code() == kafka.ErrQueueFull {
