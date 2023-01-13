@@ -49,8 +49,12 @@ func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan tmtcoreype
 			w.log.Info().Msg("stop new block listener")
 			return
 		case e := <-eventCh:
-			newBlock := e.Data.(tmtypes.EventDataNewBlock).Block
-			height := newBlock.Header.Height
+			newBlock, ok := e.Data.(tmtypes.EventDataNewBlock)
+			if !ok {
+				w.log.Warn().Msg("failed to cast ws event to EventDataNewBlock type")
+				continue
+			}
+			height := newBlock.Block.Header.Height
 			w.log.Info().Int64("height", height).Msgf("enqueueing new block with height: %v", height)
 			w.heightCh <- height
 		}

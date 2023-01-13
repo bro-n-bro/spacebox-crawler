@@ -37,11 +37,11 @@ func (c *Client) Start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
 		if err = rpcCli.Start(); err != nil {
 			return err
 		}
 	} else {
-		// return nil
 		rpcCli, err = tmHttp.NewWithClient(c.cfg.Host, "", httpCli)
 		if err != nil {
 			return err
@@ -58,11 +58,13 @@ func (c *Client) Start(ctx context.Context) error {
 
 func (c *Client) Stop(ctx context.Context) error {
 	c.HTTPClient.CloseIdleConnections()
+
 	if c.cfg.WSEnabled {
 		if err := c.RPCClient.Stop(); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 

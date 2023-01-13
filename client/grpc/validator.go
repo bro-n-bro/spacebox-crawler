@@ -10,23 +10,25 @@ import (
 	tmctypes "github.com/tendermint/tendermint/types"
 )
 
+const (
+	defaultLimit = 150
+)
+
 func (c *Client) Validators(ctx context.Context, height int64) (*tmccoretypes.ResultValidators, error) {
 	vals := &tmccoretypes.ResultValidators{
 		BlockHeight: height,
 	}
 
 	var (
-		offset uint64
-		stop   bool
+		nextKey []byte
 	)
 
-	for !stop {
+	for {
 		respPb, err := c.TmsService.GetValidatorSetByHeight(ctx, &tmservice.GetValidatorSetByHeightRequest{
 			Height: height,
 			Pagination: &query.PageRequest{
-				Key:        nil,
-				Offset:     offset,
-				Limit:      100,
+				Key:        nextKey,
+				Limit:      defaultLimit,
 				CountTotal: true,
 			},
 		})
@@ -34,18 +36,22 @@ func (c *Client) Validators(ctx context.Context, height int64) (*tmccoretypes.Re
 			return nil, err
 		}
 
+		nextKey = respPb.Pagination.NextKey
+
 		vals.Total = int(respPb.Pagination.Total)
-		if offset == 0 {
+		if len(nextKey) == 0 { // first iteration
 			vals.Validators = make([]*tmctypes.Validator, 0, vals.Total)
 		}
 
 		for _, val := range respPb.Validators {
 			vals.Validators = append(vals.Validators, convertValidator(val))
 		}
+
 		vals.Count += len(respPb.Validators)
 
-		offset += 100
-		stop = vals.Count == vals.Total
+		if len(respPb.Pagination.NextKey) == 0 {
+			break
+		}
 	}
 
 	return vals, nil

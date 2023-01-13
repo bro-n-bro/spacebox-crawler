@@ -3,12 +3,11 @@ package utils
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 // UpdateDelegationsAndReplaceExisting updates the delegations of the given delegator by querying them at the
@@ -31,7 +30,7 @@ func UpdateDelegationsAndReplaceExisting(
 	// }
 
 	// Get the delegations
-	res, err := client.DelegatorDelegations(
+	respPb, err := client.DelegatorDelegations(
 		ctx,
 		&stakingtypes.QueryDelegatorDelegationsRequest{
 			DelegatorAddr: delegator,
@@ -41,16 +40,14 @@ func UpdateDelegationsAndReplaceExisting(
 		return err
 	}
 
-	for _, delegation := range res.DelegationResponses {
-		del := model.NewDelegation(
-			delegation.Delegation.ValidatorAddress,
-			delegation.Delegation.DelegatorAddress,
-			height,
-			mapper.MapCoin(types.NewCoinFromCdk(delegation.Balance)),
-		)
-
+	for _, delegation := range respPb.DelegationResponses {
 		// TODO: test IT
-		if err = broker.PublishDelegation(ctx, del); err != nil {
+		if err = broker.PublishDelegation(ctx, model.Delegation{
+			OperatorAddress:  delegation.Delegation.ValidatorAddress,
+			DelegatorAddress: delegation.Delegation.DelegatorAddress,
+			Height:           height,
+			Coin:             mapper.MapCoin(types.NewCoinFromCdk(delegation.Balance)),
+		}); err != nil {
 			return err
 		}
 	}

@@ -18,19 +18,28 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx
 		// todo: think about how to collect total amount from outputs
 		if len(msg.Inputs) > 0 {
 			addressFrom := msg.Inputs[0].Address
+
 			for _, to := range msg.Outputs {
-				if err := m.broker.PublishMultiSendMessage(ctx, model.NewMultiSendMessage(tx.Height, addressFrom,
-					to.Address, tx.TxHash, m.tbM.MapCoins(types.NewCoinsFromCdk(to.Coins)))); err != nil {
+				if err := m.broker.PublishMultiSendMessage(ctx, model.MultiSendMessage{
+					Coins:       m.tbM.MapCoins(types.NewCoinsFromCdk(to.Coins)),
+					AddressFrom: addressFrom,
+					AddressTo:   to.Address,
+					TxHash:      tx.TxHash,
+					Height:      tx.Height,
+				}); err != nil {
 					return err
 				}
 			}
 		}
 	case *banktypes.MsgSend:
-		msgSend := model.NewSendMessage(tx.Height, msg.FromAddress, msg.ToAddress, tx.TxHash,
-			m.tbM.MapCoins(types.NewCoinsFromCdk(msg.Amount)))
-
 		// TODO: test it
-		if err := m.broker.PublishSendMessage(ctx, msgSend); err != nil {
+		if err := m.broker.PublishSendMessage(ctx, model.SendMessage{
+			Coins:       m.tbM.MapCoins(types.NewCoinsFromCdk(msg.Amount)),
+			AddressFrom: msg.FromAddress,
+			AddressTo:   msg.ToAddress,
+			TxHash:      tx.TxHash,
+			Height:      tx.Height,
+		}); err != nil {
 			return err
 		}
 	}

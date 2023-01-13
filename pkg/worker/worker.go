@@ -9,6 +9,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
 
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
@@ -17,31 +19,39 @@ import (
 	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
-type Worker struct {
-	log *zerolog.Logger
-	wg  *sync.WaitGroup
+type (
+	Worker struct {
+		log *zerolog.Logger
+		wg  *sync.WaitGroup
 
-	tsM        ts.ToStorage
-	storage    rep.Storage
-	cdc        codec.Codec
-	tbM        tb.ToBroker
-	broker     rep.Broker
-	rpcClient  rep.RPCClient
-	grpcClient rep.GrpcClient
+		tsM        ts.ToStorage
+		storage    rep.Storage
+		cdc        codec.Codec
+		tbM        tb.ToBroker
+		broker     rep.Broker
+		rpcClient  rep.RPCClient
+		grpcClient rep.GrpcClient
 
-	stopProcessing         func()
-	stopWsListener         func()
-	stopEnqueueHeight      func()
-	stopEnqueueErrorBlocks func()
+		metrics *metrics
 
-	heightCh chan int64
+		stopProcessing         func()
+		stopWsListener         func()
+		stopEnqueueHeight      func()
+		stopEnqueueErrorBlocks func()
 
-	modules []types.Module
-	cfg     Config
-}
+		heightCh chan int64
+
+		modules []types.Module
+		cfg     Config
+	}
+	metrics struct {
+		durMetric *prometheus.HistogramVec
+	}
+)
 
 func New(cfg Config, l zerolog.Logger, b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient,
 	modules []types.Module, s rep.Storage, marshaler codec.Codec, tbM tb.ToBroker, tsM ts.ToStorage) *Worker {
+
 	l = l.With().Str("cmp", "worker").Logger()
 
 	w := &Worker{
@@ -62,12 +72,22 @@ func New(cfg Config, l zerolog.Logger, b rep.Broker, rpcCli rep.RPCClient, grpcC
 }
 
 func (w *Worker) Start(_ context.Context) error {
+	if w.cfg.MetricsEnabled {
+		w.metrics = &metrics{
+			durMetric: promauto.NewHistogramVec(prometheus.HistogramOpts{
+				Namespace: "spacebox_crawler",
+				Name:      "process_duration",
+				Help:      "Duration of parsed blockchain objects",
+			}, []string{"type"}),
+		}
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	w.stopProcessing = cancel
 
 	// workers count must be greater than 0
 	workersCount := w.cfg.WorkersCount
-	if workersCount == 0 {
+	if workersCount <= 0 {
 		workersCount = 1
 	}
 
@@ -77,6 +97,7 @@ func (w *Worker) Start(_ context.Context) error {
 	stopHeight := w.cfg.StopHeight
 	if stopHeight == 0 {
 		var err error
+
 		stopHeight, err = w.rpcClient.GetLastBlockHeight(ctx)
 		if err != nil {
 			return err
@@ -93,7 +114,7 @@ func (w *Worker) Start(_ context.Context) error {
 	if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() {
 		eventCh, err := w.rpcClient.SubscribeNewBlocks(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to subscribe to new blocks: %s", err)
+			return fmt.Errorf("failed to subscribe to new blocks: %w", err)
 		}
 		go w.enqueueNewBlocks(ctx, eventCh)
 	}
@@ -118,7 +139,9 @@ func (w *Worker) Start(_ context.Context) error {
 		}
 		wg.Wait()
 		w.log.Info().Msg("process block height done! stop program")
-		_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+		if err := syscall.Kill(syscall.Getpid(), syscall.SIGINT); err != nil {
+			panic(err)
+		}
 	}(wg)
 
 	return nil
@@ -131,12 +154,17 @@ func (w *Worker) Stop(_ context.Context) error {
 	if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() {
 		w.stopWsListener()
 	}
-	time.Sleep(1 * time.Second) // XXX save from send to closed channel
+
+	t := time.NewTicker(2 * time.Second)
+	defer t.Stop()
+	<-t.C // XXX save from send to closed channel
+
 	close(w.heightCh)
 	w.wg.Wait()
 	w.stopProcessing()
 
 	w.log.Info().Msg("stop workers")
+
 	return nil
 }
 
@@ -144,12 +172,14 @@ func (w *Worker) pingStorage(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return errors.New("worker ping storage timeout")
-		default:
-			time.Sleep(1 * time.Second)
+		case <-ticker.C:
 			if err := w.storage.Ping(ctx); err == nil {
 				return nil
 			}

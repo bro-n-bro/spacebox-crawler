@@ -3,11 +3,10 @@ package auth
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *types.Tx) error {
@@ -19,8 +18,10 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *type
 
 	for _, addr := range addresses {
 		// TODO: test it
-		err = m.broker.PublishAccounts(ctx, []model.Account{model.NewAccount(addr, tx.Height)})
-		if err != nil {
+		if err = m.broker.PublishAccount(ctx, model.Account{
+			Address: addr,
+			Height:  tx.Height,
+		}); err != nil {
 			return err
 		}
 	}

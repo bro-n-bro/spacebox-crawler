@@ -3,11 +3,10 @@ package core
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/hexy-dev/spacebox-crawler/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, msg sdk.Msg, tx *types.Tx) error {
@@ -25,6 +24,6 @@ func (m *Module) HandleMessage(ctx context.Context, index int, msg sdk.Msg, tx *
 
 	// msg.GetSigners() TODO:
 
-	return m.broker.PublishMessage(ctx, m.tbM.MapMessage(tx.TxHash, proto.MessageName(msg), tx.Signer, index,
-		addresses, msgValue))
+	return m.broker.PublishMessage(ctx,
+		m.tbM.MapMessage(tx.TxHash, proto.MessageName(msg), tx.Signer, index, addresses, msgValue))
 }

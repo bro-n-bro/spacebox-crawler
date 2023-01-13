@@ -3,15 +3,14 @@ package distribution
 import (
 	"os"
 
-	"github.com/hexy-dev/spacebox-crawler/modules/core"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/rs/zerolog"
 
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules/core"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/rs/zerolog"
 )
 
 var (
@@ -29,9 +28,7 @@ type Module struct {
 	parser core.MessageAddressesParser
 }
 
-func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec,
-	parser core.MessageAddressesParser) *Module {
-
+func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, parser core.MessageAddressesParser) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "distribution").Logger()
 

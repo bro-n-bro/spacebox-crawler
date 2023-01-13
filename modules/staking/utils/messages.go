@@ -7,6 +7,8 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
@@ -23,17 +25,16 @@ func StoreValidatorFromMsgCreateValidator(
 	cdc codec.Codec,
 	mapper tb.ToBroker,
 	broker interface {
-		PublishAccounts(ctx context.Context, accounts []model.Account) error // FIXME: auth module
-		PublishValidators(ctx context.Context, vals []model.Validator) error
-		PublishValidatorsInfo(ctx context.Context, infos []model.ValidatorInfo) error
+		PublishAccount(ctx context.Context, account model.Account) error // FIXME: auth module
+		PublishValidator(ctx context.Context, val model.Validator) error
+		PublishValidatorInfo(ctx context.Context, info model.ValidatorInfo) error
 		PublishUnbondingDelegation(ctx context.Context, ud model.UnbondingDelegation) error
 		PublishDelegation(ctx context.Context, d model.Delegation) error
 	},
 ) error {
 
 	var pubKey cryptotypes.PubKey
-	err := cdc.UnpackAny(msg.Pubkey, &pubKey)
-	if err != nil {
+	if err := cdc.UnpackAny(msg.Pubkey, &pubKey); err != nil {
 		return err
 	}
 
@@ -67,12 +68,12 @@ func StoreValidatorFromMsgCreateValidator(
 	// TODO: save to mongo?
 	// TODO: test it
 	// Save the first self-delegation
-	if err = broker.PublishDelegation(ctx, model.NewDelegation(
-		msg.ValidatorAddress,
-		msg.DelegatorAddress,
-		height,
-		mapper.MapCoin(types.NewCoinFromCdk(msg.Value)),
-	)); err != nil {
+	if err = broker.PublishDelegation(ctx, model.Delegation{
+		OperatorAddress:  msg.ValidatorAddress,
+		DelegatorAddress: msg.DelegatorAddress,
+		Height:           height,
+		Coin:             mapper.MapCoin(types.NewCoinFromCdk(msg.Value)),
+	}); err != nil {
 		return err
 	}
 
@@ -95,15 +96,35 @@ func StoreValidatorFromMsgCreateValidator(
 }
 
 // StoreDelegationFromMessage handles a MsgDelegate and saves the delegation inside the database
-func StoreDelegationFromMessage(ctx context.Context, tx *types.Tx, msg *stakingtypes.MsgDelegate,
-	stakingClient stakingtypes.QueryClient, mapper tb.ToBroker, broker interface {
+func StoreDelegationFromMessage(
+	ctx context.Context,
+	tx *types.Tx,
+	msg *stakingtypes.MsgDelegate,
+	stakingClient stakingtypes.QueryClient,
+	mapper tb.ToBroker,
+	broker interface {
 		PublishDelegation(ctx context.Context, d model.Delegation) error
 		PublishDelegationMessage(ctx context.Context, dm model.DelegationMessage) error
-	}) error {
+	},
+) error {
+
+	// TODO: test it
+	if err := broker.PublishDelegationMessage(ctx, model.DelegationMessage{
+		Delegation: model.Delegation{
+			OperatorAddress:  msg.ValidatorAddress,
+			DelegatorAddress: msg.DelegatorAddress,
+			Coin:             mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Height:           tx.Height,
+		},
+		TxHash: tx.TxHash,
+	}); err != nil {
+		return err
+	}
 
 	header := grpcClient.GetHeightRequestHeader(tx.Height)
-	res, err := stakingClient.Delegation(
-		context.Background(),
+
+	respPb, err := stakingClient.Delegation(
+		ctx,
 		&stakingtypes.QueryDelegationRequest{
 			DelegatorAddr: msg.DelegatorAddress,
 			ValidatorAddr: msg.ValidatorAddress,
@@ -111,30 +132,24 @@ func StoreDelegationFromMessage(ctx context.Context, tx *types.Tx, msg *stakingt
 		header,
 	)
 	if err != nil {
-		return err
+		s, ok := status.FromError(err)
+		if !ok || s.Code() != codes.NotFound {
+			return err
+		}
+	}
+
+	var coin model.Coin
+	if err == nil {
+		coin = mapper.MapCoin(types.NewCoinFromCdk(respPb.DelegationResponse.Balance))
 	}
 
 	// TODO: test it
-	d := model.NewDelegation(
-		res.DelegationResponse.Delegation.ValidatorAddress,
-		res.DelegationResponse.Delegation.DelegatorAddress,
-		tx.Height,
-		mapper.MapCoin(types.NewCoinFromCdk(res.DelegationResponse.Balance)),
-	)
-
-	if err = broker.PublishDelegation(ctx, d); err != nil {
-		return err
-	}
-
-	dm := model.NewDelegationMessage(
-		res.DelegationResponse.Delegation.DelegatorAddress,
-		res.DelegationResponse.Delegation.ValidatorAddress,
-		tx.TxHash,
-		tx.Height,
-		mapper.MapCoin(types.NewCoinFromCdk(res.DelegationResponse.Balance)),
-	)
-
-	if err = broker.PublishDelegationMessage(ctx, dm); err != nil {
+	if err = broker.PublishDelegation(ctx, model.Delegation{
+		OperatorAddress:  msg.ValidatorAddress,
+		DelegatorAddress: msg.DelegatorAddress,
+		Height:           tx.Height,
+		Coin:             coin,
+	}); err != nil {
 		return err
 	}
 

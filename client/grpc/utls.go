@@ -13,5 +13,6 @@ func GetHeightRequestHeader(height int64) grpc.CallOption {
 	header := metadata.New(map[string]string{
 		grpctypes.GRPCBlockHeightHeader: strconv.FormatInt(height, 10),
 	})
+
 	return grpc.Header(&header)
 }

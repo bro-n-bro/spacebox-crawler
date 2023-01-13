@@ -8,7 +8,7 @@ import (
 
 type Broker interface {
 	// auth
-	PublishAccounts(context.Context, []model.Account) error
+	PublishAccount(context.Context, model.Account) error
 
 	// core
 	PublishBlock(context.Context, model.Block) error
@@ -36,9 +36,9 @@ type Broker interface {
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
 	PublishRedelegation(context.Context, model.Redelegation) error
 	PublishStakingPool(ctx context.Context, sp model.StakingPool) error
-	PublishValidators(ctx context.Context, vals []model.Validator) error
-	PublishValidatorsInfo(ctx context.Context, infos []model.ValidatorInfo) error
-	PublishValidatorsStatuses(ctx context.Context, statuses []model.ValidatorStatus) error
+	PublishValidator(ctx context.Context, val model.Validator) error
+	PublishValidatorInfo(ctx context.Context, info model.ValidatorInfo) error
+	PublishValidatorStatus(ctx context.Context, status model.ValidatorStatus) error
 
 	// mint module
 	PublishMintParams(ctx context.Context, mp model.MintParams) error

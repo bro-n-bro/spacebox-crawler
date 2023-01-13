@@ -1,8 +1,9 @@
 package model
 
-import "time"
-
-type Status uint8
+import (
+	"log"
+	"time"
+)
 
 const (
 	StatusProcessing Status = 1 + iota
@@ -10,12 +11,30 @@ const (
 	StatusError
 )
 
-type Block struct {
-	Processed    *time.Time `bson:"processed"`
-	Created      time.Time
-	ErrorMessage string `bson:"error_message"`
-	Height       int64  `bson:"height"`
-	Status       Status
+type (
+	Status uint8
+
+	Block struct {
+		Processed    *time.Time `bson:"processed"`
+		Created      time.Time
+		ErrorMessage string `bson:"error_message"`
+		Height       int64  `bson:"height"`
+		Status       Status
+	}
+)
+
+func (s Status) ToString() string {
+	switch s {
+	case StatusProcessing:
+		return "processing"
+	case StatusProcessed:
+		return "processed"
+	case StatusError:
+		return "error"
+	}
+
+	log.Fatalf("uncnown status:%v", s)
+	return ""
 }
 
 func (s Status) IsProcessing() bool { return s == StatusProcessing }

@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/hexy-dev/spacebox-crawler/modules/utils"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
@@ -19,7 +18,10 @@ func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appSt
 
 	for _, acc := range accounts {
 		// TODO: test it
-		if err = m.broker.PublishAccounts(ctx, []model.Account{model.NewAccount(acc.Address, acc.Height)}); err != nil {
+		if err = m.broker.PublishAccount(ctx, model.Account{
+			Address: acc.Address,
+			Height:  acc.Height,
+		}); err != nil {
 			return err
 		}
 	}

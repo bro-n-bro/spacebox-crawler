@@ -4,13 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/hexy-dev/spacebox-crawler/modules/utils"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 // HandleGenesis handles the genesis state of the x/bank module in order to store the initial values
@@ -33,15 +32,16 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	}
 
 	for _, balance := range bankState.Balances {
-		_, ok := uniqueAddresses[balance.Address]
-		if !ok {
-			// skip already published
+		if _, ok := uniqueAddresses[balance.Address]; !ok { // skip already published
 			continue
 		}
 
-		ab := model.NewAccountBalance(balance.Address, doc.InitialHeight, m.tbM.MapCoins(types.NewCoinsFromCdk(balance.Coins)))
 		// TODO: test it
-		if err = m.broker.PublishAccountBalance(ctx, ab); err != nil {
+		if err = m.broker.PublishAccountBalance(ctx, model.AccountBalance{
+			Address: balance.Address,
+			Height:  doc.InitialHeight,
+			Coins:   m.tbM.MapCoins(types.NewCoinsFromCdk(balance.Coins)),
+		}); err != nil {
 			return err
 		}
 	}

@@ -6,10 +6,10 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/pkg/errors"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -46,13 +46,11 @@ type (
 		ConsAddr   string
 		ConsPubkey string
 	}
-
-	MessageStruct struct {
-	}
 )
 
 func NewBlock(height int64, hash, proposerAddress string, txNum int, totalGas uint64, timestamp time.Time,
 	evidence tmtypes.EvidenceData) *Block {
+
 	return &Block{
 		Height:          height,
 		Hash:            hash,
@@ -83,14 +81,10 @@ func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse, cdc codec.Codec) Txs {
 		var signer string
 		if tx.Tx.AuthInfo != nil {
 			if len(tx.Tx.AuthInfo.SignerInfos) > 0 {
-				if tx.TxResponse.TxHash == "46798FFA86453A448D0FB0484F5345317F6DA6B2715A769EF5981FE5897A8648" {
-					println("@")
-				}
 				var pk cryptotypes.PubKey
 				if err := cdc.UnpackAny(tx.Tx.AuthInfo.SignerInfos[0].PublicKey, &pk); err == nil {
 					signer, _ = ConvertPubKeyToBech32String(pk)
 				}
-				// hash46798FFA86453A448D0FB0484F5345317F6DA6B2715A769EF5981FE5897A8648
 			}
 		}
 
@@ -100,6 +94,7 @@ func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse, cdc codec.Codec) Txs {
 			Signer:     signer,
 		}
 	}
+
 	return res
 }
 
@@ -107,11 +102,12 @@ func NewValidatorsFromTmValidator(tmVals *tmctypes.ResultValidators) Validators 
 	res := make(Validators, 0, len(tmVals.Validators))
 	for _, val := range tmVals.Validators {
 		consAddr := sdk.ConsAddress(val.Address).String()
-		consPubKey, err := ConvertValidatorPubKeyToBech32String(val.PubKey)
-		if err == nil {
+		if consPubKey, err := ConvertValidatorPubKeyToBech32String(val.PubKey); err == nil {
+			// we need only valid validators
 			res = append(res, NewValidator(consAddr, consPubKey))
 		}
 	}
+
 	return res
 }
 
@@ -138,6 +134,7 @@ func (txs Txs) TotalGas() (totalGas uint64) {
 	for _, tx := range txs {
 		totalGas += uint64(tx.GasUsed)
 	}
+
 	return totalGas
 }
 
@@ -151,7 +148,7 @@ func (tx Tx) FindEventByType(index int, eventType string) (sdk.StringEvent, erro
 		}
 	}
 
-	return sdk.StringEvent{}, fmt.Errorf("no %s event found inside tx with hash %s", eventType, tx.TxHash)
+	return sdk.StringEvent{}, errors.New(fmt.Sprintf("no %s event found inside tx with hash %s", eventType, tx.TxHash))
 }
 
 // FindAttributeByKey searches inside the specified event of the given tx to find the attribute having the given key.
@@ -163,7 +160,7 @@ func (tx Tx) FindAttributeByKey(event sdk.StringEvent, attrKey string) (string, 
 		}
 	}
 
-	return "", fmt.Errorf("no event with attribute %s found inside tx with hash %s", attrKey, tx.TxHash)
+	return "", errors.New(fmt.Sprintf("no event with attribute %s found inside tx with hash %s", attrKey, tx.TxHash))
 }
 
 // Successful tells whether this tx is successful or not

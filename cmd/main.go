@@ -4,10 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/rs/zerolog"
-
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
+	"github.com/rs/zerolog"
 
 	"github.com/hexy-dev/spacebox-crawler/internal/app"
 	executor "github.com/hexy-dev/spacebox-crawler/pkg/app"

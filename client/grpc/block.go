@@ -23,6 +23,7 @@ func (c *Client) Block(ctx context.Context, height int64) (*tmccoretypes.ResultB
 	if err != nil {
 		return nil, err
 	}
+
 	blockID, err := tmctypes.BlockIDFromProto(resp.BlockId)
 	if err != nil {
 		return nil, err

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/modules/utils"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -28,15 +28,13 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return m.handleMsgDeposit(ctx, tx, msg)
 
 	case *govtypesv1beta1.MsgVote:
-		pvm := model.NewProposalVoteMessage(
-			msg.ProposalId,
-			tx.Height,
-			msg.Voter,
-			msg.Option.String(),
-		)
-
 		// TODO: TEST IT
-		return m.broker.PublishProposalVoteMessage(ctx, pvm)
+		return m.broker.PublishProposalVoteMessage(ctx, model.ProposalVoteMessage{
+			ProposalID:   msg.ProposalId,
+			Height:       tx.Height,
+			VoterAddress: msg.Voter,
+			Option:       msg.Option.String(),
+		})
 	}
 
 	return nil
@@ -63,7 +61,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 	}
 
 	// Get the proposal
-	resPb, err := m.client.GovQueryClient.Proposal(
+	respPb, err := m.client.GovQueryClient.Proposal(
 		ctx,
 		&govtypesv1beta1.QueryProposalRequest{ProposalId: proposalID},
 	)
@@ -71,44 +69,58 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		return err
 	}
 
-	proposal := resPb.Proposal
+	proposal := respPb.Proposal
 
 	// Unpack the content
 	var content govtypesv1beta1.Content
-	err = m.cdc.UnpackAny(proposal.Content, &content)
-	if err != nil {
+	if err = m.cdc.UnpackAny(proposal.Content, &content); err != nil {
 		return err
 	}
 
 	// publish the deposit
 	// TODO: test it
-	if err = m.broker.PublishProposalDeposit(ctx,
-		model.NewProposalDeposit(proposal.ProposalId, tx.Height, msg.Proposer,
-			m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)))); err != nil {
-
+	if err = m.broker.PublishProposalDeposit(ctx, model.ProposalDeposit{
+		ProposalID:       proposal.ProposalId,
+		Height:           tx.Height,
+		DepositorAddress: msg.Proposer,
+		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+	}); err != nil {
 		return err
 	}
 
 	// TODO: test it
-	if err = m.broker.PublishProposalDepositMessage(ctx,
-		model.NewProposalDepositMessage(proposal.ProposalId, tx.Height, msg.Proposer, tx.TxHash,
-			m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)))); err != nil {
-
+	if err = m.broker.PublishProposalDepositMessage(ctx, model.ProposalDepositMessage{
+		ProposalDeposit: model.ProposalDeposit{
+			ProposalID:       proposal.ProposalId,
+			Height:           tx.Height,
+			DepositorAddress: msg.Proposer,
+			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		},
+		TxHash: tx.TxHash,
+	}); err != nil {
 		return err
 	}
 
-	contentBytes, err := types.GetProposalContentBytes(content, m.cdc)
+	contentBytes, err := utils.GetProposalContentBytes(content, m.cdc)
 	if err != nil {
 		return err
 	}
 
 	// TODO: test it
-	if err = m.broker.PublishProposal(ctx,
-		model.NewProposal(
-			proposal.ProposalId, content.GetTitle(), content.GetDescription(),
-			proposal.ProposalRoute(), proposal.ProposalType(), msg.Proposer, proposal.Status.String(), contentBytes,
-			proposal.SubmitTime, proposal.DepositEndTime, proposal.VotingStartTime, proposal.VotingEndTime),
-	); err != nil {
+	if err = m.broker.PublishProposal(ctx, model.Proposal{
+		ID:              proposal.ProposalId,
+		Title:           content.GetTitle(),
+		Description:     content.GetDescription(),
+		ProposalRoute:   proposal.ProposalRoute(),
+		ProposalType:    proposal.ProposalType(),
+		ProposerAddress: msg.Proposer,
+		Status:          proposal.Status.String(),
+		Content:         contentBytes,
+		SubmitTime:      proposal.SubmitTime,
+		DepositEndTime:  proposal.DepositEndTime,
+		VotingStartTime: proposal.VotingStartTime,
+		VotingEndTime:   proposal.VotingEndTime,
+	}); err != nil {
 		return err
 	}
 
@@ -124,22 +136,29 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtyp
 		grpcClient.GetHeightRequestHeader(tx.Height),
 	)
 	if err != nil {
-		return fmt.Errorf("error while getting proposal deposit: %s", err)
+		return fmt.Errorf("error while getting proposal deposit: %w", err)
 	}
 
 	// TODO: test it
-	if err = m.broker.PublishProposalDeposit(ctx, model.NewProposalDeposit(
-		msg.ProposalId, tx.Height, msg.Depositor,
-		m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)))); err != nil {
-
+	if err = m.broker.PublishProposalDeposit(ctx, model.ProposalDeposit{
+		ProposalID:       msg.ProposalId,
+		DepositorAddress: msg.Depositor,
+		Height:           tx.Height,
+		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
+	}); err != nil {
 		return err
 	}
 
 	// TODO: test it
-	if err = m.broker.PublishProposalDepositMessage(ctx, model.NewProposalDepositMessage(
-		msg.ProposalId, tx.Height, msg.Depositor, tx.TxHash,
-		m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)))); err != nil {
-
+	if err = m.broker.PublishProposalDepositMessage(ctx, model.ProposalDepositMessage{
+		ProposalDeposit: model.ProposalDeposit{
+			ProposalID:       msg.ProposalId,
+			DepositorAddress: msg.Depositor,
+			Height:           tx.Height,
+			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
+		},
+		TxHash: tx.TxHash,
+	}); err != nil {
 		return err
 	}
 

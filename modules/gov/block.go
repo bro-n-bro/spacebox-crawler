@@ -3,11 +3,11 @@ package bank
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
@@ -29,7 +29,6 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	)
 	if err != nil {
 		return err
-
 	}
 
 	respTally, err := m.client.GovQueryClient.Params(
@@ -41,27 +40,25 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 		return err
 	}
 
-	params := model.NewGowParams(
-		block.Height,
-		model.NewDepositParams(
-			respDeposit.DepositParams.MaxDepositPeriod.Nanoseconds(),
-			m.tbM.MapCoins(types.NewCoinsFromCdk(respDeposit.DepositParams.MinDeposit))),
-		model.NewVotingParams(respVoting.VotingParams.VotingPeriod.Nanoseconds()),
-		model.NewTallyParams(
-			respTally.TallyParams.Quorum.MustFloat64(),
-			respTally.TallyParams.Threshold.MustFloat64(),
-			respTally.TallyParams.VetoThreshold.MustFloat64(),
-		),
-	)
+	// TODO: UpdateProposal
 
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
-	if err = m.broker.PublishGovParams(ctx, params); err != nil {
-		return err
-	}
-
-	// TODO: UpdateProposal
-	return err
+	return m.broker.PublishGovParams(ctx, model.GovParams{
+		DepositParams: model.DepositParams{
+			MinDeposit:       m.tbM.MapCoins(types.NewCoinsFromCdk(respDeposit.DepositParams.MinDeposit)),
+			MaxDepositPeriod: respDeposit.DepositParams.MaxDepositPeriod.Nanoseconds(),
+		},
+		VotingParams: model.VotingParams{
+			VotingPeriod: respVoting.VotingParams.VotingPeriod.Nanoseconds(),
+		},
+		TallyParams: model.TallyParams{
+			Quorum:        respTally.TallyParams.Quorum.MustFloat64(),
+			Threshold:     respTally.TallyParams.Threshold.MustFloat64(),
+			VetoThreshold: respTally.TallyParams.VetoThreshold.MustFloat64(),
+		},
+		Height: block.Height,
+	})
 }
 
 // updateProposals updates the proposals

@@ -6,12 +6,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type Coins []Coin
+type (
+	Coins []Coin
 
-type Coin struct {
-	Denom  string  `json:"denom"`
-	Amount float64 `json:"amount"`
-}
+	Coin struct {
+		Denom  string  `json:"denom"`
+		Amount float64 `json:"amount"`
+	}
+)
 
 func NewCoinFromCdk(coin sdk.Coin) Coin {
 	return Coin{
@@ -25,6 +27,7 @@ func NewCoinsFromCdk(coins sdk.Coins) Coins {
 	for i, c := range coins {
 		res[i] = NewCoinFromCdk(c)
 	}
+
 	return res
 }
 
@@ -36,6 +39,7 @@ func NewCoinsFromCdkDec(coins sdk.DecCoins) Coins {
 			Amount: c.Amount.MustFloat64(),
 		}
 	}
+
 	return res
 }
 

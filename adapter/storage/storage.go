@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	mongoprom "github.com/globocom/mongo-go-prometheus"
 	"github.com/rs/zerolog"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -12,11 +13,13 @@ type Storage struct {
 	log        *zerolog.Logger
 	cli        *mongo.Client
 	collection *mongo.Collection
-	cfg        Config
+
+	cfg Config
 }
 
 func New(cfg Config, l zerolog.Logger) *Storage {
 	l = l.With().Str("cmp", "mongo").Logger()
+
 	return &Storage{
 		cfg: cfg,
 		log: &l,
@@ -29,19 +32,24 @@ func (s *Storage) Start(ctx context.Context) error {
 		options.Client().SetMaxPoolSize(s.cfg.MaxPoolSize),
 		options.Client().SetMaxConnecting(s.cfg.MaxConnecting),
 		options.Client().SetAuth(options.Credential{
-			AuthMechanism:           "",
-			AuthMechanismProperties: nil,
-			AuthSource:              "",
-			Username:                s.cfg.User,
-			Password:                s.cfg.Password,
-			PasswordSet:             false,
+			Username: s.cfg.User,
+			Password: s.cfg.Password,
 		}),
+	}
+
+	if s.cfg.MetricsEnabled {
+		monitor := mongoprom.NewCommandMonitor(
+			mongoprom.WithInstanceName("blocks"),
+			mongoprom.WithDurationBuckets([]float64{.001, .005, .01}),
+		)
+		opts = append(opts, options.Client().SetMonitor(monitor))
 	}
 
 	client, err := mongo.Connect(ctx, opts...)
 	if err != nil {
 		return err
 	}
+
 	s.cli = client
 
 	if err := s.Ping(ctx); err != nil {
@@ -51,8 +59,6 @@ func (s *Storage) Start(ctx context.Context) error {
 	collection := s.cli.Database("spacebox").Collection("blocks")
 	s.collection = collection
 
-	s.log.Info().Msg("storage started")
-
 	return nil
 }
 
@@ -60,11 +66,11 @@ func (s *Storage) Stop(ctx context.Context) error {
 	s.log.Info().Msg("start setErrorStatusForProcessing")
 
 	// TODO:
-	err := s.setErrorStatusForProcessing(context.Background())
-	if err != nil {
+	if err := s.setErrorStatusForProcessing(ctx); err != nil {
 		s.log.Error().Err(err).Msg("setErrorStatusForProcessing error")
 		return err
 	}
+
 	return s.cli.Disconnect(ctx)
 }
 

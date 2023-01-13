@@ -1,9 +1,8 @@
 package tobroker
 
 import (
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (tb ToBroker) MapCoin(coin types.Coin) model.Coin {
@@ -18,5 +17,6 @@ func (tb ToBroker) MapCoins(coins types.Coins) model.Coins {
 	for i, c := range coins {
 		res[i] = tb.MapCoin(c)
 	}
+
 	return res
 }

@@ -2,6 +2,7 @@ package modules
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
 	authModule "github.com/hexy-dev/spacebox-crawler/modules/auth"
@@ -15,10 +16,11 @@ import (
 	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
-func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker,
-	addressesParser coreModule.MessageAddressesParser, cdc codec.Codec, modules []string) []types.Module {
+func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, cdc codec.Codec, modules []string,
+	addressesParser coreModule.MessageAddressesParser) []types.Module {
 
 	res := make([]types.Module, 0)
+
 	for _, m := range modules {
 		// TODO: make better
 		switch m {
@@ -30,8 +32,6 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker,
 			res = append(res, govModule.New(b, cli, tbMapper, cdc))
 		case "mint":
 			res = append(res, mintModule.New(b, cli, tbMapper))
-		// case "slashing": // TODO:
-		//	res = append(res, slashingModule.New(b, cli))
 		case "staking":
 			s := stakingModule.New(b, cli, tbMapper, cdc, modules)
 			res = append(res, s)
@@ -44,5 +44,6 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker,
 			continue
 		}
 	}
+
 	return res
 }

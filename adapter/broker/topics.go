@@ -1,10 +1,5 @@
 package broker
 
-type (
-	Topic  *string
-	Topics []Topic
-)
-
 var (
 	Account                    Topic = newTopic("account")
 	AccountBalance             Topic = newTopic("account_balance")
@@ -55,15 +50,23 @@ var (
 	coreTopics = Topics{Block, Transaction, Message}
 )
 
+type (
+	Topic  *string
+	Topics []Topic
+)
+
 func newTopic(t string) *string { return &t }
 
 func (ts Topics) ToStringSlice() []string {
 	res := make([]string, len(ts))
+
 	for i, t := range ts {
 		if t == nil {
 			panic("topic is nil")
 		}
+
 		res[i] = *t
 	}
+
 	return res
 }

@@ -5,9 +5,6 @@ import (
 	"crypto/tls"
 	"time"
 
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -16,7 +13,10 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Client struct {
@@ -42,6 +42,16 @@ func (c *Client) Start(ctx context.Context) error {
 
 	options := []grpc.DialOption{
 		grpc.WithBlock(),
+	}
+
+	if c.cfg.MetricsEnabled {
+		options = append(
+			options,
+			grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
+		)
+
+		grpc_prometheus.EnableClientHandlingTimeHistogram()
 	}
 
 	// Add required secure grpc option based on config parameter
@@ -71,6 +81,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.DistributionQueryClient = distributiontypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
+
 	return nil
 }
 

@@ -4,16 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/hexy-dev/spacebox-crawler/adapter/broker"
-	"github.com/hexy-dev/spacebox-crawler/adapter/storage"
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	rpcClient "github.com/hexy-dev/spacebox-crawler/client/rpc"
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	"github.com/hexy-dev/spacebox-crawler/modules"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	ts "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_storage"
-	"github.com/hexy-dev/spacebox-crawler/pkg/worker"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -21,9 +11,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibcstypes "github.com/cosmos/ibc-go/v5/modules/core/types"
-	"github.com/hexy-dev/spacebox-crawler/modules/core"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
+
+	"github.com/hexy-dev/spacebox-crawler/adapter/broker"
+	"github.com/hexy-dev/spacebox-crawler/adapter/metrics"
+	"github.com/hexy-dev/spacebox-crawler/adapter/storage"
+	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	rpcClient "github.com/hexy-dev/spacebox-crawler/client/rpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules"
+	"github.com/hexy-dev/spacebox-crawler/modules/core"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	ts "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_storage"
+	"github.com/hexy-dev/spacebox-crawler/pkg/worker"
 )
 
 const (
@@ -49,6 +50,7 @@ type (
 
 func New(cfg Config, l zerolog.Logger) *App {
 	l = l.With().Str("cmp", "app").Logger()
+
 	return &App{
 		log: &l,
 		cfg: cfg,
@@ -68,9 +70,11 @@ func (a *App) Start(ctx context.Context) error {
 
 	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
 	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
-	modules := modules.BuildModules(b, grpcCli, *tb, parser, cdc, a.cfg.Modules)
+	modules := modules.BuildModules(b, grpcCli, *tb, cdc, a.cfg.Modules, parser)
 	ts := ts.NewToStorage()
+
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
+	metrics := metrics.New(a.cfg.Metrics, s, *a.log)
 
 	MakeSdkConfig(a.cfg, sdk.GetConfig())
 
@@ -81,16 +85,23 @@ func (a *App) Start(ctx context.Context) error {
 		cmp{rpcCli, "rpcClient"},
 		cmp{b, "broker"},
 		cmp{w, "worker"},
+		cmp{metrics, "metrics"},
 	)
 
 	okCh, errCh := make(chan struct{}), make(chan error)
+
 	go func() {
 		for _, c := range a.cmps {
 			a.log.Info().Msgf("%v is starting", c.Name)
+
 			if err := c.Service.Start(ctx); err != nil {
 				a.log.Error().Err(err).Msgf(FmtCannotStart, c.Name)
 				errCh <- errors.Wrapf(err, FmtCannotStart, c.Name)
+
+				return
 			}
+
+			a.log.Info().Msgf("%v started", c.Name)
 		}
 		okCh <- struct{}{}
 	}()
@@ -110,15 +121,20 @@ func (a *App) Stop(ctx context.Context) error {
 	a.log.Info().Msg("shutting down service...")
 
 	okCh, errCh := make(chan struct{}), make(chan error)
+
 	go func() {
 		for i := len(a.cmps) - 1; i > 0; i-- {
 			c := a.cmps[i]
 			a.log.Info().Msgf("stopping %q...", c.Name)
+
 			if err := c.Service.Stop(ctx); err != nil {
 				a.log.Error().Err(err).Msgf("cannot stop %q", c.Name)
 				errCh <- err
+
+				return
 			}
 		}
+
 		okCh <- struct{}{}
 	}()
 

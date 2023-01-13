@@ -7,5 +7,5 @@ import (
 )
 
 type broker interface {
-	PublishAccounts(context.Context, []model.Account) error
+	PublishAccount(context.Context, model.Account) error
 }

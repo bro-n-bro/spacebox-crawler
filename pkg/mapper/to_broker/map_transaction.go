@@ -45,7 +45,7 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 		if tx.AuthInfo.SignerInfos != nil {
 			infos := make([]model.SignersInfo, len(tx.AuthInfo.SignerInfos))
 			for i, info := range tx.AuthInfo.SignerInfos {
-				// info.ModeInfo // TODO
+				// info.ModeInfo // TODO: add it
 				infos[i] = model.SignersInfo{
 					PublicKey: info.PublicKey.String(),
 					Sequence:  info.Sequence,
@@ -60,7 +60,7 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 				// XXX
 				// without this we will get a panic if transaction cannot contain a feePayer
 				var stdMsg sdk.Msg
-				if err := tb.cdc.UnpackAny(tx.Body.Messages[0], &stdMsg); err == nil {
+				if err = tb.cdc.UnpackAny(tx.Body.Messages[0], &stdMsg); err == nil {
 					payer = stdMsg.GetSigners()[0].String()
 				}
 			} else {

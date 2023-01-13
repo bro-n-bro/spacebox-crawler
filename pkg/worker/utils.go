@@ -43,12 +43,12 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 		case status.IsError() && !w.cfg.ProcessErrorBlocks:
 			return ErrBlockError
 		}
-
 	} else { // new block
 		if err := w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
 			w.log.Error().Err(err).Int64("height", height).Msgf("cant create new block in storage %v:", err)
 			return err
 		}
 	}
+
 	return nil
 }

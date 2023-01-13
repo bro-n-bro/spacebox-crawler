@@ -3,12 +3,12 @@ package core
 import (
 	"os"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/rs/zerolog"
+
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/rs/zerolog"
 )
 
 var (

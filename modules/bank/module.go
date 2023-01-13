@@ -3,16 +3,14 @@ package bank
 import (
 	"os"
 
-	"github.com/hexy-dev/spacebox-crawler/modules/core"
-
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	"github.com/hexy-dev/spacebox-crawler/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
+	"github.com/hexy-dev/spacebox-crawler/internal/rep"
+	"github.com/hexy-dev/spacebox-crawler/modules/core"
+	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 var (

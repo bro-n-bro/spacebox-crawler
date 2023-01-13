@@ -13,40 +13,6 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 )
 
-// 07-tendermint-259
-// ibc.lightclients.tendermint.v1.Header
-
-// MessageNotSupported returns an error telling that the given message is not supported
-func MessageNotSupported(msg sdk.Msg) error {
-	defer func() { // FIXME
-		if r := recover(); r != nil {
-			println("message type not supported:", r)
-		}
-	}()
-	// return fmt.Errorf("message type not supported: %s", msg.String())
-	return nil
-}
-
-// MessageAddressesParser represents a function that extracts all the
-// involved addresses from a provided message (both accounts and validators)
-type MessageAddressesParser = func(cdc codec.Codec, msg sdk.Msg) ([]string, error)
-
-// JoinMessageParsers joins together all the given parsers, calling them in order
-func JoinMessageParsers(parsers ...MessageAddressesParser) MessageAddressesParser {
-	return func(cdc codec.Codec, msg sdk.Msg) ([]string, error) {
-		for _, parser := range parsers {
-			// Try getting the addresses
-			addresses, _ := parser(cdc, msg)
-
-			// If some addresses are found, return them
-			if len(addresses) > 0 {
-				return addresses, nil
-			}
-		}
-		return nil, MessageNotSupported(msg)
-	}
-}
-
 // CosmosMessageAddressesParser represents a MessageAddressesParser that parses a
 // Cosmos message and returns all the involved addresses (both accounts and validators)
 var CosmosMessageAddressesParser = JoinMessageParsers(
@@ -61,6 +27,38 @@ var CosmosMessageAddressesParser = JoinMessageParsers(
 	DefaultMessagesParser,
 )
 
+// MessageAddressesParser represents a function that extracts all the
+// involved addresses from a provided message (both accounts and validators)
+type MessageAddressesParser = func(cdc codec.Codec, msg sdk.Msg) ([]string, error)
+
+// MessageNotSupported returns an error telling that the given message is not supported
+func MessageNotSupported(msg sdk.Msg) error {
+	defer func() { // FIXME
+		if r := recover(); r != nil {
+			println("message type not supported:", r)
+		}
+	}()
+	// return fmt.Errorf("message type not supported: %s", msg.String())
+	return nil
+}
+
+// JoinMessageParsers joins together all the given parsers, calling them in order
+func JoinMessageParsers(parsers ...MessageAddressesParser) MessageAddressesParser {
+	return func(cdc codec.Codec, msg sdk.Msg) ([]string, error) {
+		for _, parser := range parsers {
+			// Try getting the addresses
+			addresses, _ := parser(cdc, msg)
+
+			// If some addresses are found, return them
+			if len(addresses) > 0 {
+				return addresses, nil
+			}
+		}
+
+		return nil, MessageNotSupported(msg)
+	}
+}
+
 // DefaultMessagesParser represents the default messages parser that simply returns the list
 // of all the signers of a message
 func DefaultMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
@@ -69,6 +67,7 @@ func DefaultMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 	for index, signer := range cosmosSigners {
 		signers[index] = signer.String()
 	}
+
 	return signers, nil
 }
 
@@ -87,6 +86,7 @@ func BankMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 		for _, o := range msg.Outputs {
 			addresses = append(addresses, o.Address)
 		}
+
 		return addresses, nil
 	}
 
@@ -109,7 +109,6 @@ func CrisisMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 // message if it's related to the x/distribution module
 func DistributionMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 	switch msg := cosmosMsg.(type) {
-
 	case *distrtypes.MsgSetWithdrawAddress:
 		return []string{msg.DelegatorAddress, msg.WithdrawAddress}, nil
 
@@ -121,7 +120,6 @@ func DistributionMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, err
 
 	case *distrtypes.MsgFundCommunityPool:
 		return []string{msg.Depositor}, nil
-
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)
@@ -143,13 +141,11 @@ func EvidenceMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) 
 // message if it's related to the x/gov module
 func GovMessagesParser(cdc codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 	switch msg := cosmosMsg.(type) {
-
 	case *govtypes.MsgSubmitProposal:
 		addresses := []string{msg.Proposer}
 
 		var content govtypes.Content
-		err := cdc.UnpackAny(msg.Content, &content)
-		if err != nil {
+		if err := cdc.UnpackAny(msg.Content, &content); err != nil {
 			return nil, err
 		}
 
@@ -167,7 +163,6 @@ func GovMessagesParser(cdc codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 
 	case *govtypes.MsgVote:
 		return []string{msg.Voter}, nil
-
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)
@@ -194,7 +189,6 @@ func SlashingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) 
 	switch msg := cosmosMsg.(type) {
 	case *slashingtypes.MsgUnjail:
 		return []string{msg.ValidatorAddr}, nil
-
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)
@@ -204,7 +198,6 @@ func SlashingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) 
 // message if it's related to the x/staking module
 func StakingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 	switch msg := cosmosMsg.(type) {
-
 	case *stakingtypes.MsgCreateValidator:
 		return []string{msg.ValidatorAddress, msg.DelegatorAddress}, nil
 
@@ -219,7 +212,6 @@ func StakingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, error) {
 
 	case *stakingtypes.MsgUndelegate:
 		return []string{msg.DelegatorAddress, msg.ValidatorAddress}, nil
-
 	}
 
 	return nil, MessageNotSupported(cosmosMsg)

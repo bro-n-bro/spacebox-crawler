@@ -23,9 +23,13 @@ func (m *Module) updateBalance(ctx context.Context, addresses []string, height i
 			return err
 		}
 
-		if err = m.broker.PublishAccountBalance(ctx, model.NewAccountBalance(address, height,
-			m.tbM.MapCoins(types.NewCoinsFromCdk(balRes.Balances)))); err != nil {
-
+		if err = m.broker.PublishAccountBalance(
+			ctx,
+			model.AccountBalance{
+				Address: address,
+				Height:  height,
+				Coins:   m.tbM.MapCoins(types.NewCoinsFromCdk(balRes.Balances)),
+			}); err != nil {
 			return err
 		}
 	}

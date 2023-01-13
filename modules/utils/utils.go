@@ -10,5 +10,6 @@ func ContainAny[T constraints.Ordered](src []T, trg T) bool {
 			return true
 		}
 	}
+
 	return false
 }

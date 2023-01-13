@@ -4,16 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
-	"cosmossdk.io/errors"
-
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"golang.org/x/sync/errgroup"
 
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	stakingutils "github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
@@ -23,21 +20,21 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 		return err
 	}
 
-	g, _ctx := errgroup.WithContext(ctx)
+	g, ctx2 := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		// Update the params
-		return m.updateParams(_ctx, block.Height)
+		return m.updateParams(ctx2, block.Height)
 	})
 
 	g.Go(func() error {
 		// Update the validators statuses
-		return m.updateValidatorsStatus(_ctx, block.Height, validators)
+		return m.updateValidatorsStatus(ctx2, block.Height, validators)
 	})
 
 	g.Go(func() error {
 		// Update the staking pool
-		return m.updateStakingPool(_ctx, block.Height, m.client.StakingQueryClient)
+		return m.updateStakingPool(ctx2, block.Height, m.client.StakingQueryClient)
 	})
 
 	// FIXME: does it needed?
@@ -54,17 +51,13 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// return m.updateElapsedDelegations(_ctx, block.Height, block.Timestamp, m.enabledModules)
 	// })
 
-	if err := g.Wait(); err != nil {
-		return err
-	}
-
-	return nil
+	return g.Wait()
 }
 
 // updateParams gets the updated params and stores them inside the database
 func (m *Module) updateParams(ctx context.Context, height int64) error {
 	res, err := m.client.StakingQueryClient.Params(
-		context.Background(),
+		ctx,
 		&stakingtypes.QueryParamsRequest{},
 		grpcClient.GetHeightRequestHeader(height),
 	)
@@ -78,13 +71,19 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 		commissionRate = res.Params.MinCommissionRate.MustFloat64()
 	}
 
-	modelParams := model.NewStakingParams(height, res.Params.MaxValidators, res.Params.MaxEntries,
-		res.Params.HistoricalEntries, res.Params.BondDenom, commissionRate, res.Params.UnbondingTime)
-
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
-	err = m.broker.PublishStakingParams(ctx, modelParams)
-	if err != nil {
+	if err = m.broker.PublishStakingParams(ctx, model.StakingParams{
+		Height: height,
+		Params: model.SParams{
+			UnbondingTime:     res.Params.UnbondingTime,
+			MaxValidators:     res.Params.MaxValidators,
+			MaxEntries:        res.Params.MaxEntries,
+			HistoricalEntries: res.Params.HistoricalEntries,
+			BondDenom:         res.Params.BondDenom,
+			MinCommissionRate: commissionRate,
+		},
+	}); err != nil {
 		return err
 	}
 
@@ -95,40 +94,40 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 	//	Int64("height", height).
 	//	Msg("error while saving params")
 	// return
-	//}
+	// }
 
 	return nil
 }
 
 // updateValidatorsStatus updates all validators' statuses
 func (m *Module) updateValidatorsStatus(ctx context.Context, height int64, vals []stakingtypes.Validator) error {
-	var (
-		val    model.Validator
-		status model.ValidatorStatus
-	)
-
 	for _, validator := range vals {
 		consAddr, err := stakingutils.GetValidatorConsAddr(m.cdc, validator)
 		if err != nil {
-			return fmt.Errorf("error while getting validator consensus address: %s", err)
+			return fmt.Errorf("error while getting validator consensus address: %w", err)
 		}
 
 		consPubKey, err := stakingutils.GetValidatorConsPubKey(m.cdc, validator)
 		if err != nil {
-			return fmt.Errorf("error while getting validator consensus public key: %s", err)
+			return fmt.Errorf("error while getting validator consensus public key: %w", err)
 		}
 
 		// TODO: save to mongo?
 		// TODO: test it
-		val = model.NewValidator(consAddr.String(), consPubKey.String())
-		err = m.broker.PublishValidators(ctx, []model.Validator{val})
-		if err != nil {
+		if err = m.broker.PublishValidator(ctx, model.Validator{
+			ConsensusAddress: consAddr.String(),
+			ConsensusPubkey:  consPubKey.String(),
+		}); err != nil {
 			return err
 		}
 
-		status = model.NewValidatorStatus(height, int64(validator.GetStatus()), consAddr.String(), validator.IsJailed())
 		// TODO: test it
-		if err = m.broker.PublishValidatorsStatuses(ctx, []model.ValidatorStatus{status}); err != nil {
+		if err = m.broker.PublishValidatorStatus(ctx, model.ValidatorStatus{
+			Height:           height,
+			ValidatorAddress: consAddr.String(),
+			Status:           int64(validator.GetStatus()),
+			Jailed:           validator.IsJailed(),
+		}); err != nil {
 			return err
 		}
 	}
@@ -138,8 +137,8 @@ func (m *Module) updateValidatorsStatus(ctx context.Context, height int64, vals 
 
 // updateStakingPool reads from the LCD the current staking pool and stores its value inside the database
 func (m *Module) updateStakingPool(ctx context.Context, height int64, stakingClient stakingtypes.QueryClient) error {
-	pbResp, err := stakingClient.Pool(
-		context.Background(),
+	respPb, err := stakingClient.Pool(
+		ctx,
 		&stakingtypes.QueryPoolRequest{},
 		grpcClient.GetHeightRequestHeader(height),
 	)
@@ -150,17 +149,22 @@ func (m *Module) updateStakingPool(ctx context.Context, height int64, stakingCli
 	// TODO: to mapper?
 	var bondedTokens, notBondedTokens int64
 
-	if !pbResp.Pool.BondedTokens.IsNil() {
-		bondedTokens = pbResp.Pool.BondedTokens.Int64()
+	if !respPb.Pool.BondedTokens.IsNil() {
+		bondedTokens = respPb.Pool.BondedTokens.Int64()
 	}
 
-	if !pbResp.Pool.NotBondedTokens.IsNil() {
-		notBondedTokens = pbResp.Pool.NotBondedTokens.Int64()
+	if !respPb.Pool.NotBondedTokens.IsNil() {
+		notBondedTokens = respPb.Pool.NotBondedTokens.Int64()
 	}
 
 	// TODO: test IT
-	if err = m.broker.PublishStakingPool(ctx, model.NewStakingPool(height, notBondedTokens, bondedTokens)); err != nil {
-		return errors.Wrap(err, "PublishStakingPool error")
+	if err = m.broker.PublishStakingPool(ctx, model.StakingPool{
+		Height:          height,
+		NotBondedTokens: notBondedTokens,
+		BondedTokens:    bondedTokens,
+	}); err != nil {
+		return fmt.Errorf("PublishStakingPool error: %w", err)
 	}
+
 	return nil
 }

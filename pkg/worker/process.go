@@ -41,11 +41,13 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
 
 			_genesisDur := time.Now()
+
 			genesis, err := w.rpcClient.Genesis(ctx)
 			if err != nil {
 				w.log.Error().Err(err).Msgf("get genesis error: %v", err)
 				continue
 			}
+
 			w.log.Info().
 				Int("worker_number", workerIndex).
 				Msgf("Get genesis dur: %v", time.Since(_genesisDur))
@@ -74,7 +76,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 
 		w.log.Info().Int("worker_number", workerIndex).Msgf("Parse block № %d", height)
 
-		g, _ctx := errgroup.WithContext(ctx)
+		g, ctx2 := errgroup.WithContext(ctx)
 
 		var (
 			block *tmtcoreypes.ResultBlock
@@ -85,8 +87,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			var err error
 
 			_blockDur := time.Now()
-			block, err = w.grpcClient.Block(_ctx, height)
-			if err != nil {
+			if block, err = w.grpcClient.Block(ctx2, height); err != nil {
 				return err
 			}
 			w.log.Debug().
@@ -99,10 +100,8 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 
 		g.Go(func() error {
 			var err error
-
 			_validatorsDur := time.Now()
-			vals, err = w.grpcClient.Validators(_ctx, height)
-			if err != nil {
+			if vals, err = w.grpcClient.Validators(ctx2, height); err != nil {
 				return err
 			}
 			w.log.Debug().
@@ -110,35 +109,27 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 				Int64("block_height", height).
 				Dur("parse_block_dur", time.Since(_validatorsDur)).
 				Msg("Get validators info")
+
 			return nil
 		})
 
 		if err := g.Wait(); err != nil {
 			w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
+
 			continue
 		}
 
 		_txsDur := time.Now()
-		// with async
-		// 2022/11/03 17:29:29 worker 7. height: 6710901. get block dur: 854.136709ms
-		// 2022/11/03 17:29:35 worker 7. height: 6710901. get txs dur: 5.954485916s
-		// 2022/11/03 17:29:36 worker 7. height: 6710901. get validators dur: 536.417667ms
 
-		// sync
-		// 2022/11/03 17:30:02 worker 7. height: 6710901. get block dur: 645.112792ms
-		// 2022/11/03 17:30:08 worker 7. height: 6710901. get txs dur: 5.895915416s
-		// 2022/11/03 17:30:08 worker 7. height: 6710901. get validators dur: 434.883833ms
-
-		// Async: 2022/11/03 19:11:21 duration sec: 208.474833083
-		// Sync: 2022/11/03 19:14:38 duration sec: 165.029986125
-
-		txsRes, err := w.grpcClient.TxsOld(ctx, block.Block.Data.Txs)
+		txsRes, err := w.grpcClient.Txs(ctx, block.Block.Data.Txs)
 		if err != nil {
 			w.log.Error().Err(err).Msgf("get txs error: %v", err)
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
+
 			continue
 		}
+
 		w.log.Debug().
 			Int("worker_number", workerIndex).
 			Int64("block_height", height).
@@ -148,16 +139,27 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		txs := types.NewTxsFromTmTxs(txsRes, w.cdc)
 		b := types.NewBlockFromTmBlock(block, txs.TotalGas())
 
-		g, _ctx = errgroup.WithContext(ctx)
+		g, ctx2 = errgroup.WithContext(ctx)
 
 		g.Go(func() error {
-			return w.processValidators(_ctx, vals)
+			return w.withMetrics("validators", func() error {
+				return w.processValidators(ctx2, vals)
+			})
 		})
 		g.Go(func() error {
-			return w.processBlock(_ctx, b)
+			return w.withMetrics("block", func() error {
+				return w.processBlock(ctx2, b)
+			})
 		})
 		g.Go(func() error {
-			return w.processTxs(_ctx, txs)
+			return w.withMetrics("txs", func() error {
+				return w.processTxs(ctx2, txs)
+			})
+		})
+		g.Go(func() error {
+			return w.withMetrics("messages", func() error {
+				return w.processMessages(ctx2, txs)
+			})
 		})
 
 		if err := g.Wait(); err != nil {
@@ -169,7 +171,6 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			w.log.Error().Err(err).Int64("height", height).Msgf("cant set processed status in storage %v:", err)
 		}
 	}
-
 }
 
 func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc) error {
@@ -184,6 +185,7 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc
 			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("handle genesis error: %v", err)
 		}
 	}
+
 	return nil
 }
 
@@ -194,6 +196,7 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -204,6 +207,7 @@ func (w *Worker) processValidators(ctx context.Context, vals *tmtcoreypes.Result
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -215,23 +219,33 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
+	for _, tx := range txs {
+		if !tx.Successful() { // skip message processing from failed transaction
+			continue
+		}
 
 		for i, msg := range tx.Body.Messages {
 			var stdMsg sdk.Msg
 
-			err := w.cdc.UnpackAny(msg, &stdMsg)
-			if err != nil {
+			if err := w.cdc.UnpackAny(msg, &stdMsg); err != nil {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
 				return err
 			}
 
 			for _, m := range messageHandlers {
-				if err = m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
+				if err := m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
 					w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleMessage error: %v", err)
 					return err
 				}
 			}
 		}
 	}
+
 	return nil
 }

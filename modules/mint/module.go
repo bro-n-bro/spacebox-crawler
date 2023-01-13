@@ -3,13 +3,12 @@ package mint
 import (
 	"os"
 
+	"github.com/rs/zerolog"
+
 	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
 	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	"github.com/hexy-dev/spacebox-crawler/types"
-
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-
-	"github.com/rs/zerolog"
+	"github.com/hexy-dev/spacebox-crawler/types"
 )
 
 var (

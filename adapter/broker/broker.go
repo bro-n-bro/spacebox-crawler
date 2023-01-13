@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/pkg/errors"
@@ -26,6 +27,7 @@ type Broker struct {
 
 func New(cfg Config, modules []string, l zerolog.Logger) *Broker {
 	l = l.With().Str("cmp", "broker").Logger()
+
 	return &Broker{
 		log:     &l,
 		cfg:     cfg,
@@ -63,8 +65,7 @@ func (b *Broker) Start(ctx context.Context) error {
 	}
 
 	// create init topics if needed
-	_, err = ac.CreateTopics(ctx, kafkaTopics)
-	if err != nil {
+	if _, err = ac.CreateTopics(ctx, kafkaTopics); err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateTopics)
 		return errors.Wrap(err, MsgErrCreateTopics)
 	}
@@ -109,6 +110,7 @@ func (b *Broker) Start(ctx context.Context) error {
 			if !ok {
 				continue
 			}
+
 			if err := m.TopicPartition.Error; err != nil {
 				b.log.Error().Err(err).Msgf("Delivery error: %v", m.TopicPartition)
 			}
@@ -118,7 +120,6 @@ func (b *Broker) Start(ctx context.Context) error {
 	b.p = p
 	b.ac = ac
 
-	b.log.Info().Msg("broker started")
 	return nil
 }
 
@@ -126,8 +127,10 @@ func (b *Broker) Stop(ctx context.Context) error {
 	if !b.cfg.Enabled {
 		return nil
 	}
+
 	b.p.Close()
 	b.ac.Close()
+
 	return nil
 }
 
@@ -146,17 +149,20 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 		flushedMessages := b.p.Flush(30 * 1000)
 		b.log.Info().Str("topic", *topic).
 			Msgf("Flushed kafka messages. Outstanding events still un-flushed: %d", flushedMessages)
+
 		return b.produce(topic, data)
 	}
 
 	if err != nil {
-		return err
+		return errors.Wrap(err, fmt.Sprintf("produce %s fail", *topic))
 	}
+
 	return nil
 }
 
 func (b *Broker) getCurrentTopics(modules []string) []string {
 	topics := make([]string, 0)
+
 	for _, m := range modules {
 		switch m {
 		case "auth":
@@ -178,5 +184,6 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			continue
 		}
 	}
+
 	return topics
 }

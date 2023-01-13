@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hexy-dev/spacebox/broker/model"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
@@ -17,81 +15,72 @@ import (
 	"github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
 	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/hexy-dev/spacebox/broker/model"
 )
 
 func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	// Read the genesis state
 	var genState stakingtypes.GenesisState
-	err := m.cdc.UnmarshalJSON(appState[stakingtypes.ModuleName], &genState)
-	if err != nil {
+	if err := m.cdc.UnmarshalJSON(appState[stakingtypes.ModuleName], &genState); err != nil {
 		return err
 	}
 
 	// Save the params
-	err = m.publishParams(ctx, doc.InitialHeight, genState.Params)
-	if err != nil {
-		return fmt.Errorf("error while storing staking genesis params: %s", err)
+	if err := m.publishParams(ctx, doc.InitialHeight, genState.Params); err != nil {
+		return fmt.Errorf("error while storing staking genesis params: %w", err)
 	}
 
 	// Parse genesis transactions
-	err = parseGenesisTransactions(ctx, doc, appState, m.cdc, m.tbM, m.broker)
-	if err != nil {
-		return fmt.Errorf("error while storing genesis transactions: %s", err)
+	if err := parseGenesisTransactions(ctx, doc, appState, m.cdc, m.tbM, m.broker); err != nil {
+		return fmt.Errorf("error while storing genesis transactions: %w", err)
 	}
 
 	// Save the validators
-	err = m.publishValidators(ctx, doc, genState.Validators)
-	if err != nil {
-		return fmt.Errorf("error while storing staking genesis validators: %s", err)
+	if err := m.publishValidators(ctx, doc, genState.Validators); err != nil {
+		return fmt.Errorf("error while storing staking genesis validators: %w", err)
 	}
 
 	// Save the delegations
-	err = m.publishDelegations(ctx, doc, genState)
-	if err != nil {
-		return fmt.Errorf("error while storing staking genesis delegations: %s", err)
+	if err := m.publishDelegations(ctx, doc, genState); err != nil {
+		return fmt.Errorf("error while storing staking genesis delegations: %w", err)
 	}
 
 	// Save the unbonding delegations
-	err = m.publishUnbondingDelegations(ctx, doc, genState)
-	if err != nil {
-		return fmt.Errorf("error while storing staking genesis unbonding delegations: %s", err)
+	if err := m.publishUnbondingDelegations(ctx, doc, genState); err != nil {
+		return fmt.Errorf("error while storing staking genesis unbonding delegations: %w", err)
 	}
 
 	// Save the re-delegations
-	err = m.publishRedelegations(ctx, doc, genState)
-	if err != nil {
-		return fmt.Errorf("error while storing staking genesis redelegations: %s", err)
+	if err := m.publishRedelegations(ctx, doc, genState); err != nil {
+		return fmt.Errorf("error while storing staking genesis redelegations: %w", err)
 	}
 
 	// FIXME: dead code?
 	// Save the description
-	// err = saveValidatorDescription(doc, genState.Validators)
-	// if err != nil {
+	// if err := saveValidatorDescription(doc, genState.Validators); err != nil {
 	//	return fmt.Errorf("error while storing staking genesis validator descriptions: %s", err)
 	// }
 
 	// FIXME: does it needed?
-	// err = publishValidatorsCommissions(doc.InitialHeight, genState.Validators)
-	// if err != nil {
+	// if err := publishValidatorsCommissions(doc.InitialHeight, genState.Validators); err != nil {
 	//	return fmt.Errorf("error while storing staking genesis validators commissions: %s", err)
 	// }
 
 	return nil
 }
 
-func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
-	appState map[string]json.RawMessage, cdc codec.Codec, mapper tb.ToBroker, broker broker) error {
+func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage,
+	cdc codec.Codec, mapper tb.ToBroker, broker broker) error {
 
 	var genUtilState genutiltypes.GenesisState
-	err := cdc.UnmarshalJSON(appState[genutiltypes.ModuleName], &genUtilState)
-	if err != nil {
+	if err := cdc.UnmarshalJSON(appState[genutiltypes.ModuleName], &genUtilState); err != nil {
 		return err
 	}
 
 	for _, genTxBz := range genUtilState.GetGenTxs() {
 		// Unmarshal the transaction
 		var genTx tx.Tx
-		if err = cdc.UnmarshalJSON(genTxBz, &genTx); err != nil {
+		if err := cdc.UnmarshalJSON(genTxBz, &genTx); err != nil {
 			return err
 		}
 
@@ -102,8 +91,14 @@ func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
 				continue
 			}
 
-			err = utils.StoreValidatorFromMsgCreateValidator(ctx, doc.InitialHeight, createValMsg, cdc, mapper, broker)
-			if err != nil {
+			if err := utils.StoreValidatorFromMsgCreateValidator(
+				ctx,
+				doc.InitialHeight,
+				createValMsg,
+				cdc,
+				mapper,
+				broker,
+			); err != nil {
 				return err
 			}
 		}
@@ -112,8 +107,6 @@ func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
 	return nil
 }
 
-// -------------------------------------------------------------------------------------------------------------------
-
 // publishParams saves the given params to the broker.
 func (m *Module) publishParams(ctx context.Context, height int64, params stakingtypes.Params) error {
 	var commissionRate float64
@@ -121,22 +114,24 @@ func (m *Module) publishParams(ctx context.Context, height int64, params staking
 		commissionRate = params.MinCommissionRate.MustFloat64()
 	}
 
-	modelParams := model.NewStakingParams(height, params.MaxValidators, params.MaxEntries, params.HistoricalEntries,
-		params.BondDenom, commissionRate, params.UnbondingTime)
-
 	// TODO: test it
-	err := m.broker.PublishStakingParams(ctx, modelParams)
-	if err != nil {
-		return err
-	}
-	return nil
+	return m.broker.PublishStakingParams(ctx, model.StakingParams{
+		Height: height,
+		Params: model.SParams{
+			UnbondingTime:     params.UnbondingTime,
+			MaxValidators:     params.MaxValidators,
+			MaxEntries:        params.MaxEntries,
+			HistoricalEntries: params.HistoricalEntries,
+			BondDenom:         params.BondDenom,
+			MinCommissionRate: commissionRate,
+		},
+	})
 }
-
-// --------------------------------------------------------------------------------------------------------------------
 
 // publishValidators publishes the validators data present inside the given genesis state to the broker.
 func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc, validators stakingtypes.Validators) error {
 	vals := make([]types.StakingValidator, len(validators))
+
 	for i, val := range validators {
 		validator, err := utils.ConvertValidator(m.cdc, val, doc.InitialHeight)
 		if err != nil {
@@ -148,36 +143,36 @@ func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc,
 
 	// TODO: save to mongo?
 	// TODO test it
-	if err := utils.PublishValidatorsData(ctx, vals, m.broker); err != nil {
-		return err
-	}
-	return nil
+	return utils.PublishValidatorsData(ctx, vals, m.broker)
 }
-
-// --------------------------------------------------------------------------------------------------------------------
 
 // publishDelegations publishes the delegations and account data present inside the given genesis state to the broker.
 func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
 	for _, validator := range genState.Validators {
 		tokens := validator.Tokens
-		delegatorShares := validator.DelegatorShares
+		delShares := validator.DelegatorShares
 
 		typesDelegations := findDelegations(genState.Delegations, validator.OperatorAddress)
-		for _, delegation := range typesDelegations {
 
-			delegationAmount := sdk.NewDecFromBigInt(tokens.BigInt()).Mul(delegation.Shares).Quo(delegatorShares).TruncateInt()
+		for _, del := range typesDelegations {
 			// TODO: test it
-			acc := model.NewAccount(delegation.DelegatorAddress, doc.InitialHeight)
-			if err := m.broker.PublishAccounts(ctx, []model.Account{acc}); err != nil {
+			if err := m.broker.PublishAccount(ctx, model.Account{
+				Address: del.DelegatorAddress,
+				Height:  doc.InitialHeight,
+			}); err != nil {
 				return err
 			}
 
+			delegationAmount := sdk.NewDecFromBigInt(tokens.BigInt()).Mul(del.Shares).Quo(delShares).TruncateInt()
 			// TODO: save to mongo?
 			// TODO: test it
-			modelDel := model.NewDelegation(validator.OperatorAddress, delegation.DelegatorAddress, doc.InitialHeight,
-				m.tbM.MapCoin(types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, delegationAmount))))
-
-			if err := m.broker.PublishDelegation(ctx, modelDel); err != nil {
+			if err := m.broker.PublishDelegation(ctx, model.Delegation{
+				OperatorAddress:  validator.OperatorAddress,
+				DelegatorAddress: del.DelegatorAddress,
+				Height:           doc.InitialHeight,
+				Coin: m.tbM.MapCoin(
+					types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, delegationAmount))),
+			}); err != nil {
 				return err
 			}
 		}
@@ -190,32 +185,35 @@ func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc
 // related to the validator having the given validator address
 func findDelegations(genData stakingtypes.Delegations, valAddr string) stakingtypes.Delegations {
 	var delegations stakingtypes.Delegations
+
 	for _, delegation := range genData {
 		if delegation.ValidatorAddress == valAddr {
 			delegations = append(delegations, delegation)
 		}
 	}
+
 	return delegations
 }
 
-// --------------------------------------------------------------------------------------------------------------------
-
 // publishUnbondingDelegations publishes the unbonding delegations data present inside the given genesis state to the broker.
-func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.GenesisDoc,
+	genState stakingtypes.GenesisState) error {
+
+	var coin types.Coin
+
 	for _, validator := range genState.Validators {
 		valUD := findUnbondingDelegations(genState.UnbondingDelegations, validator.OperatorAddress)
 		for _, ud := range valUD {
 			for _, entry := range ud.Entries {
-				del := model.NewUnbondingDelegation(
-					doc.InitialHeight,
-					ud.DelegatorAddress,
-					validator.OperatorAddress,
-					m.tbM.MapCoin(types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))),
-					entry.CompletionTime,
-				)
-
+				coin = types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))
 				// TODO: test it
-				if err := m.broker.PublishUnbondingDelegation(ctx, del); err != nil {
+				if err := m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
+					Height:              doc.InitialHeight,
+					DelegatorAddress:    ud.DelegatorAddress,
+					ValidatorAddress:    validator.OperatorAddress,
+					Coin:                m.tbM.MapCoin(coin),
+					CompletionTimestamp: entry.CompletionTime,
+				}); err != nil {
 					return err
 				}
 			}
@@ -229,32 +227,33 @@ func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.G
 // that are related to the validator having the given validator address
 func findUnbondingDelegations(genData stakingtypes.UnbondingDelegations, valAddr string) stakingtypes.UnbondingDelegations {
 	unbondingDelegations := make(stakingtypes.UnbondingDelegations, 0)
+
 	for _, unbondingDelegation := range genData {
 		if unbondingDelegation.ValidatorAddress == valAddr {
 			unbondingDelegations = append(unbondingDelegations, unbondingDelegation)
 		}
 	}
+
 	return unbondingDelegations
 }
 
-// --------------------------------------------------------------------------------------------------------------------
-
 // publishRedelegations publishes the redelegations data present inside the given genesis state to the broker.
-func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisDoc,
+	genState stakingtypes.GenesisState) error {
+
 	for _, genRedelegation := range genState.Redelegations {
 		for _, entry := range genRedelegation.Entries {
 			// TODO: save to mongo?
 			// TODO: test it
-			redelegation := model.NewRedelegation(
-				doc.InitialHeight,
-				genRedelegation.DelegatorAddress,
-				genRedelegation.ValidatorSrcAddress,
-				genRedelegation.ValidatorDstAddress,
-				m.tbM.MapCoin(types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))),
-				entry.CompletionTime,
-			)
-
-			if err := m.broker.PublishRedelegation(ctx, redelegation); err != nil {
+			if err := m.broker.PublishRedelegation(ctx, model.Redelegation{
+				Height:              doc.InitialHeight,
+				DelegatorAddress:    genRedelegation.DelegatorAddress,
+				SrcValidatorAddress: genRedelegation.ValidatorSrcAddress,
+				DstValidatorAddress: genRedelegation.ValidatorDstAddress,
+				Coin: m.tbM.MapCoin(
+					types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))),
+				CompletionTime: entry.CompletionTime,
+			}); err != nil {
 				return err
 			}
 		}
