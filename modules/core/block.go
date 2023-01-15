@@ -12,7 +12,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 		Height:          block.Height,
 		Hash:            block.Hash,
 		ProposerAddress: block.ProposerAddress,
-		NumTxs:          block.TxNum,
+		TxNum:           int64(block.TxNum),
 		TotalGas:        block.TotalGas,
 		Timestamp:       block.Timestamp,
 	}); err != nil {

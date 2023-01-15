@@ -17,7 +17,7 @@ const (
 	errDelegationDoesNotExists = `rpc error: code = %s desc = delegation does not exist`
 )
 
-func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx *types.Tx) error {
+func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	if len(tx.Logs) == 0 {
 		return nil
 	}
@@ -64,6 +64,7 @@ func (m *Module) HandleMessage(ctx context.Context, _ int, cosmosMsg sdk.Msg, tx
 			DelegatorAddress: msg.DelegatorAddress,
 			ValidatorAddress: msg.ValidatorAddress,
 			TxHash:           tx.TxHash,
+			MsgIndex:         int64(index),
 		})
 	}
 

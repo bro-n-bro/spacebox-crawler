@@ -29,7 +29,7 @@ require (
 	github.com/globocom/mongo-go-prometheus v0.1.1
 	github.com/gogo/protobuf v1.3.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/hexy-dev/spacebox v0.0.0-20230108183621-aeba3780de7e
+	github.com/hexy-dev/spacebox v0.0.0-20230115132327-768a56e2fb0a
 	github.com/joho/godotenv v1.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1

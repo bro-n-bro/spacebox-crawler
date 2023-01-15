@@ -100,6 +100,7 @@ func StoreDelegationFromMessage(
 	ctx context.Context,
 	tx *types.Tx,
 	msg *stakingtypes.MsgDelegate,
+	index int,
 	stakingClient stakingtypes.QueryClient,
 	mapper tb.ToBroker,
 	broker interface {
@@ -116,7 +117,8 @@ func StoreDelegationFromMessage(
 			Coin:             mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
 			Height:           tx.Height,
 		},
-		TxHash: tx.TxHash,
+		TxHash:   tx.TxHash,
+		MsgIndex: int64(index),
 	}); err != nil {
 		return err
 	}

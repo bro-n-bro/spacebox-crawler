@@ -25,7 +25,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return m.handleMsgSubmitProposal(ctx, tx, index, msg)
 
 	case *govtypesv1beta1.MsgDeposit:
-		return m.handleMsgDeposit(ctx, tx, msg)
+		return m.handleMsgDeposit(ctx, tx, index, msg)
 
 	case *govtypesv1beta1.MsgVote:
 		// TODO: TEST IT
@@ -34,6 +34,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Height:       tx.Height,
 			VoterAddress: msg.Voter,
 			Option:       msg.Option.String(),
+			MsgIndex:     int64(index),
 		})
 	}
 
@@ -96,7 +97,8 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 			DepositorAddress: msg.Proposer,
 			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
 		},
-		TxHash: tx.TxHash,
+		TxHash:   tx.TxHash,
+		MsgIndex: int64(index),
 	}); err != nil {
 		return err
 	}
@@ -129,7 +131,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 
 // handleMsgDeposit handles a handleMsgDeposit.
 // publishes proposalDeposit and proposalDepositMessage to the broker.
-func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgDeposit) error {
+func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, msg *govtypesv1beta1.MsgDeposit) error {
 	res, err := m.client.GovQueryClient.Deposit(
 		ctx,
 		&govtypesv1beta1.QueryDepositRequest{ProposalId: msg.ProposalId, Depositor: msg.Depositor},
@@ -157,7 +159,8 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, msg *govtyp
 			Height:           tx.Height,
 			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
 		},
-		TxHash: tx.TxHash,
+		TxHash:   tx.TxHash,
+		MsgIndex: int64(index),
 	}); err != nil {
 		return err
 	}

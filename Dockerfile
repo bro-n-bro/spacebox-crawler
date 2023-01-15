@@ -11,21 +11,21 @@ ARG TARGETOS
 ARG TARGETARCH
 
 RUN apk update && apk add --no-cache make git build-base musl-dev librdkafka librdkafka-dev
-WORKDIR /go/src/github.com/space-box-crawler
+WORKDIR /go/src/github.com/spacebox-crawler
 COPY . ./
 
 RUN echo "machine ${CI_SERVER_HOST} login ${CI_REGISTRY_USER} password ${CI_JOB_TOKEN}" > ~/.netrc
 
 RUN echo "build binary on os: $TARGETOS for platform: $TARGETARCH" && \
     export PATH=$PATH:/usr/local/go/bin && \
-    export GOPRIVATE=github.com/hexy-dev/space-box/ && \
+    export GOPRIVATE=github.com/hexy-dev/spacebox/ && \
     go mod download && \
-    GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags musl /go/src/github.com/space-box-crawler/cmd/main.go && \
-    mkdir -p /space-box-crawler && \
-    mv main /space-box-crawler/main && \
+    GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags musl /go/src/github.com/spacebox-crawler/cmd/main.go && \
+    mkdir -p /spacebox-crawler && \
+    mv main /spacebox-crawler/main && \
     rm -Rf /usr/local/go/src
 
 FROM alpine:latest as app
-WORKDIR /space-box-crawler
-COPY --from=builder /space-box-crawler/. /space-box-crawler/
+WORKDIR /spacebox-crawler
+COPY --from=builder /spacebox-crawler/. /spacebox-crawler/
 CMD ./main

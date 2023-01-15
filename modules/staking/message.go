@@ -27,7 +27,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	//	return handleEditValidator(tx.Height, msg)
 
 	case *stakingtypes.MsgDelegate:
-		return stakingutils.StoreDelegationFromMessage(ctx, tx, msg, m.client.StakingQueryClient, m.tbM, m.broker)
+		return stakingutils.StoreDelegationFromMessage(ctx, tx, msg, index, m.client.StakingQueryClient,
+			m.tbM, m.broker)
 
 	case *stakingtypes.MsgBeginRedelegate:
 		return handleMsgBeginRedelegate(ctx, tx, index, m.tbM, m.broker, msg, m.client.StakingQueryClient)
@@ -81,7 +82,8 @@ func handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, index int, mapp
 			Coin:                mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
 			CompletionTime:      completionTime,
 		},
-		TxHash: tx.TxHash,
+		TxHash:   tx.TxHash,
+		MsgIndex: int64(index),
 	}); err != nil {
 		return err
 	}
@@ -129,7 +131,8 @@ func handleMsgUndelegate(ctx context.Context, tx *types.Tx, index int, mapper tb
 			Coin:                mapper.MapCoin(types.NewCoinFromCdk(msg.Amount)),
 			CompletionTimestamp: completionTime,
 		},
-		TxHash: tx.TxHash,
+		TxHash:   tx.TxHash,
+		MsgIndex: int64(index),
 	}); err != nil {
 		return err
 	}

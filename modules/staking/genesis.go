@@ -119,9 +119,9 @@ func (m *Module) publishParams(ctx context.Context, height int64, params staking
 		Height: height,
 		Params: model.SParams{
 			UnbondingTime:     params.UnbondingTime,
-			MaxValidators:     params.MaxValidators,
-			MaxEntries:        params.MaxEntries,
-			HistoricalEntries: params.HistoricalEntries,
+			MaxValidators:     uint64(params.MaxValidators),
+			MaxEntries:        uint64(params.MaxEntries),
+			HistoricalEntries: uint64(params.HistoricalEntries),
 			BondDenom:         params.BondDenom,
 			MinCommissionRate: commissionRate,
 		},

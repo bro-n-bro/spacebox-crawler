@@ -77,9 +77,9 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 		Height: height,
 		Params: model.SParams{
 			UnbondingTime:     res.Params.UnbondingTime,
-			MaxValidators:     res.Params.MaxValidators,
-			MaxEntries:        res.Params.MaxEntries,
-			HistoricalEntries: res.Params.HistoricalEntries,
+			MaxValidators:     uint64(res.Params.MaxValidators),
+			MaxEntries:        uint64(res.Params.MaxEntries),
+			HistoricalEntries: uint64(res.Params.HistoricalEntries),
 			BondDenom:         res.Params.BondDenom,
 			MinCommissionRate: commissionRate,
 		},

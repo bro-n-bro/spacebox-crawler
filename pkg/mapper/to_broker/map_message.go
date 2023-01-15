@@ -7,7 +7,7 @@ import (
 func (tb ToBroker) MapMessage(txHash, msgType, signer string, index int, accounts []string, value []byte) model.Message {
 	return model.Message{
 		TransactionHash:           txHash,
-		Index:                     index,
+		Index:                     int64(index),
 		Type:                      msgType,
 		InvolvedAccountsAddresses: accounts,
 		Signer:                    signer,
