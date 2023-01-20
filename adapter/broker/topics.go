@@ -26,7 +26,7 @@ var (
 	StakingParams              Topic = newTopic("staking_params")
 	StakingPool                Topic = newTopic("staking_pool")
 	Supply                     Topic = newTopic("supply")
-	Transaction                Topic = newTopic("tx")
+	Transaction                Topic = newTopic("transaction")
 	UnbondingDelegation        Topic = newTopic("unbonding_delegation")
 	UnbondingDelegationMessage Topic = newTopic("unbonding_delegation_message")
 	ValidatorInfo              Topic = newTopic("validator_info")

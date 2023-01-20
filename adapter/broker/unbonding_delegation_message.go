@@ -6,7 +6,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
-	"github.com/hexy-dev/spacebox/broker/model"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (b *Broker) PublishUnbondingDelegationMessage(ctx context.Context, udm model.UnbondingDelegationMessage) error {

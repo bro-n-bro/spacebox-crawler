@@ -9,10 +9,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	"github.com/hexy-dev/spacebox-crawler/modules/utils"
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {

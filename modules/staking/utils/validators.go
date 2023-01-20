@@ -9,9 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 const (

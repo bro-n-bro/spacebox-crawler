@@ -6,9 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
+	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 var (

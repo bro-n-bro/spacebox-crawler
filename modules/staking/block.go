@@ -7,10 +7,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"golang.org/x/sync/errgroup"
 
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	stakingutils "github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	stakingutils "github.com/bro-n-bro/spacebox-crawler/modules/staking/utils"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {

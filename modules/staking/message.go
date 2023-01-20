@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	stakingutils "github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	stakingutils "github.com/bro-n-bro/spacebox-crawler/modules/staking/utils"
+	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {

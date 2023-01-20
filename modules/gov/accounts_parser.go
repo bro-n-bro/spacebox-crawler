@@ -6,7 +6,7 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	"github.com/hexy-dev/spacebox-crawler/modules/core"
+	"github.com/bro-n-bro/spacebox-crawler/modules/core"
 )
 
 // GovMessagesParser returns the list of all the accounts involved in the given

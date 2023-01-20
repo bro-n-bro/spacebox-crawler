@@ -12,10 +12,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/hexy-dev/spacebox-crawler/modules/staking/utils"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	"github.com/bro-n-bro/spacebox-crawler/modules/staking/utils"
+	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {

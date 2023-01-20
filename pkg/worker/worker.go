@@ -13,10 +13,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
 
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	ts "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_storage"
-	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
+	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
+	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 type (
@@ -95,7 +95,7 @@ func (w *Worker) Start(_ context.Context) error {
 
 	// check if stop height is empty
 	stopHeight := w.cfg.StopHeight
-	if stopHeight == 0 {
+	if stopHeight <= 0 {
 		var err error
 
 		stopHeight, err = w.rpcClient.GetLastBlockHeight(ctx)

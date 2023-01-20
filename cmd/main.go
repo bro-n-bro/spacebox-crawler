@@ -8,8 +8,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	"github.com/hexy-dev/spacebox-crawler/internal/app"
-	executor "github.com/hexy-dev/spacebox-crawler/pkg/app"
+	"github.com/bro-n-bro/spacebox-crawler/internal/app"
+	executor "github.com/bro-n-bro/spacebox-crawler/pkg/app"
 )
 
 const (

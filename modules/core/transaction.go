@@ -3,7 +3,7 @@ package core
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 func (m *Module) HandleTx(ctx context.Context, tx *types.Tx) error {

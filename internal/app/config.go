@@ -3,12 +3,12 @@ package app
 import (
 	"time"
 
-	"github.com/hexy-dev/spacebox-crawler/adapter/broker"
-	"github.com/hexy-dev/spacebox-crawler/adapter/metrics"
-	"github.com/hexy-dev/spacebox-crawler/adapter/storage"
-	"github.com/hexy-dev/spacebox-crawler/client/grpc"
-	"github.com/hexy-dev/spacebox-crawler/client/rpc"
-	"github.com/hexy-dev/spacebox-crawler/pkg/worker"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/broker"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/metrics"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
+	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
 )
 
 type Config struct {

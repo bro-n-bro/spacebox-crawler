@@ -3,17 +3,17 @@ package modules
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	authModule "github.com/hexy-dev/spacebox-crawler/modules/auth"
-	bankModule "github.com/hexy-dev/spacebox-crawler/modules/bank"
-	coreModule "github.com/hexy-dev/spacebox-crawler/modules/core"
-	distributionModule "github.com/hexy-dev/spacebox-crawler/modules/distribution"
-	govModule "github.com/hexy-dev/spacebox-crawler/modules/gov"
-	mintModule "github.com/hexy-dev/spacebox-crawler/modules/mint"
-	stakingModule "github.com/hexy-dev/spacebox-crawler/modules/staking"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	"github.com/hexy-dev/spacebox-crawler/types"
+	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
+	authModule "github.com/bro-n-bro/spacebox-crawler/modules/auth"
+	bankModule "github.com/bro-n-bro/spacebox-crawler/modules/bank"
+	coreModule "github.com/bro-n-bro/spacebox-crawler/modules/core"
+	distributionModule "github.com/bro-n-bro/spacebox-crawler/modules/distribution"
+	govModule "github.com/bro-n-bro/spacebox-crawler/modules/gov"
+	mintModule "github.com/bro-n-bro/spacebox-crawler/modules/mint"
+	stakingModule "github.com/bro-n-bro/spacebox-crawler/modules/staking"
+	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, cdc codec.Codec, modules []string,

@@ -1,8 +1,8 @@
 package tobroker
 
 import (
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (tb ToBroker) MapCoin(coin types.Coin) model.Coin {

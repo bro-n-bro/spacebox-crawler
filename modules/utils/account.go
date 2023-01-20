@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authttypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/hexy-dev/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 // GetGenesisAccounts parses the given appState and returns the genesis accounts

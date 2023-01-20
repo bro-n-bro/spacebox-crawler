@@ -3,7 +3,7 @@ package rep
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox/broker/model"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 type Broker interface {

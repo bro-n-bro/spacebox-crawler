@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/hexy-dev/spacebox-crawler/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 )
 
 func (s *Storage) HasBlock(ctx context.Context, height int64) (bool, error) {

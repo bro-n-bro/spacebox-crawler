@@ -3,8 +3,8 @@ package core
 import (
 	"context"
 
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {

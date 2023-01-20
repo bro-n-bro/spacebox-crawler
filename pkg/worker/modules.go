@@ -1,6 +1,6 @@
 package worker
 
-import "github.com/hexy-dev/spacebox-crawler/types"
+import "github.com/bro-n-bro/spacebox-crawler/types"
 
 var (
 	transactionHandlers []types.TransactionHandler

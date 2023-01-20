@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 
-	"github.com/hexy-dev/spacebox-crawler/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
 )
 
 type Metrics struct {

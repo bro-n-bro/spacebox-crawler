@@ -1,4 +1,4 @@
-module github.com/hexy-dev/spacebox-crawler
+module github.com/bro-n-bro/spacebox-crawler
 
 go 1.18
 
@@ -22,6 +22,7 @@ replace (
 
 require (
 	cosmossdk.io/math v1.0.0-beta.3
+	github.com/bro-n-bro/spacebox v0.0.0-20230120163832-cb792d94ab5e
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
@@ -29,7 +30,6 @@ require (
 	github.com/globocom/mongo-go-prometheus v0.1.1
 	github.com/gogo/protobuf v1.3.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/hexy-dev/spacebox v0.0.0-20230115132327-768a56e2fb0a
 	github.com/joho/godotenv v1.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1

@@ -3,8 +3,8 @@ package tobroker
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/hexy-dev/spacebox-crawler/types"
-	"github.com/hexy-dev/spacebox/broker/model"
+	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {

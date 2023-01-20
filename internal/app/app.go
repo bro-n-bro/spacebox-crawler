@@ -14,17 +14,17 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
-	"github.com/hexy-dev/spacebox-crawler/adapter/broker"
-	"github.com/hexy-dev/spacebox-crawler/adapter/metrics"
-	"github.com/hexy-dev/spacebox-crawler/adapter/storage"
-	grpcClient "github.com/hexy-dev/spacebox-crawler/client/grpc"
-	rpcClient "github.com/hexy-dev/spacebox-crawler/client/rpc"
-	"github.com/hexy-dev/spacebox-crawler/internal/rep"
-	"github.com/hexy-dev/spacebox-crawler/modules"
-	"github.com/hexy-dev/spacebox-crawler/modules/core"
-	tb "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_broker"
-	ts "github.com/hexy-dev/spacebox-crawler/pkg/mapper/to_storage"
-	"github.com/hexy-dev/spacebox-crawler/pkg/worker"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/broker"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/metrics"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
+	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	rpcClient "github.com/bro-n-bro/spacebox-crawler/client/rpc"
+	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
+	"github.com/bro-n-bro/spacebox-crawler/modules"
+	"github.com/bro-n-bro/spacebox-crawler/modules/core"
+	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
+	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
+	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
 )
 
 const (
