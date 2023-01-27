@@ -1,6 +1,7 @@
 package types
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+	"golang.org/x/crypto/ripemd160" // nolint: staticcheck
 )
 
 type (
@@ -83,7 +85,7 @@ func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse, cdc codec.Codec) Txs {
 			if len(tx.Tx.AuthInfo.SignerInfos) > 0 {
 				var pk cryptotypes.PubKey
 				if err := cdc.UnpackAny(tx.Tx.AuthInfo.SignerInfos[0].PublicKey, &pk); err == nil {
-					signer, _ = ConvertPubKeyToBech32String(pk)
+					signer, _ = ConvertAddressToBech32String(pk.Address())
 				}
 			}
 		}
@@ -119,14 +121,22 @@ func NewValidator(consAddr string, consPubKey string) *Validator {
 	}
 }
 
-func ConvertPubKeyToBech32String(pubKey cryptotypes.PubKey) (string, error) {
-	return bech32.ConvertAndEncode("cosmos", pubKey.Bytes()) // TODO
+func ConvertAddressToBech32String(address cryptotypes.Address) (string, error) {
+	bech32Prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+	return bech32.ConvertAndEncode(bech32Prefix, address)
 }
 
 // ConvertValidatorPubKeyToBech32String converts the given pubKey to Bech32 string
 func ConvertValidatorPubKeyToBech32String(pubKey tmcrypto.PubKey) (string, error) {
 	bech32Prefix := sdk.GetConfig().GetBech32ConsensusPubPrefix()
 	return bech32.ConvertAndEncode(bech32Prefix, pubKey.Bytes())
+}
+
+func BytesToAddress(key []byte) cryptotypes.Address {
+	sha := sha256.Sum256(key)
+	hasherRIPEMD160 := ripemd160.New()
+	hasherRIPEMD160.Write(sha[:])
+	return hasherRIPEMD160.Sum(nil)
 }
 
 // TotalGas calculates and returns total used gas of all transactions

@@ -16,7 +16,6 @@ var (
 	_ types.BlockHandler       = &Module{}
 	_ types.MessageHandler     = &Module{}
 	_ types.TransactionHandler = &Module{}
-	_ types.ValidatorsHandler  = &Module{}
 )
 
 type Module struct {

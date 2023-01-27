@@ -14,11 +14,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/broker"
-	"github.com/bro-n-bro/spacebox-crawler/adapter/metrics"
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	rpcClient "github.com/bro-n-bro/spacebox-crawler/client/rpc"
+	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
+	"github.com/bro-n-bro/spacebox-crawler/delivery/metrics"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	"github.com/bro-n-bro/spacebox-crawler/modules"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"

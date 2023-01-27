@@ -8,18 +8,11 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	stakingutils "github.com/bro-n-bro/spacebox-crawler/modules/staking/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
-	// Update the validators
-	validators, err := stakingutils.UpdateValidators(ctx, block.Height, m.client.StakingQueryClient, m.cdc, m.broker)
-	if err != nil {
-		return err
-	}
-
 	g, ctx2 := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
@@ -28,18 +21,9 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	})
 
 	g.Go(func() error {
-		// Update the validators statuses
-		return m.updateValidatorsStatus(ctx2, block.Height, validators)
-	})
-
-	g.Go(func() error {
 		// Update the staking pool
 		return m.updateStakingPool(ctx2, block.Height, m.client.StakingQueryClient)
 	})
-
-	// FIXME: does it needed?
-	// Update the voting powers
-	// go updateValidatorVotingPower(block.Height, vals)
 
 	// FIXME: does it needed?
 	// Updated the double sign evidences
@@ -95,42 +79,6 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 	//	Msg("error while saving params")
 	// return
 	// }
-
-	return nil
-}
-
-// updateValidatorsStatus updates all validators' statuses
-func (m *Module) updateValidatorsStatus(ctx context.Context, height int64, vals []stakingtypes.Validator) error {
-	for _, validator := range vals {
-		consAddr, err := stakingutils.GetValidatorConsAddr(m.cdc, validator)
-		if err != nil {
-			return fmt.Errorf("error while getting validator consensus address: %w", err)
-		}
-
-		consPubKey, err := stakingutils.GetValidatorConsPubKey(m.cdc, validator)
-		if err != nil {
-			return fmt.Errorf("error while getting validator consensus public key: %w", err)
-		}
-
-		// TODO: save to mongo?
-		// TODO: test it
-		if err = m.broker.PublishValidator(ctx, model.Validator{
-			ConsensusAddress: consAddr.String(),
-			ConsensusPubkey:  consPubKey.String(),
-		}); err != nil {
-			return err
-		}
-
-		// TODO: test it
-		if err = m.broker.PublishValidatorStatus(ctx, model.ValidatorStatus{
-			Height:           height,
-			ValidatorAddress: consAddr.String(),
-			Status:           int64(validator.GetStatus()),
-			Jailed:           validator.IsJailed(),
-		}); err != nil {
-			return err
-		}
-	}
 
 	return nil
 }

@@ -5,15 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/bro-n-bro/spacebox-crawler/modules/staking/utils"
-	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -31,7 +28,7 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	}
 
 	// Parse genesis transactions
-	if err := parseGenesisTransactions(ctx, doc, appState, m.cdc, m.tbM, m.broker); err != nil {
+	if err := m.parseGenesisTransactions(ctx, doc, appState); err != nil {
 		return fmt.Errorf("error while storing genesis transactions: %w", err)
 	}
 
@@ -55,11 +52,10 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 		return fmt.Errorf("error while storing staking genesis redelegations: %w", err)
 	}
 
-	// FIXME: dead code?
 	// Save the description
-	// if err := saveValidatorDescription(doc, genState.Validators); err != nil {
-	//	return fmt.Errorf("error while storing staking genesis validator descriptions: %s", err)
-	// }
+	if err := m.publishValidatorDescription(ctx, doc, genState.Validators); err != nil {
+		return fmt.Errorf("error while storing staking genesis validator descriptions: %w", err)
+	}
 
 	// FIXME: does it needed?
 	// if err := publishValidatorsCommissions(doc.InitialHeight, genState.Validators); err != nil {
@@ -69,18 +65,18 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	return nil
 }
 
-func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage,
-	cdc codec.Codec, mapper tb.ToBroker, broker broker) error {
+func (m *Module) parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
+	appState map[string]json.RawMessage) error {
 
 	var genUtilState genutiltypes.GenesisState
-	if err := cdc.UnmarshalJSON(appState[genutiltypes.ModuleName], &genUtilState); err != nil {
+	if err := m.cdc.UnmarshalJSON(appState[genutiltypes.ModuleName], &genUtilState); err != nil {
 		return err
 	}
 
 	for _, genTxBz := range genUtilState.GetGenTxs() {
 		// Unmarshal the transaction
 		var genTx tx.Tx
-		if err := cdc.UnmarshalJSON(genTxBz, &genTx); err != nil {
+		if err := m.cdc.UnmarshalJSON(genTxBz, &genTx); err != nil {
 			return err
 		}
 
@@ -91,13 +87,10 @@ func parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc, appS
 				continue
 			}
 
-			if err := utils.StoreValidatorFromMsgCreateValidator(
+			if err := m.handleMsgCreateValidator(
 				ctx,
 				doc.InitialHeight,
 				createValMsg,
-				cdc,
-				mapper,
-				broker,
 			); err != nil {
 				return err
 			}
@@ -133,7 +126,7 @@ func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc,
 	vals := make([]types.StakingValidator, len(validators))
 
 	for i, val := range validators {
-		validator, err := utils.ConvertValidator(m.cdc, val, doc.InitialHeight)
+		validator, err := convertValidator(m.cdc, val, doc.InitialHeight)
 		if err != nil {
 			return err
 		}
@@ -143,7 +136,7 @@ func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc,
 
 	// TODO: save to mongo?
 	// TODO test it
-	return utils.PublishValidatorsData(ctx, vals, m.broker)
+	return m.PublishValidatorsData(ctx, vals)
 }
 
 // publishDelegations publishes the delegations and account data present inside the given genesis state to the broker.
@@ -181,20 +174,6 @@ func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc
 	return nil
 }
 
-// findDelegations returns the list of all the delegations that are
-// related to the validator having the given validator address
-func findDelegations(genData stakingtypes.Delegations, valAddr string) stakingtypes.Delegations {
-	var delegations stakingtypes.Delegations
-
-	for _, delegation := range genData {
-		if delegation.ValidatorAddress == valAddr {
-			delegations = append(delegations, delegation)
-		}
-	}
-
-	return delegations
-}
-
 // publishUnbondingDelegations publishes the unbonding delegations data present inside the given genesis state to the broker.
 func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.GenesisDoc,
 	genState stakingtypes.GenesisState) error {
@@ -223,20 +202,6 @@ func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.G
 	return nil
 }
 
-// findUnbondingDelegations returns the list of all the unbonding delegations
-// that are related to the validator having the given validator address
-func findUnbondingDelegations(genData stakingtypes.UnbondingDelegations, valAddr string) stakingtypes.UnbondingDelegations {
-	unbondingDelegations := make(stakingtypes.UnbondingDelegations, 0)
-
-	for _, unbondingDelegation := range genData {
-		if unbondingDelegation.ValidatorAddress == valAddr {
-			unbondingDelegations = append(unbondingDelegations, unbondingDelegation)
-		}
-	}
-
-	return unbondingDelegations
-}
-
 // publishRedelegations publishes the redelegations data present inside the given genesis state to the broker.
 func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisDoc,
 	genState stakingtypes.GenesisState) error {
@@ -260,4 +225,53 @@ func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisD
 	}
 
 	return nil
+}
+
+func (m *Module) publishValidatorDescription(ctx context.Context, doc *tmtypes.GenesisDoc,
+	validators stakingtypes.Validators) error {
+
+	for _, val := range validators {
+		if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
+			OperatorAddress: val.OperatorAddress,
+			Moniker:         val.GetMoniker(),
+			Identity:        val.Description.Identity,
+			Website:         val.Description.Website,
+			SecurityContact: val.Description.SecurityContact,
+			Details:         val.Description.Details,
+			AvatarURL:       "", // TODO:
+			Height:          doc.InitialHeight,
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// findDelegations returns the list of all the delegations that are
+// related to the validator having the given validator address
+func findDelegations(genData stakingtypes.Delegations, valAddr string) stakingtypes.Delegations {
+	var delegations stakingtypes.Delegations
+
+	for _, delegation := range genData {
+		if delegation.ValidatorAddress == valAddr {
+			delegations = append(delegations, delegation)
+		}
+	}
+
+	return delegations
+}
+
+// findUnbondingDelegations returns the list of all the unbonding delegations
+// that are related to the validator having the given validator address
+func findUnbondingDelegations(genData stakingtypes.UnbondingDelegations, valAddr string) stakingtypes.UnbondingDelegations {
+	unbondingDelegations := make(stakingtypes.UnbondingDelegations, 0)
+
+	for _, unbondingDelegation := range genData {
+		if unbondingDelegation.ValidatorAddress == valAddr {
+			unbondingDelegations = append(unbondingDelegations, unbondingDelegation)
+		}
+	}
+
+	return unbondingDelegations
 }

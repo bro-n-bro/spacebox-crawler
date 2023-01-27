@@ -3,11 +3,11 @@ package app
 import (
 	"time"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/broker"
-	"github.com/bro-n-bro/spacebox-crawler/adapter/metrics"
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
 	"github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
+	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
+	"github.com/bro-n-bro/spacebox-crawler/delivery/metrics"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
 )
 

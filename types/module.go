@@ -35,8 +35,8 @@ type (
 
 	ValidatorsHandler interface {
 		Module
-		// ValidatorsHandler handles of all validators in blockchain.
-		ValidatorsHandler(ctx context.Context, vals *tmctypes.ResultValidators) error
+		// HandleValidators handles of all validators in blockchain.
+		HandleValidators(ctx context.Context, vals *tmctypes.ResultValidators) error
 	}
 
 	GenesisHandler interface {

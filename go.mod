@@ -22,7 +22,7 @@ replace (
 
 require (
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230120163832-cb792d94ab5e
+	github.com/bro-n-bro/spacebox v0.0.0-20230127163235-6a3855d0929d
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
@@ -37,6 +37,7 @@ require (
 	github.com/rs/zerolog v1.28.0
 	github.com/tendermint/tendermint v0.34.23
 	go.mongodb.org/mongo-driver v1.11.1
+	golang.org/x/crypto v0.1.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
 	google.golang.org/grpc v1.50.1
@@ -154,7 +155,6 @@ require (
 	github.com/zondax/hid v0.9.1-0.20220302062450-5552068d2266 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sys v0.1.0 // indirect

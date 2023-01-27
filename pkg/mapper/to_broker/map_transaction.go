@@ -8,9 +8,12 @@ import (
 )
 
 func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
-	signatures := make([]string, len(tx.Signatures))
-	for i, s := range tx.Signatures {
-		signatures[i] = string(s)
+	signatures := make([]string, 0, len(tx.Signatures))
+	for _, s := range tx.Signatures {
+		signer, err := types.ConvertAddressToBech32String(types.BytesToAddress(s))
+		if err == nil {
+			signatures = append(signatures, signer)
+		}
 	}
 
 	var msgs = make([][]byte, len(tx.Body.Messages))

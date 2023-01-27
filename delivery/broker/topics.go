@@ -29,9 +29,10 @@ var (
 	Transaction                Topic = newTopic("transaction")
 	UnbondingDelegation        Topic = newTopic("unbonding_delegation")
 	UnbondingDelegationMessage Topic = newTopic("unbonding_delegation_message")
+	Validator                  Topic = newTopic("validator")
 	ValidatorInfo              Topic = newTopic("validator_info")
 	ValidatorStatus            Topic = newTopic("validator_status")
-	Validator                  Topic = newTopic("validator")
+	ValidatorDescription       Topic = newTopic("validator_description")
 
 	authTopics = Topics{Account}
 
@@ -44,8 +45,10 @@ var (
 
 	mintTopics = Topics{MintParams, AnnualProvision}
 
-	stakingTopics = Topics{Validator, ValidatorStatus, ValidatorInfo, StakingParams, StakingPool, Redelegation,
-		RedelegationMessage, UnbondingDelegation, UnbondingDelegationMessage, Delegation, DelegationMessage}
+	stakingTopics = Topics{Validator, ValidatorStatus, ValidatorInfo, ValidatorDescription, StakingParams,
+		StakingPool, Redelegation, RedelegationMessage, UnbondingDelegation, UnbondingDelegationMessage,
+		Delegation, DelegationMessage,
+	}
 
 	coreTopics = Topics{Block, Transaction, Message}
 )

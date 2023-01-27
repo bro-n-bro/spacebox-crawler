@@ -202,8 +202,8 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 
 func (w *Worker) processValidators(ctx context.Context, vals *tmtcoreypes.ResultValidators) error {
 	for _, m := range validatorsHandlers {
-		if err := m.ValidatorsHandler(ctx, vals); err != nil {
-			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("ValidatorsHandler error: %v", err)
+		if err := m.HandleValidators(ctx, vals); err != nil {
+			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleValidators error: %v", err)
 			return err
 		}
 	}

@@ -18,6 +18,7 @@ type broker interface {
 	PublishValidator(ctx context.Context, val model.Validator) error
 	PublishValidatorInfo(ctx context.Context, infos model.ValidatorInfo) error
 	PublishValidatorStatus(ctx context.Context, statuses model.ValidatorStatus) error
+	PublishValidatorDescription(ctx context.Context, description model.ValidatorDescription) error
 	PublishRedelegation(context.Context, model.Redelegation) error
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
 }

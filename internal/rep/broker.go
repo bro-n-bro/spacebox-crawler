@@ -39,6 +39,7 @@ type Broker interface {
 	PublishValidator(ctx context.Context, val model.Validator) error
 	PublishValidatorInfo(ctx context.Context, info model.ValidatorInfo) error
 	PublishValidatorStatus(ctx context.Context, status model.ValidatorStatus) error
+	PublishValidatorDescription(ctx context.Context, description model.ValidatorDescription) error
 
 	// mint module
 	PublishMintParams(ctx context.Context, mp model.MintParams) error
