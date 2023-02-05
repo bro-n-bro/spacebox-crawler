@@ -18,7 +18,7 @@ import (
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	rpcClient "github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
-	"github.com/bro-n-bro/spacebox-crawler/delivery/metrics"
+	"github.com/bro-n-bro/spacebox-crawler/delivery/server"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	"github.com/bro-n-bro/spacebox-crawler/modules"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"
@@ -74,7 +74,7 @@ func (a *App) Start(ctx context.Context) error {
 	ts := ts.NewToStorage()
 
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
-	metrics := metrics.New(a.cfg.Metrics, s, *a.log)
+	server := server.New(a.cfg.Server, s, *a.log)
 
 	MakeSdkConfig(a.cfg, sdk.GetConfig())
 
@@ -85,7 +85,7 @@ func (a *App) Start(ctx context.Context) error {
 		cmp{rpcCli, "rpcClient"},
 		cmp{b, "broker"},
 		cmp{w, "worker"},
-		cmp{metrics, "metrics"},
+		cmp{server, "server"},
 	)
 
 	okCh, errCh := make(chan struct{}), make(chan error)

@@ -114,6 +114,7 @@ func convertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 		sdk.AccAddress(validator.GetOperator()).String(),
 		&validator.Commission.MaxChangeRate,
 		&validator.Commission.MaxRate,
+		validator.Description,
 		height,
 	), nil
 }

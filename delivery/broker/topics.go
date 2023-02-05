@@ -33,6 +33,7 @@ var (
 	ValidatorInfo              Topic = newTopic("validator_info")
 	ValidatorStatus            Topic = newTopic("validator_status")
 	ValidatorDescription       Topic = newTopic("validator_description")
+	ValidatorCommission        Topic = newTopic("validator_commission")
 
 	authTopics = Topics{Account}
 

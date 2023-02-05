@@ -7,14 +7,14 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
-	"github.com/bro-n-bro/spacebox-crawler/delivery/metrics"
+	"github.com/bro-n-bro/spacebox-crawler/delivery/server"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
 )
 
 type Config struct {
 	ChainPrefix   string `env:"CHAIN_PREFIX"`
 	LogLevel      string `env:"LOG_LEVEL" envDefault:"info"`
-	Metrics       metrics.Config
+	Server        server.Config
 	Modules       []string `env:"MODULES" required:"true"`
 	GRPCConfig    grpc.Config
 	RPCConfig     rpc.Config

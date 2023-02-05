@@ -34,6 +34,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Height:       tx.Height,
 			VoterAddress: msg.Voter,
 			Option:       msg.Option.String(),
+			TxHash:       tx.TxHash,
 			MsgIndex:     int64(index),
 		})
 	}

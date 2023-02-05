@@ -34,11 +34,6 @@ func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHei
 }
 
 func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan tmtcoreypes.ResultEvent) {
-	if err := w.pingStorage(ctx); err != nil { // FIXME: maybe not needed
-		w.log.Error().Err(err).Msg("enqueueNewBlocks pingStorage error!")
-		return
-	}
-
 	ctx, w.stopWsListener = context.WithCancel(ctx)
 	defer w.stopWsListener()
 	w.log.Info().Msg("listening for new block events...")

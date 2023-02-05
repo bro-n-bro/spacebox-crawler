@@ -25,6 +25,7 @@ type Broker interface {
 	PublishDelegationReward(context.Context, model.DelegationReward) error
 	PublishDelegationRewardMessage(context.Context, model.DelegationRewardMessage) error
 	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
+	PublishValidatorCommission(ctx context.Context, commission model.ValidatorCommission) error
 
 	// staking
 	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error

@@ -69,31 +69,6 @@ func (b *Broker) Start(ctx context.Context) error {
 		b.log.Error().Err(err).Msg(MsgErrCreateTopics)
 		return errors.Wrap(err, MsgErrCreateTopics)
 	}
-	//
-	// for _, result := range topicRes {
-	//	if result.Error.Code() == kafka.ErrTopicAlreadyExists {
-	//		partRes, err := ac.CreatePartitions(ctx, []kafka.PartitionsSpecification{{
-	//			Topic:      result.Topic,
-	//			IncreaseTo: b.cfg.PartitionsCount,
-	//		},
-	//		})
-	//		if err != nil {
-	//			b.log.Error().Err(err).Msg(MsgErrCreatePartitions)
-	//			return errors.Wrap(err, MsgErrCreatePartitions)
-	//		}
-	//		if partRes[0].Error.Code() == kafka.ErrInvalidPartitions {
-	//			return errors.New("You cannot decrease partitions!")
-	//		}
-	//	}
-	// }
-
-	// create init partitions if needed
-	// res, err := ac.CreatePartitions(ctx, kafkaPartitions)
-	// _ = res
-	// if err != nil {
-	//	b.log.Error().Err(err).Msgf(MsgErrCreatePartitions, err)
-	//	return errors.Wrap(err, MsgErrCreatePartitions)
-	// }
 
 	// create a producer connection
 	p, err := kafka.NewProducer(&kafka.ConfigMap{

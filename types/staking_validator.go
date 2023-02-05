@@ -3,11 +3,9 @@ package types
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// StakingValidator represents a single validator.
-// This is defined as an interface so that we can use the SDK types
-// as well as database types properly.
 type (
 	StakingValidator interface {
 		GetConsAddr() string
@@ -18,6 +16,7 @@ type (
 		GetMaxRate() *sdk.Dec
 		GetHeight() int64
 		GetMinSelfDelegation() *sdkmath.Int
+		GetDescription() stakingtypes.Description
 	}
 
 	// validator allows to easily implement the Validator interface
@@ -25,6 +24,7 @@ type (
 		MinSelfDelegation   *sdkmath.Int
 		MaxChangeRate       *sdk.Dec
 		MaxRate             *sdk.Dec
+		Description         stakingtypes.Description
 		ConsPubKey          string
 		OperatorAddr        string
 		SelfDelegateAddress string
@@ -35,7 +35,7 @@ type (
 
 // NewStakingValidator allows to build a new Validator implementation having the given data
 func NewStakingValidator(consAddr, opAddr, consPubKey, selfDelegateAddress string,
-	maxChangeRate, maxRate *sdk.Dec, height int64) StakingValidator {
+	maxChangeRate, maxRate *sdk.Dec, description stakingtypes.Description, height int64) StakingValidator {
 
 	return stakingValidator{
 		ConsensusAddr:       consAddr,
@@ -44,6 +44,7 @@ func NewStakingValidator(consAddr, opAddr, consPubKey, selfDelegateAddress strin
 		SelfDelegateAddress: selfDelegateAddress,
 		MaxChangeRate:       maxChangeRate,
 		MaxRate:             maxRate,
+		Description:         description,
 		Height:              height,
 	}
 }
@@ -80,4 +81,8 @@ func (v stakingValidator) GetHeight() int64 {
 
 func (v stakingValidator) GetMinSelfDelegation() *sdkmath.Int {
 	return v.MinSelfDelegation
+}
+
+func (v stakingValidator) GetDescription() stakingtypes.Description {
+	return v.Description
 }

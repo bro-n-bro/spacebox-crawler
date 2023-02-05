@@ -22,14 +22,16 @@ replace (
 
 require (
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230127163235-6a3855d0929d
+	github.com/bro-n-bro/spacebox v0.0.0-20230130184443-07344dd57a12
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
 	github.com/cosmos/ibc-go/v5 v5.0.0
 	github.com/globocom/mongo-go-prometheus v0.1.1
 	github.com/gogo/protobuf v1.3.3
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/joho/godotenv v1.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1
@@ -85,7 +87,6 @@ require (
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/gateway v1.1.0 // indirect
 	github.com/golang/glog v1.0.0 // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect

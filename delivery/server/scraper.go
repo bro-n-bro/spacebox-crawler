@@ -1,4 +1,4 @@
-package metrics
+package server
 
 import (
 	"context"
@@ -12,9 +12,9 @@ const (
 	namespace = "spacebox_crawler"
 )
 
-// startScraping fills metrics in prometheus in background
-func (m *Metrics) startScraping() {
-	m.log.Info().Msg("start metrics scraper")
+// startMetricsScrapper fills metrics in prometheus in background.
+func (s *Server) startMetricsScrapper() {
+	s.log.Info().Msg("start metrics scraper")
 
 	var (
 		// count of blocks for each status
@@ -38,16 +38,16 @@ func (m *Metrics) startScraping() {
 
 	for {
 		select {
-		case <-m.stopScraping:
-			m.log.Info().Msg("stop metrics scraper")
+		case <-s.stopScraping:
+			s.log.Info().Msg("stop metrics scraper")
 			return
 		case <-ticker.C:
-			if err := m.storage.Ping(ctx); err != nil {
+			if err := s.storage.Ping(ctx); err != nil {
 				continue
 			}
-			blocks, err := m.storage.GetAllBlocks(ctx)
+			blocks, err := s.storage.GetAllBlocks(ctx)
 			if err != nil {
-				m.log.Error().Err(err).Msg("can't get all blocks from storage")
+				s.log.Error().Err(err).Msg("can't get all blocks from storage")
 				continue
 			}
 

@@ -33,13 +33,13 @@ linters-settings:
   # Detects code cloning.
   dupl:
     # Tokens count to trigger issue, 150 by default.
-    threshold: 100
+    threshold: 150
   # Checks if package imports are in a list of acceptable packages.
   goimports:
     # A comma-separated list of prefixes, which, if set, checks import paths
     # with the given prefixes are grouped after 3rd-party packages.
     # Default: ""
-    local-prefixes: github.com/org/project
+    local-prefixes: github.com/bro-n-bro
   # Checks if package imports are in a list of acceptable packages
   depguard:
     list-type: blacklist
