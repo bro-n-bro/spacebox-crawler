@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"sync"
+	"time"
 
 	tmtcoreypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -11,17 +12,12 @@ import (
 func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHeight, stopHeight int64) {
 	defer wg.Done()
 
-	if err := w.pingStorage(ctx); err != nil { // FIXME: maybe not needed
-		w.log.Error().Err(err).Msg("enqueueHeight pingStorage error!")
-		return
-	}
-
 	w.log.Debug().Msgf("try to parse: %d count of blocks", stopHeight-startHeight)
 
 	ctx, w.stopEnqueueHeight = context.WithCancel(ctx)
 	defer w.stopEnqueueHeight()
 
-	for height := startHeight; height <= stopHeight; height++ {
+	for height := startHeight; height >= 0 && height <= stopHeight; height++ {
 		// safe from closed channel
 		select {
 		case <-ctx.Done():
@@ -59,28 +55,34 @@ func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan tmtcoreype
 func (w *Worker) enqueueErrorBlocks(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	if err := w.pingStorage(ctx); err != nil { // FIXME: maybe not needed
-		w.log.Error().Err(err).Msg("enqueueHeight pingStorage error!")
-		return
-	}
+	ticker := time.NewTicker(w.cfg.ProcessErrorBlocksInterval)
+	defer ticker.Stop()
 
 	ctx, w.stopEnqueueErrorBlocks = context.WithCancel(ctx)
 	defer w.stopEnqueueErrorBlocks()
 
-	heights, err := w.storage.GetErrorBlockHeights(ctx)
-	if err != nil {
-		w.log.Error().Err(err).Str("func", "GetErrorBlockHeights").Msg("cant enqueueErrorBlocks")
-		return
-	}
-
-	for _, height := range heights {
-		// safe from closed channel
+	for {
 		select {
 		case <-ctx.Done():
 			w.log.Info().Msg("stop GetErrorBlockHeights")
 			return
-		default:
+		case <-ticker.C:
+			heights, err := w.storage.GetErrorBlockHeights(ctx)
+			if err != nil {
+				w.log.Error().Err(err).Str("func", "GetErrorBlockHeights").Msg("cant enqueueErrorBlocks")
+				return
+			}
+
+			for _, height := range heights {
+				// safe from closed channel
+				select {
+				case <-ctx.Done():
+					w.log.Info().Msg("stop GetErrorBlockHeights")
+					return
+				default:
+				}
+				w.heightCh <- height
+			}
 		}
-		w.heightCh <- height
 	}
 }

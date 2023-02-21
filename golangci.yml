@@ -186,6 +186,8 @@ issues:
         - govet
         - gocyclo
         - misspell
+        - gocognit
+        - errcheck
     - path: proto.go
       linters:
         - misspell

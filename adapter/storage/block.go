@@ -9,30 +9,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
-func (s *Storage) HasBlock(ctx context.Context, height int64) (bool, error) {
-	var err error
+func (s *Storage) GetBlockByHeight(ctx context.Context, height int64) (*model.Block, error) {
+	var (
+		err   error
+		block model.Block
+	)
+
 	if err = s.collection.
 		FindOne(ctx, bson.D{{Key: "height", Value: height}}).
-		Decode(&model.Block{}); err == nil { // record exist
-		return true, nil
+		Decode(&block); err == nil { // record exist
+		return &block, nil
 	}
 
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return false, nil
+		return nil, types.ErrBlockNotFound
 	}
 
-	return false, err
-}
-
-func (s *Storage) GetBlockStatus(ctx context.Context, height int64) (model.Status, error) {
-	block := model.Block{}
-	if err := s.collection.FindOne(ctx, bson.D{{Key: "height", Value: height}}).Decode(&block); err != nil {
-		return 0, err
-	}
-
-	return block.Status, nil
+	return nil, err
 }
 
 func (s *Storage) CreateBlock(ctx context.Context, block *model.Block) error {
@@ -107,6 +103,11 @@ func (s *Storage) GetAllBlocks(ctx context.Context) ([]*model.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err = cursor.Close(ctx); err != nil {
+			s.log.Error().Err(err).Msg("close cursor error")
+		}
+	}()
 
 	blocks := make([]*model.Block, 0)
 	if err = cursor.All(ctx, &blocks); err != nil {

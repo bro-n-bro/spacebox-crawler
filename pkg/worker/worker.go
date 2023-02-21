@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
@@ -93,9 +92,9 @@ func (w *Worker) Start(_ context.Context) error {
 
 	w.heightCh = make(chan int64, workersCount)
 
-	// check if stop height is empty
 	stopHeight := w.cfg.StopHeight
-	if stopHeight <= 0 {
+	// check if stop height is empty, and we want to process height range from config
+	if stopHeight <= 0 && w.cfg.StartHeight >= 0 {
 		var err error
 
 		stopHeight, err = w.rpcClient.GetLastBlockHeight(ctx)
@@ -166,23 +165,4 @@ func (w *Worker) Stop(_ context.Context) error {
 	w.log.Info().Msg("stop workers")
 
 	return nil
-}
-
-func (w *Worker) pingStorage(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return errors.New("worker ping storage timeout")
-		case <-ticker.C:
-			if err := w.storage.Ping(ctx); err == nil {
-				return nil
-			}
-		}
-	}
 }

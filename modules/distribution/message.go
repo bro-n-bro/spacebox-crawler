@@ -3,18 +3,14 @@ package distribution
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	"google.golang.org/grpc/codes"
+	"github.com/pkg/errors"
 
-	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
-)
-
-const (
-	errDelegationDoesNotExists = `rpc error: code = %s desc = delegation does not exist`
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -23,43 +19,25 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	}
 
 	switch msg := cosmosMsg.(type) {
-	// TODO: todo to handle block
-	case *distrtypes.MsgFundCommunityPool:
-		res, err := m.client.DistributionQueryClient.CommunityPool(ctx, &distrtypes.QueryCommunityPoolRequest{})
+	case *distrtypes.MsgWithdrawDelegatorReward:
+		event, err := tx.FindEventByType(index, distrtypes.EventTypeWithdrawRewards)
 		if err != nil {
 			return err
 		}
 
-		// TODO: test it
-		return m.broker.PublishCommunityPool(ctx, model.CommunityPool{
-			Height: tx.Height,
-			Coins:  m.tbM.MapCoins(types.NewCoinsFromCdkDec(res.Pool)),
-		})
-	case *distrtypes.MsgWithdrawDelegatorReward:
-		resp, err := m.client.DistributionQueryClient.DelegationRewards(
-			ctx,
-			&distrtypes.QueryDelegationRewardsRequest{
-				DelegatorAddress: msg.DelegatorAddress,
-				ValidatorAddress: msg.ValidatorAddress,
-			},
-			grpcClient.GetHeightRequestHeader(tx.Height))
+		value, err := tx.FindAttributeByKey(event, "amount")
 		if err != nil {
-			// Get the error code
-			var code string
-			if _, err = fmt.Sscanf(err.Error(), errDelegationDoesNotExists, &code); err != nil {
-				return err
-			}
-
-			if code == codes.Unknown.String() {
-				return nil
-			}
-
 			return err
+		}
+
+		coin, err := coinFromBytes([]byte(value))
+		if err != nil {
+			return fmt.Errorf("%w failed to convert %s string to coin", err, value)
 		}
 
 		// TODO: test it
 		return m.broker.PublishDelegationRewardMessage(ctx, model.DelegationRewardMessage{
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdkDec(resp.Rewards)),
+			Coin:             m.tbM.MapCoin(coin),
 			Height:           tx.Height,
 			DelegatorAddress: msg.DelegatorAddress,
 			ValidatorAddress: msg.ValidatorAddress,
@@ -69,4 +47,25 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	}
 
 	return nil
+}
+
+// coinFromBytes converts slice bytes to coin type
+// loop over value with index and find first not digit byte. it means that before the index - digits and after - chars
+// ex: 123abc - > amount: 123, denom: abc
+func coinFromBytes(value []byte) (types.Coin, error) {
+	for i := 0; i < len(value); i++ {
+		v := value[i]
+		if v < 48 || v > 57 { // bytes range [48-57] == digits range [0-9]
+			amount, err := strconv.ParseFloat(string(value[:i]), 64)
+			if err != nil {
+				return types.Coin{}, err
+			}
+			return types.Coin{
+				Denom:  string(value[i:]),
+				Amount: amount,
+			}, nil
+		}
+	}
+
+	return types.Coin{}, errors.New("not found")
 }

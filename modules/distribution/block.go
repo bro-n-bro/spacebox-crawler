@@ -3,6 +3,7 @@ package distribution
 import (
 	"context"
 
+	"cosmossdk.io/errors"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
@@ -28,7 +29,19 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	//	return err
 	// }
 
-	// TODO: client.community pull
+	res, err := m.client.DistributionQueryClient.CommunityPool(ctx, &distrtypes.QueryCommunityPoolRequest{})
+	if err != nil {
+		return errors.Wrap(err, "get CommunityPool error")
+	}
+
+	// TODO: test it
+	if err := m.broker.PublishCommunityPool(ctx, model.CommunityPool{
+		Height: block.Height,
+		Coins:  m.tbM.MapCoins(types.NewCoinsFromCdkDec(res.Pool)),
+	}); err != nil {
+		return errors.Wrap(err, "publish CommunityPool error")
+	}
+
 	return m.updateParams(ctx, block.Height)
 }
 

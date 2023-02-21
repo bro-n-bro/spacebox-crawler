@@ -137,8 +137,6 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			Msg("Get txs info")
 
 		txs := types.NewTxsFromTmTxs(txsRes, w.cdc)
-		b := types.NewBlockFromTmBlock(block, txs.TotalGas())
-
 		g, ctx2 = errgroup.WithContext(ctx)
 
 		g.Go(func() error {
@@ -148,7 +146,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		})
 		g.Go(func() error {
 			return w.withMetrics("block", func() error {
-				return w.processBlock(ctx2, b)
+				return w.processBlock(ctx2, types.NewBlockFromTmBlock(block, txs.TotalGas()))
 			})
 		})
 		g.Go(func() error {
@@ -226,13 +224,12 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 
 func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 	for _, tx := range txs {
-		if !tx.Successful() { // skip message processing from failed transaction
+		if !tx.Successful() { // skip message processing for failed transaction
 			continue
 		}
 
 		for i, msg := range tx.Body.Messages {
 			var stdMsg sdk.Msg
-
 			if err := w.cdc.UnpackAny(msg, &stdMsg); err != nil {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
 				return err
@@ -240,7 +237,10 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 
 			for _, m := range messageHandlers {
 				if err := m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
-					w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleMessage error: %v", err)
+					w.log.Error().
+						Int64("height", tx.Height).
+						Str(keyModule, m.Name()).Err(err).
+						Msgf("HandleMessage error: %v", err)
 					return err
 				}
 			}

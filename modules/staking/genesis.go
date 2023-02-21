@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
@@ -141,6 +142,8 @@ func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc,
 
 // publishDelegations publishes the delegations and account data present inside the given genesis state to the broker.
 func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+
 	for _, validator := range genState.Validators {
 		tokens := validator.Tokens
 		delShares := validator.DelegatorShares
@@ -148,12 +151,14 @@ func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc
 		typesDelegations := findDelegations(genState.Delegations, validator.OperatorAddress)
 
 		for _, del := range typesDelegations {
-			// TODO: test it
-			if err := m.broker.PublishAccount(ctx, model.Account{
-				Address: del.DelegatorAddress,
-				Height:  doc.InitialHeight,
-			}); err != nil {
-				return err
+			if strings.HasPrefix(del.DelegatorAddress, prefix) {
+				// TODO: test it
+				if err := m.broker.PublishAccount(ctx, model.Account{
+					Address: del.DelegatorAddress,
+					Height:  doc.InitialHeight,
+				}); err != nil {
+					return err
+				}
 			}
 
 			delegationAmount := sdk.NewDecFromBigInt(tokens.BigInt()).Mul(del.Shares).Quo(delShares).TruncateInt()

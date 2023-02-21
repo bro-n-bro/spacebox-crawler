@@ -5,6 +5,7 @@ import (
 
 	mongoprom "github.com/globocom/mongo-go-prometheus"
 	"github.com/rs/zerolog"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -58,6 +59,15 @@ func (s *Storage) Start(ctx context.Context) error {
 
 	collection := s.cli.Database("spacebox").Collection("blocks")
 	s.collection = collection
+
+	mod := mongo.IndexModel{
+		Keys: bson.M{"height": 1}, // index in ascending order or -1 for descending order
+		// Options: options.Index().SetUnique(true),
+	}
+
+	if _, err := collection.Indexes().CreateOne(ctx, mod); err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -51,11 +51,5 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		}
 	}
 
-	addresses, err := m.parser(m.cdc, cosmosMsg)
-	if err != nil {
-		m.log.Error().Err(err).Msg("HandleMessage getAddresses error:")
-		return nil
-	}
-
-	return m.updateBalance(ctx, utils.FilterNonAccountAddresses(addresses), tx.Height)
+	return m.updateBalance(ctx, utils.FilterNonAccountAddresses(m.parser(m.cdc, cosmosMsg)), tx.Height)
 }

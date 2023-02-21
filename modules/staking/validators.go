@@ -3,7 +3,9 @@ package staking
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -77,6 +79,8 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 
 // PublishValidatorsData produces a message about validator, account and validator info to the broker.
 func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.StakingValidator) error {
+	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
+
 	for _, val := range sVals {
 		// TODO: test it
 		if err := m.broker.PublishValidator(ctx, model.Validator{
@@ -88,12 +92,14 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 			return err
 		}
 
-		// TODO: test it
-		if err := m.broker.PublishAccount(ctx, model.Account{
-			Address: val.GetSelfDelegateAddress(),
-			Height:  val.GetHeight(),
-		}); err != nil {
-			return err
+		if strings.HasPrefix(val.GetSelfDelegateAddress(), prefix) {
+			// TODO: test it
+			if err := m.broker.PublishAccount(ctx, model.Account{
+				Address: val.GetSelfDelegateAddress(),
+				Height:  val.GetHeight(),
+			}); err != nil {
+				return err
+			}
 		}
 
 		var minSelfDelegation int64

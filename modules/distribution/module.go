@@ -8,7 +8,6 @@ import (
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
-	"github.com/bro-n-bro/spacebox-crawler/modules/core"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
@@ -25,10 +24,9 @@ type Module struct {
 	broker broker
 	tbM    tb.ToBroker
 	cdc    codec.Codec
-	parser core.MessageAddressesParser
 }
 
-func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, parser core.MessageAddressesParser) *Module {
+func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", "distribution").Logger()
 
@@ -38,7 +36,6 @@ func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec,
 		client: cli,
 		tbM:    tbM,
 		cdc:    cdc,
-		parser: parser,
 	}
 }
 

@@ -73,6 +73,7 @@ func (b *Broker) Start(ctx context.Context) error {
 	// create a producer connection
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": b.cfg.ServerURL,
+		"message.max.bytes": 5 << 20, // 5 MB
 	})
 	if err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateProducer)
@@ -102,6 +103,8 @@ func (b *Broker) Stop(ctx context.Context) error {
 	if !b.cfg.Enabled {
 		return nil
 	}
+
+	b.p.Flush(30 * 1000)
 
 	b.p.Close()
 	b.ac.Close()

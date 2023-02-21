@@ -36,7 +36,7 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, cd
 			s := stakingModule.New(b, cli, tbMapper, cdc, modules)
 			res = append(res, s)
 		case "distribution":
-			res = append(res, distributionModule.New(b, cli, tbMapper, cdc, addressesParser))
+			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))
 		case "core":
 			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
 		default:

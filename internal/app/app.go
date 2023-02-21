@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,6 +26,7 @@ import (
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
+	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
 )
 
 const (
@@ -160,11 +162,13 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	std.RegisterInterfaces(ir)
 	ibcstypes.RegisterInterfaces(ir)
 	ibctransfertypes.RegisterInterfaces(ir)
+	liquiditytypes.RegisterInterfaces(ir)
+	cryptocodec.RegisterInterfaces(ir)
 
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
-	// liquiditytypes.RegisterInterfaces(ir)
+	liquiditytypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 
 	return codec.NewProtoCodec(ir), amino
 }

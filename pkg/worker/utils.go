@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 var (
@@ -19,36 +21,30 @@ func (w *Worker) setErrorStatusWithLogging(ctx context.Context, height int64, ms
 }
 
 func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) error {
-	hasBlock, err := w.storage.HasBlock(ctx, height)
-	if err != nil {
-		w.log.Fatal().Err(err).Int64("height", height).Msgf("cant check block in storage %v:", err)
-		return err
-	}
-
-	if hasBlock { // exists block
-		status, err := w.storage.GetBlockStatus(ctx, height)
-		if err != nil {
-			w.log.Error().Err(err).Int64("height", height).Msgf("cant get block status in storage %v:", err)
-			return err
-		}
-
-		switch {
-		// block info already in kafka
-		case status.IsProcessed():
-			return ErrBlockProcessed
-		// block now is processing
-		case status.IsProcessing():
-			return ErrBlockProcessing
-		// block processed with error, skip if needed
-		case status.IsError() && !w.cfg.ProcessErrorBlocks:
-			return ErrBlockError
-		}
-	} else { // new block
-		if err := w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
+	block, err := w.storage.GetBlockByHeight(ctx, height)
+	if err != nil && errors.Is(err, types.ErrBlockNotFound) {
+		// create new block
+		if err = w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
 			w.log.Error().Err(err).Int64("height", height).Msgf("cant create new block in storage %v:", err)
 			return err
 		}
+		return nil
+	} else if err != nil {
+		// got some error from storage
+		return err
 	}
 
+	// block exists check status
+	switch {
+	// block info already in kafka
+	case block.Status.IsProcessed():
+		return ErrBlockProcessed
+	// block now is processing
+	case block.Status.IsProcessing():
+		return ErrBlockProcessing
+	// block processed with error, skip if needed
+	case block.Status.IsError() && !w.cfg.ProcessErrorBlocks:
+		return ErrBlockError
+	}
 	return nil
 }

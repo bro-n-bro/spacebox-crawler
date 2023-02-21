@@ -8,8 +8,7 @@ import (
 
 // Storage implementation needed for store some tmp data for correct processing
 type Storage interface {
-	HasBlock(ctx context.Context, height int64) (bool, error)
-	GetBlockStatus(ctx context.Context, height int64) (model.Status, error)
+	GetBlockByHeight(ctx context.Context, height int64) (*model.Block, error)
 	CreateBlock(ctx context.Context, block *model.Block) error
 	SetProcessedStatus(ctx context.Context, height int64) error
 	SetErrorStatus(ctx context.Context, height int64, msg string) error

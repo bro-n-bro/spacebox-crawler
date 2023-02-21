@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -10,19 +11,18 @@ import (
 )
 
 func (m *Module) HandleMessage(ctx context.Context, _ int, msg sdk.Msg, tx *types.Tx) error {
-	addresses, err := m.parser(m.cdc, msg)
-	if err != nil {
-		m.log.Error().Err(err).Msg("HandleMessage getAddresses error")
-		return nil
-	}
+	addresses := m.parser(m.cdc, msg)
+	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 
 	for _, addr := range addresses {
-		// TODO: test it
-		if err = m.broker.PublishAccount(ctx, model.Account{
-			Address: addr,
-			Height:  tx.Height,
-		}); err != nil {
-			return err
+		if strings.HasPrefix(addr, prefix) {
+			// TODO: test it
+			if err := m.broker.PublishAccount(ctx, model.Account{
+				Address: addr,
+				Height:  tx.Height,
+			}); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -6,6 +6,8 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 )
 
 const (
@@ -36,6 +38,8 @@ func (s *Server) startMetricsScrapper() {
 		ticker    = time.NewTicker(1 * time.Minute)
 	)
 
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-s.stopScraping:
@@ -51,7 +55,12 @@ func (s *Server) startMetricsScrapper() {
 				continue
 			}
 
-			statusMap = make(map[string]int) // clear map
+			statusMap = map[string]int{
+				model.StatusProcessing.ToString(): 0,
+				model.StatusProcessed.ToString():  0,
+				model.StatusError.ToString():      0,
+			}
+
 			var maxHeight int64
 			for _, b := range blocks {
 				if b.Status.IsProcessed() && b.Height > maxHeight {

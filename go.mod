@@ -5,31 +5,32 @@ go 1.18
 replace (
 	//github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
+	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.46.1
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-//latest grpc doesn't work with with our modified proto compiler, so we need to enforce
-//the following version across all dependencies.
-//google.golang.org/grpc => google.golang.org/grpc v1.33.2
+	//latest grpc doesn't work with with our modified proto compiler, so we need to enforce
+	//the following version across all dependencies.
+	//google.golang.org/grpc => google.golang.org/grpc v1.33.2
 
-//github.com/jhump/protoreflect => github.com/jhump/protoreflect v1.9.0
+	//github.com/jhump/protoreflect => github.com/jhump/protoreflect v1.9.0
 
-//github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
-
+	//github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
+	google.golang.org/grpc => google.golang.org/grpc v1.50.1
 )
 
 require (
+	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230130184443-07344dd57a12
+	github.com/bro-n-bro/spacebox v0.0.0-20230221190237-b1a3d35f6227
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
 	github.com/cosmos/ibc-go/v5 v5.0.0
 	github.com/globocom/mongo-go-prometheus v0.1.1
 	github.com/gogo/protobuf v1.3.3
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/joho/godotenv v1.4.0
@@ -37,6 +38,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.13.0
 	github.com/rs/zerolog v1.28.0
+	github.com/stretchr/testify v1.8.0
 	github.com/tendermint/tendermint v0.34.23
 	go.mongodb.org/mongo-driver v1.11.1
 	golang.org/x/crypto v0.1.0
@@ -50,7 +52,6 @@ require (
 	cloud.google.com/go/compute v1.6.1 // indirect
 	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/storage v1.14.0 // indirect
-	cosmossdk.io/errors v1.0.0-beta.7 // indirect
 	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -87,6 +88,7 @@ require (
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/gateway v1.1.0 // indirect
 	github.com/golang/glog v1.0.0 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.0.1 // indirect
@@ -141,7 +143,6 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.13.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tendermint/btcd v0.1.1 // indirect
