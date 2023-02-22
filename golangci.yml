@@ -1,0 +1,203 @@
+# Options for analysis running.
+run:
+  # Default concurrency is a available CPU number.
+  concurrency: 4
+  # Timeout for analysis. e.g. 30s, default is 1m.
+  deadline: 2m
+  # Exit code when at least one issue was found, default is 1.
+  issues-exit-code: 10
+  # Include test files, default is true.
+  tests: true
+
+# Output configuration options.
+output:
+  # Output styling.
+  # e.g. colored-line-number, line-number, json, tab, checkstyle, code-climate.
+  # Default is colored-line-number.
+  format: colored-line-number
+  # Print lines of code with issue, default is true.
+  print-issued-lines: true
+  # Print linter name in the end of issue text, default is true.
+  print-linter-name: true
+
+# All available settings of specific linters.
+linters-settings:
+  # Checks whether code was formatted.
+  gofmt:
+    # Simplify code: gofmt with `-s` option, true by default.
+    simplify: true
+  # Computes and checks the cyclomatic complexity of functions.
+  gocyclo:
+    # Minimal code complexity to report, 30 by default but recommend 10-20.
+    min-complexity: 20
+  # Detects code cloning.
+  dupl:
+    # Tokens count to trigger issue, 150 by default.
+    threshold: 150
+  # Checks if package imports are in a list of acceptable packages.
+  goimports:
+    # A comma-separated list of prefixes, which, if set, checks import paths
+    # with the given prefixes are grouped after 3rd-party packages.
+    # Default: ""
+    local-prefixes: github.com/bro-n-bro
+  # Checks if package imports are in a list of acceptable packages
+  depguard:
+    list-type: blacklist
+    include-go-root: false
+    packages:
+      - github.com/davecgh/go-spew/spew
+  # Finds commonly misspelled English words in comments.
+  misspell:
+    # Correct spellings using locale preferences for UK.
+    locale: UK
+  # Reports long lines.
+  lll:
+    # Max line length, lines longer will be reported, 120 by default.
+    line-length: 126
+    # Tab width in spaces, 1 by default.
+    tab-width: 8
+  govet:
+    # Report about shadowed variables.
+    # Default: false
+    check-shadowing: false
+    # Disable all analyzers.
+    # Default: false
+    # disable-all: true
+    # Enable analyzers by name.
+    # Run `go tool vet help` to see all analyzers.
+    # enable:
+    #  - fieldalignment
+    #  - shadow
+    # Enable all analyzers.
+    # Default: false
+    enable-all: true
+  # Checks declaration order and count of types, constants, variables and functions
+  decorder:
+    # Required order of `type`, `const`, `var` and `func` declarations inside a file.
+    # Default: types before constants before variables before functions.
+    dec-order:
+      - const
+      - var
+      - type
+      - func
+    # If true, order of declarations is not checked at all.
+    # Default: true (disabled)
+    disable-dec-order-check: false
+    # If true, `init` func can be anywhere in file (does not have to be declared before all other functions).
+    # Default: true (disabled)
+    disable-init-func-first-check: false
+    # If true, multiple global `type`, `const` and `var` declarations are allowed.
+    # Default: true (disabled)
+    disable-dec-num-check: false
+  # Controls golang package import order and makes it always deterministic.
+  gci:
+    # Section configuration to compare against.
+    # Section names are case-insensitive and may contain parameters in ().
+    # The default order of sections is `standard > default > custom > blank > dot`,
+    # If `custom-order` is `true`, it follows the order of `sections` option.
+    # Default: ["standard", "default"]
+    sections:
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - prefix(github.com/bro-n-bro) # Custom section: groups all imports with the specified Prefix.
+#      - blank # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
+#      - dot # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
+    # Skip generated files.
+    # Default: true
+    skip-generated: false
+    # Enable custom order of sections.
+    # If `true`, make the section order the same as the order of `sections`.
+    # Default: false
+    custom-order: true
+  # Finds slice declarations that could potentially be pre-allocated
+  prealloc:
+    # IMPORTANT: we don't recommend using this linter before doing performance profiling.
+    # For most programs usage of prealloc will be a premature optimization.
+
+    # Report pre-allocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
+    # Default: true
+    simple: false
+    # Report pre-allocation suggestions on range loops.
+    # Default: true
+    range-loops: true
+    # Report pre-allocation suggestions on for loops.
+    # Default: false
+    for-loops: true
+  whitespace:
+    # Enforces newlines (or comments) after every multi-line if statement.
+    # Default: false
+    multi-if: true
+    # Enforces newlines (or comments) after every multi-line function signature.
+    # Default: false
+    multi-func: true
+
+# List of enabled linters.
+linters:
+  enable:
+    - bodyclose
+    - dupl
+    - errcheck
+    - goconst
+    - gocritic
+    - gocyclo
+    - goimports
+    - gosimple
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - staticcheck
+    - stylecheck
+    - unconvert
+    - unparam
+    - unused
+    - sqlclosecheck
+    - decorder
+    - durationcheck
+    - errchkjson
+    - errname
+    - exportloopref
+    - forcetypeassert
+    - gci
+    - gocognit
+    - goerr113
+    - prealloc
+    - promlinter
+    - tenv
+    - usestdlibvars
+    - whitespace
+  fast: false
+
+# Linter exception and limit rules.
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source.
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gosec
+        - dupl
+        - lll
+        - unparam
+        - gocritic
+        - goconst
+        - govet
+        - gocyclo
+        - misspell
+        - gocognit
+        - errcheck
+    - path: proto.go
+      linters:
+        - misspell
+    - path: routecalculator.go
+      linters:
+        - misspell
+  # Independently from option "exclude" option (if set), let default exclude patterns be used.
+  # Default is true.
+  exclude-use-default: true
+  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
+  max-issues-per-linter: 0
+  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
+  max-same-issues: 0

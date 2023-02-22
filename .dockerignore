@@ -1,0 +1,8 @@
+vendor/
+.idea/
+*env
+docker-compose.yaml
+scripts/build_m1.sh
+Dockerfile*
+README.md
+.env*
