@@ -40,11 +40,24 @@ func TestCoinFromBytes(t *testing.T) {
 				},
 			},
 		},
+		{
+			value: "1ibc/B05539B66B72E2739B986B86391E5D08F12B8D5D2C2A7F8F8CF9ADF674DFA231,4146906uatom",
+			want: types.Coins{
+				types.Coin{
+					Denom:  "ibc/B05539B66B72E2739B986B86391E5D08F12B8D5D2C2A7F8F8CF9ADF674DFA231",
+					Amount: 1,
+				},
+				types.Coin{
+					Denom:  "uatom",
+					Amount: 4146906,
+				},
+			},
+		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.value, func(t *testing.T) {
-			got, err := coinFromBytes([]byte(tt.value))
+			got, err := coinsFromAttribute(tt.value)
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
 		})
