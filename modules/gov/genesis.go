@@ -48,7 +48,7 @@ func (m *Module) publishProposals(ctx context.Context, proposals govtypesv1beta1
 			ProposalType:    content.ProposalType(),
 			ProposerAddress: "",
 			Status:          proposal.Status.String(),
-			Content:         contentBytes,
+			Content:         string(contentBytes),
 			SubmitTime:      proposal.SubmitTime,
 			DepositEndTime:  proposal.DepositEndTime,
 			VotingStartTime: proposal.VotingStartTime,
@@ -75,7 +75,7 @@ func (m *Module) publishProposals(ctx context.Context, proposals govtypesv1beta1
 			ProposalID:       proposal.ProposalId,
 			Height:           1,
 			DepositorAddress: "",
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(proposal.TotalDeposit)),
+			Coins:            m.tbM.MapCoinsToString(types.NewCoinsFromCdk(proposal.TotalDeposit)),
 		}); err != nil {
 			return err
 		}

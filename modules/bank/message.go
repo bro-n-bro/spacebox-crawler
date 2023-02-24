@@ -20,7 +20,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			addressFrom := msg.Inputs[0].Address
 
 			message := model.MultiSendMessage{
-				Coins:       make(model.Coins, 0, len(msg.Outputs)),
+				Coins:       "",
 				AddressFrom: addressFrom,
 				AddressesTo: make([]string, 0, len(msg.Outputs)),
 				TxHash:      tx.TxHash,
@@ -28,10 +28,14 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 				MsgIndex:    int64(index),
 			}
 
+			coins := make(types.Coins, 0, len(msg.Outputs))
+
 			for _, to := range msg.Outputs {
 				message.AddressesTo = append(message.AddressesTo, to.Address)
-				message.Coins = append(message.Coins, m.tbM.MapCoins(types.NewCoinsFromCdk(to.Coins))...)
+				coins = append(coins, types.NewCoinsFromCdk(to.Coins)...)
 			}
+
+			message.Coins = m.tbM.MapCoinsToString(coins)
 
 			if err := m.broker.PublishMultiSendMessage(ctx, message); err != nil {
 				return err
@@ -40,7 +44,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	case *banktypes.MsgSend:
 		// TODO: test it
 		if err := m.broker.PublishSendMessage(ctx, model.SendMessage{
-			Coins:       m.tbM.MapCoins(types.NewCoinsFromCdk(msg.Amount)),
+			Coins:       m.tbM.MapCoinsToString(types.NewCoinsFromCdk(msg.Amount)),
 			AddressFrom: msg.FromAddress,
 			AddressTo:   msg.ToAddress,
 			TxHash:      tx.TxHash,

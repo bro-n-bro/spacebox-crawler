@@ -12,6 +12,7 @@ type Storage interface {
 	CreateBlock(ctx context.Context, block *model.Block) error
 	SetProcessedStatus(ctx context.Context, height int64) error
 	SetErrorStatus(ctx context.Context, height int64, msg string) error
+	SetProcessingStatus(ctx context.Context, height int64) error
 	UpdateStatus(ctx context.Context, height int64, status model.Status) error
 	GetErrorBlockHeights(ctx context.Context) ([]int64, error)
 

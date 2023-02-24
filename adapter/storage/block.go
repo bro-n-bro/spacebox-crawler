@@ -69,6 +69,20 @@ func (s *Storage) SetErrorStatus(ctx context.Context, height int64, msg string) 
 	return nil
 }
 
+func (s *Storage) SetProcessingStatus(ctx context.Context, height int64) error {
+	filter := bson.D{{Key: "height", Value: height}}
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "status", Value: model.StatusProcessing},
+			{Key: "error_message", Value: ""},
+		}}}
+	if _, err := s.collection.UpdateOne(ctx, filter, update); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Storage) UpdateStatus(ctx context.Context, height int64, status model.Status) error {
 	filter := bson.D{{Key: "height", Value: height}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "status", Value: status}}}}

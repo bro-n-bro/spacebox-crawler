@@ -11,6 +11,6 @@ func (tb ToBroker) MapMessage(txHash, msgType, signer string, index int, account
 		Type:                      msgType,
 		InvolvedAccountsAddresses: accounts,
 		Signer:                    signer,
-		Value:                     value,
+		Value:                     string(value),
 	}
 }

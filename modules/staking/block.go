@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
@@ -55,18 +56,21 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 		commissionRate = res.Params.MinCommissionRate.MustFloat64()
 	}
 
+	params := model.SParams{
+		UnbondingTime:     res.Params.UnbondingTime,
+		MaxValidators:     uint64(res.Params.MaxValidators),
+		MaxEntries:        uint64(res.Params.MaxEntries),
+		HistoricalEntries: uint64(res.Params.HistoricalEntries),
+		BondDenom:         res.Params.BondDenom,
+		MinCommissionRate: commissionRate,
+	}
+	paramsStr, _ := jsoniter.MarshalToString(params)
+
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
 	if err = m.broker.PublishStakingParams(ctx, model.StakingParams{
 		Height: height,
-		Params: model.SParams{
-			UnbondingTime:     res.Params.UnbondingTime,
-			MaxValidators:     uint64(res.Params.MaxValidators),
-			MaxEntries:        uint64(res.Params.MaxEntries),
-			HistoricalEntries: uint64(res.Params.HistoricalEntries),
-			BondDenom:         res.Params.BondDenom,
-			MinCommissionRate: commissionRate,
-		},
+		Params: paramsStr,
 	}); err != nil {
 		return err
 	}

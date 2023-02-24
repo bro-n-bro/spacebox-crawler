@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -21,6 +22,11 @@ const (
 	errDepositerNotFoundForProposal = `rpc error: code = %s desc = depositer: %s not found for proposal: %d`
 )
 
+var (
+	mu        sync.RWMutex
+	tallyLock = make(map[uint64]struct{})
+)
+
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	if len(tx.Logs) == 0 {
 		return nil
@@ -29,10 +35,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	switch msg := cosmosMsg.(type) {
 	case *govtypesv1beta1.MsgSubmitProposal:
 		return m.handleMsgSubmitProposal(ctx, tx, index, msg)
-
 	case *govtypesv1beta1.MsgDeposit:
 		return m.handleMsgDeposit(ctx, tx, index, msg)
-
 	case *govtypesv1beta1.MsgVote:
 		return m.handleMsgVote(ctx, tx, index, msg)
 	case *govtypesv1beta1.MsgVoteWeighted:
@@ -89,7 +93,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		ProposalID:       proposal.ProposalId,
 		Height:           tx.Height,
 		DepositorAddress: msg.Proposer,
-		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		Coins:            m.tbM.MapCoinsToString(types.NewCoinsFromCdk(msg.InitialDeposit)),
 	}); err != nil {
 		return err
 	}
@@ -100,7 +104,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 			ProposalID:       proposal.ProposalId,
 			Height:           tx.Height,
 			DepositorAddress: msg.Proposer,
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+			Coins:            m.tbM.MapCoinsToString(types.NewCoinsFromCdk(msg.InitialDeposit)),
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),
@@ -122,7 +126,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		ProposalType:    proposal.ProposalType(),
 		ProposerAddress: msg.Proposer,
 		Status:          proposal.Status.String(),
-		Content:         contentBytes,
+		Content:         string(contentBytes),
 		SubmitTime:      proposal.SubmitTime,
 		DepositEndTime:  proposal.DepositEndTime,
 		VotingStartTime: proposal.VotingStartTime,
@@ -164,7 +168,7 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		ProposalID:       msg.ProposalId,
 		DepositorAddress: msg.Depositor,
 		Height:           tx.Height,
-		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
+		Coins:            m.tbM.MapCoinsToString(types.NewCoinsFromCdk(res.Deposit.Amount)),
 	}); err != nil {
 		return err
 	}
@@ -175,7 +179,7 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 			ProposalID:       msg.ProposalId,
 			DepositorAddress: msg.Depositor,
 			Height:           tx.Height,
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
+			Coins:            m.tbM.MapCoinsToString(types.NewCoinsFromCdk(res.Deposit.Amount)),
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),

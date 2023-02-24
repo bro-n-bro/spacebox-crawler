@@ -40,7 +40,7 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 		if err = m.broker.PublishAccountBalance(ctx, model.AccountBalance{
 			Address: balance.Address,
 			Height:  doc.InitialHeight,
-			Coins:   m.tbM.MapCoins(types.NewCoinsFromCdk(balance.Coins)),
+			Coins:   m.tbM.MapCoinsToString(types.NewCoinsFromCdk(balance.Coins)),
 		}); err != nil {
 			return err
 		}

@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/errors"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	jsoniter "github.com/json-iterator/go"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -37,7 +38,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// TODO: test it
 	if err := m.broker.PublishCommunityPool(ctx, model.CommunityPool{
 		Height: block.Height,
-		Coins:  m.tbM.MapCoins(types.NewCoinsFromCdkDec(res.Pool)),
+		Coins:  m.tbM.MapCoinsToString(types.NewCoinsFromCdkDec(res.Pool)),
 	}); err != nil {
 		return errors.Wrap(err, "publish CommunityPool error")
 	}
@@ -57,14 +58,18 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 
 	// TODO: maybe check diff from mongo in my side?
 	// TODO: test it
+	params := model.DParams{
+		CommunityTax:        res.Params.CommunityTax.MustFloat64(),
+		BaseProposerReward:  res.Params.BaseProposerReward.MustFloat64(),
+		BonusProposerReward: res.Params.BonusProposerReward.MustFloat64(),
+		WithdrawAddrEnabled: res.Params.WithdrawAddrEnabled,
+	}
+
+	paramsStr, _ := jsoniter.MarshalToString(params)
+
 	if err := m.broker.PublishDistributionParams(ctx, model.DistributionParams{
 		Height: height,
-		Params: model.DParams{
-			CommunityTax:        res.Params.CommunityTax.MustFloat64(),
-			BaseProposerReward:  res.Params.BaseProposerReward.MustFloat64(),
-			BonusProposerReward: res.Params.BonusProposerReward.MustFloat64(),
-			WithdrawAddrEnabled: res.Params.WithdrawAddrEnabled,
-		},
+		Params: paramsStr,
 	}); err != nil {
 		m.log.Error().Int64("height", height).Err(err).Msg("PublishDistributionParams error")
 		return err

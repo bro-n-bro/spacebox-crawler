@@ -4,6 +4,7 @@ import (
 	"context"
 
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
@@ -35,19 +36,21 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// _ = inflationResp
 
 	// m.client.MintQueryClient.AnnualProvisions()
+	params := model.MParams{
+		MintDenom:           paramsResp.Params.MintDenom,
+		InflationRateChange: paramsResp.Params.InflationRateChange.MustFloat64(),
+		InflationMax:        paramsResp.Params.InflationMax.MustFloat64(),
+		InflationMin:        paramsResp.Params.InflationMin.MustFloat64(),
+		GoalBonded:          paramsResp.Params.GoalBonded.MustFloat64(),
+		BlocksPerYear:       paramsResp.Params.BlocksPerYear,
+	}
+	mParamsStr, _ := jsoniter.MarshalToString(params)
 
 	// TODO: maybe check diff from mongo in my side?
 	// TODO: test it
 	if err = m.broker.PublishMintParams(ctx, model.MintParams{
 		Height: block.Height,
-		Params: model.MParams{
-			MintDenom:           paramsResp.Params.MintDenom,
-			InflationRateChange: paramsResp.Params.InflationRateChange.MustFloat64(),
-			InflationMax:        paramsResp.Params.InflationMax.MustFloat64(),
-			InflationMin:        paramsResp.Params.InflationMin.MustFloat64(),
-			GoalBonded:          paramsResp.Params.GoalBonded.MustFloat64(),
-			BlocksPerYear:       paramsResp.Params.BlocksPerYear,
-		},
+		Params: mParamsStr,
 	}); err != nil {
 		return errors.Wrap(err, "PublishMintParams error")
 	}

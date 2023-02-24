@@ -2,6 +2,7 @@ package tobroker
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
@@ -25,6 +26,11 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 		msgs[i] = msgBytes
 	}
 
+	msgsStr, err := jsoniter.MarshalToString(msgs)
+	if err != nil {
+		return model.Transaction{}, err
+	}
+
 	logs, err := tb.amino.MarshalJSON(tx.Logs)
 	if err != nil {
 		return model.Transaction{}, err
@@ -34,14 +40,14 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 		Hash:       tx.TxHash,
 		Height:     tx.Height,
 		Success:    tx.Successful(),
-		Messages:   msgs,
+		Messages:   msgsStr,
 		Memo:       tx.Body.Memo,
 		Signatures: signatures,
 		Signer:     tx.Signer,
 		GasWanted:  tx.GasWanted,
 		GasUsed:    tx.GasUsed,
 		RawLog:     tx.RawLog,
-		Logs:       logs,
+		Logs:       string(logs),
 	}
 
 	if tx.AuthInfo != nil {
@@ -54,7 +60,8 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 					Sequence:  info.Sequence,
 				}
 			}
-			t.SignerInfos = infos
+			infosStr, _ := jsoniter.MarshalToString(infos)
+			t.SignerInfos = infosStr
 		}
 
 		if tx.AuthInfo.Fee != nil {
@@ -70,12 +77,14 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 				payer = tx.FeePayer().String()
 			}
 
-			t.Fee = &model.Fee{
+			fee, _ := jsoniter.MarshalToString(model.Fee{
 				Coins:    tb.MapCoins(types.NewCoinsFromCdk(tx.GetFee())),
 				GasLimit: tx.GetGas(),
 				Granter:  tx.FeeGranter().String(),
 				Payer:    payer,
-			}
+			})
+
+			t.Fee = fee
 		}
 	}
 

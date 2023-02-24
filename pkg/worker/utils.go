@@ -43,8 +43,11 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 	case block.Status.IsProcessing():
 		return ErrBlockProcessing
 	// block processed with error, skip if needed
-	case block.Status.IsError() && !w.cfg.ProcessErrorBlocks:
-		return ErrBlockError
+	case block.Status.IsError():
+		if !w.cfg.ProcessErrorBlocks {
+			return ErrBlockError
+		}
+		return w.storage.SetProcessingStatus(ctx, height)
 	}
 	return nil
 }

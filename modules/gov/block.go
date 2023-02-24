@@ -4,6 +4,7 @@ import (
 	"context"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	jsoniter "github.com/json-iterator/go"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -44,20 +45,29 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 
 	// TODO: test it
 	// TODO: maybe check diff from mongo in my side?
+
+	dp := model.DepositParams{
+		MinDeposit:       m.tbM.MapCoins(types.NewCoinsFromCdk(respDeposit.DepositParams.MinDeposit)),
+		MaxDepositPeriod: respDeposit.DepositParams.MaxDepositPeriod.Nanoseconds(),
+	}
+	vp := model.VotingParams{
+		VotingPeriod: respVoting.VotingParams.VotingPeriod.Nanoseconds(),
+	}
+	tp := model.TallyParams{
+		Quorum:        respTally.TallyParams.Quorum.MustFloat64(),
+		Threshold:     respTally.TallyParams.Threshold.MustFloat64(),
+		VetoThreshold: respTally.TallyParams.VetoThreshold.MustFloat64(),
+	}
+
+	dbStr, _ := jsoniter.MarshalToString(dp)
+	vpStr, _ := jsoniter.MarshalToString(vp)
+	tpStr, _ := jsoniter.MarshalToString(tp)
+
 	return m.broker.PublishGovParams(ctx, model.GovParams{
-		DepositParams: model.DepositParams{
-			MinDeposit:       m.tbM.MapCoins(types.NewCoinsFromCdk(respDeposit.DepositParams.MinDeposit)),
-			MaxDepositPeriod: respDeposit.DepositParams.MaxDepositPeriod.Nanoseconds(),
-		},
-		VotingParams: model.VotingParams{
-			VotingPeriod: respVoting.VotingParams.VotingPeriod.Nanoseconds(),
-		},
-		TallyParams: model.TallyParams{
-			Quorum:        respTally.TallyParams.Quorum.MustFloat64(),
-			Threshold:     respTally.TallyParams.Threshold.MustFloat64(),
-			VetoThreshold: respTally.TallyParams.VetoThreshold.MustFloat64(),
-		},
-		Height: block.Height,
+		DepositParams: dbStr,
+		VotingParams:  vpStr,
+		TallyParams:   tpStr,
+		Height:        block.Height,
 	})
 }
 

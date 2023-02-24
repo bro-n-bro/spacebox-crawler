@@ -10,6 +10,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -37,7 +38,7 @@ func New(cfg Config) *Client {
 }
 
 func (c *Client) Start(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
 
 	options := []grpc.DialOption{
@@ -81,6 +82,16 @@ func (c *Client) Start(ctx context.Context) error {
 	c.DistributionQueryClient = distributiontypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
+
+	respPb, err := c.GovQueryClient.TallyResult(
+		ctx,
+		&govtypesv1beta1.QueryTallyResultRequest{ProposalId: uint64(104)},
+	)
+	if err != nil {
+		return err
+	}
+
+	_ = respPb
 
 	return nil
 }

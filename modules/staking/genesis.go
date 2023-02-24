@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	jsoniter "github.com/json-iterator/go"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -108,17 +109,21 @@ func (m *Module) publishParams(ctx context.Context, height int64, params staking
 		commissionRate = params.MinCommissionRate.MustFloat64()
 	}
 
+	sParams := model.SParams{
+		UnbondingTime:     params.UnbondingTime,
+		MaxValidators:     uint64(params.MaxValidators),
+		MaxEntries:        uint64(params.MaxEntries),
+		HistoricalEntries: uint64(params.HistoricalEntries),
+		BondDenom:         params.BondDenom,
+		MinCommissionRate: commissionRate,
+	}
+
+	paramsStr, _ := jsoniter.MarshalToString(sParams)
+
 	// TODO: test it
 	return m.broker.PublishStakingParams(ctx, model.StakingParams{
 		Height: height,
-		Params: model.SParams{
-			UnbondingTime:     params.UnbondingTime,
-			MaxValidators:     uint64(params.MaxValidators),
-			MaxEntries:        uint64(params.MaxEntries),
-			HistoricalEntries: uint64(params.HistoricalEntries),
-			BondDenom:         params.BondDenom,
-			MinCommissionRate: commissionRate,
-		},
+		Params: paramsStr,
 	})
 }
 
@@ -168,7 +173,7 @@ func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc
 				OperatorAddress:  validator.OperatorAddress,
 				DelegatorAddress: del.DelegatorAddress,
 				Height:           doc.InitialHeight,
-				Coin: m.tbM.MapCoin(
+				Coin: m.tbM.MapCoinToString(
 					types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, delegationAmount))),
 			}); err != nil {
 				return err
@@ -195,7 +200,7 @@ func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.G
 					Height:              doc.InitialHeight,
 					DelegatorAddress:    ud.DelegatorAddress,
 					ValidatorAddress:    validator.OperatorAddress,
-					Coin:                m.tbM.MapCoin(coin),
+					Coin:                m.tbM.MapCoinToString(coin),
 					CompletionTimestamp: entry.CompletionTime,
 				}); err != nil {
 					return err
@@ -220,7 +225,7 @@ func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisD
 				DelegatorAddress:    genRedelegation.DelegatorAddress,
 				SrcValidatorAddress: genRedelegation.ValidatorSrcAddress,
 				DstValidatorAddress: genRedelegation.ValidatorDstAddress,
-				Coin: m.tbM.MapCoin(
+				Coin: m.tbM.MapCoinToString(
 					types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))),
 				CompletionTime: entry.CompletionTime,
 			}); err != nil {

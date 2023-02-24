@@ -88,7 +88,7 @@ func (m *Module) handleMsgCreateValidator(ctx context.Context, height int64,
 		OperatorAddress:  msg.ValidatorAddress,
 		DelegatorAddress: msg.DelegatorAddress,
 		Height:           height,
-		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Value)),
+		Coin:             m.tbM.MapCoinToString(types.NewCoinFromCdk(msg.Value)),
 	}); err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func (m *Module) handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, ind
 		DelegatorAddress:    msg.DelegatorAddress,
 		SrcValidatorAddress: msg.ValidatorSrcAddress,
 		DstValidatorAddress: msg.ValidatorDstAddress,
-		Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		Coin:                m.tbM.MapCoinToString(types.NewCoinFromCdk(msg.Amount)),
 		CompletionTime:      completionTime,
 	}); err != nil {
 		return err
@@ -150,7 +150,7 @@ func (m *Module) handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, ind
 			DelegatorAddress:    msg.DelegatorAddress,
 			SrcValidatorAddress: msg.ValidatorSrcAddress,
 			DstValidatorAddress: msg.ValidatorDstAddress,
-			Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Coin:                m.tbM.MapCoinToString(types.NewCoinFromCdk(msg.Amount)),
 			CompletionTime:      completionTime,
 		},
 		TxHash:   tx.TxHash,
@@ -187,7 +187,7 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 		Height:              tx.Height,
 		DelegatorAddress:    msg.DelegatorAddress,
 		ValidatorAddress:    msg.ValidatorAddress,
-		Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		Coin:                m.tbM.MapCoinToString(types.NewCoinFromCdk(msg.Amount)),
 		CompletionTimestamp: completionTime,
 	}); err != nil {
 		return err
@@ -199,7 +199,7 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 			Height:              tx.Height,
 			DelegatorAddress:    msg.DelegatorAddress,
 			ValidatorAddress:    msg.ValidatorAddress,
-			Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Coin:                m.tbM.MapCoinToString(types.NewCoinFromCdk(msg.Amount)),
 			CompletionTimestamp: completionTime,
 		},
 		TxHash:   tx.TxHash,
@@ -219,7 +219,7 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 		Delegation: model.Delegation{
 			OperatorAddress:  msg.ValidatorAddress,
 			DelegatorAddress: msg.DelegatorAddress,
-			Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Coin:             m.tbM.MapCoinToString(types.NewCoinFromCdk(msg.Amount)),
 			Height:           tx.Height,
 		},
 		TxHash:   tx.TxHash,
@@ -245,9 +245,9 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 		}
 	}
 
-	var coin model.Coin
+	var coin string
 	if err == nil {
-		coin = m.tbM.MapCoin(types.NewCoinFromCdk(respPb.DelegationResponse.Balance))
+		coin = m.tbM.MapCoinToString(types.NewCoinFromCdk(respPb.DelegationResponse.Balance))
 	}
 
 	// TODO: test it
@@ -306,7 +306,7 @@ func (m *Module) updateDelegationsAndReplaceExisting(
 			OperatorAddress:  delegation.Delegation.ValidatorAddress,
 			DelegatorAddress: delegation.Delegation.DelegatorAddress,
 			Height:           height,
-			Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(delegation.Balance)),
+			Coin:             m.tbM.MapCoinToString(types.NewCoinFromCdk(delegation.Balance)),
 		}); err != nil {
 			return err
 		}

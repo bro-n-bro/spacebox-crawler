@@ -69,13 +69,16 @@ func (s *Storage) Start(ctx context.Context) error {
 		return err
 	}
 
+	if err := s.setErrorStatusForProcessing(ctx); err != nil {
+		s.log.Error().Err(err).Msg("setErrorStatusForProcessing error")
+		return err
+	}
 	return nil
 }
 
 func (s *Storage) Stop(ctx context.Context) error {
 	s.log.Info().Msg("start setErrorStatusForProcessing")
 
-	// TODO:
 	if err := s.setErrorStatusForProcessing(ctx); err != nil {
 		s.log.Error().Err(err).Msg("setErrorStatusForProcessing error")
 		return err

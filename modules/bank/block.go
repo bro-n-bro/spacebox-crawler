@@ -12,11 +12,10 @@ import (
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
-	supply := model.Supply{
-		Height: block.Height,
-	}
-
-	var nextKey []byte
+	var (
+		nextKey []byte
+		coins   types.Coins
+	)
 
 	for {
 		respPb, err := m.client.BankQueryClient.TotalSupply(
@@ -33,16 +32,21 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 			return err
 		}
 
-		if cap(supply.Coins) == 0 {
-			supply.Coins = make(model.Coins, 0, respPb.Pagination.Total)
+		if cap(coins) == 0 {
+			coins = make(types.Coins, 0, respPb.Pagination.Total)
 		}
 
-		supply.Coins = append(supply.Coins, m.tbM.MapCoins(types.NewCoinsFromCdk(respPb.Supply))...)
+		coins = append(coins, types.NewCoinsFromCdk(respPb.Supply)...)
 
 		nextKey = respPb.Pagination.NextKey
 		if len(nextKey) == 0 {
 			break
 		}
+	}
+
+	supply := model.Supply{
+		Height: block.Height,
+		Coins:  m.tbM.MapCoinsToString(coins),
 	}
 
 	// TODO: test it

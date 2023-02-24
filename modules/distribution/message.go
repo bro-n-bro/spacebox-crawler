@@ -36,9 +36,9 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			return err
 		}
 
-		coin := types.Coins{}
+		coins := types.Coins{}
 		if value != "" {
-			coin, err = coinsFromAttribute(value)
+			coins, err = coinsFromAttribute(value)
 			if err != nil {
 				m.log.Error().
 					Err(err).
@@ -50,7 +50,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 		// TODO: test it
 		return m.broker.PublishDelegationRewardMessage(ctx, model.DelegationRewardMessage{
-			Coins:            m.tbM.MapCoins(coin),
+			Coins:            m.tbM.MapCoinsToString(coins),
 			Height:           tx.Height,
 			DelegatorAddress: msg.DelegatorAddress,
 			ValidatorAddress: msg.ValidatorAddress,
