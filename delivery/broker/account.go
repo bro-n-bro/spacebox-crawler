@@ -3,33 +3,14 @@ package broker
 import (
 	"context"
 
-	lru "github.com/hashicorp/golang-lru/v2"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-var (
-	// TODO: use redis
-	accCache *lru.Cache[string, int64]
-)
-
-func init() {
-	var err error
-	accCache, err = lru.New[string, int64](100000)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func (b *Broker) PublishAccount(ctx context.Context, account model.Account) error {
-	updated := updateCacheValue[string, int64](
-		accCache,
-		account.Address,
-		account.Height, func(curVal int64) bool { return account.Height < curVal })
-
-	if !updated {
+	if !b.needProduceAccount(account.Address, account.Height) {
 		return nil
 	}
 
@@ -39,4 +20,11 @@ func (b *Broker) PublishAccount(ctx context.Context, account model.Account) erro
 	}
 
 	return b.produce(Account, data)
+}
+
+func (b *Broker) needProduceAccount(address string, height int64) bool {
+	if b.cache.account != nil && !b.cache.account.UpdateCacheValue(address, height) {
+		return false
+	}
+	return true
 }

@@ -24,7 +24,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return nil
 	}
 
-	switch msg := cosmosMsg.(type) {
+	switch msg := cosmosMsg.(type) { // nolint: gocritic
 	case *distrtypes.MsgWithdrawDelegatorReward:
 		event, err := tx.FindEventByType(index, distrtypes.EventTypeWithdrawRewards)
 		if err != nil {

@@ -23,6 +23,7 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	"github.com/bro-n-bro/spacebox-crawler/modules"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"
+	"github.com/bro-n-bro/spacebox-crawler/pkg/cache"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
@@ -30,12 +31,16 @@ import (
 )
 
 const (
-	FmtCannotStart = "cannot start %q"
+	defaultCacheSize = 100000
+	FmtCannotStart   = "cannot start %q"
 )
 
 var (
 	ErrStartTimeout    = errors.New("start timeout")
 	ErrShutdownTimeout = errors.New("shutdown timeout")
+
+	lessInt64    = func(cacheVal, newVal int64) bool { return cacheVal < newVal }
+	greaterInt64 = func(cacheVal, newVal int64) bool { return cacheVal > newVal }
 )
 
 type (
@@ -64,17 +69,68 @@ func (a *App) Start(ctx context.Context) error {
 
 	grpcCli := grpcClient.New(a.cfg.GRPCConfig)
 	rpcCli := rpcClient.New(a.cfg.RPCConfig)
-	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log)
+
+	// TODO: use redis
+	accCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	// exists height > new height
+	accCache.SetCompareFn(greaterInt64)
+
+	valCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	valCache.SetCompareFn(lessInt64)
+
+	valCommissionCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	valCommissionCache.SetCompareFn(lessInt64)
+
+	valDescriptionCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	valDescriptionCache.SetCompareFn(lessInt64)
+
+	valInfoCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	valInfoCache.SetCompareFn(lessInt64)
+
+	valStatusCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	valStatusCache.SetCompareFn(lessInt64)
+
+	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
+		broker.WithAccountCache(accCache),
+		broker.WithValidatorCache(valCache),
+		broker.WithValidatorCommissionCache(valCommissionCache),
+		broker.WithValidatorDescriptionCache(valDescriptionCache),
+		broker.WithValidatorInfoCache(valInfoCache),
+		broker.WithValidatorStatusCache(valStatusCache),
+	)
 	s := storage.New(a.cfg.StorageConfig, *a.log)
 
-	// encoding := MakeEncodingConfig(getBasicManagers())
 	cdc, amino := MakeEncodingConfig()
-
 	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
 	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
-	modules := modules.BuildModules(b, grpcCli, *tb, cdc, a.cfg.Modules, parser)
-	ts := ts.NewToStorage()
 
+	// collect data only from bigger height
+	tallyCache, err := cache.New[uint64, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	tallyCache.SetCompareFn(lessInt64)
+
+	modules := modules.BuildModules(b, grpcCli, *tb, cdc, a.cfg.Modules, parser, tallyCache)
+	ts := ts.NewToStorage()
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 	server := server.New(a.cfg.Server, s, *a.log)
 

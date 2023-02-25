@@ -17,22 +17,46 @@ const (
 	MsgErrCreatePartitions  = "cant create partitions in broker: %w"
 )
 
-type Broker struct {
-	log     *zerolog.Logger
-	p       *kafka.Producer
-	ac      *kafka.AdminClient
-	modules []string
-	cfg     Config
-}
+type (
+	Broker struct {
+		log     *zerolog.Logger
+		p       *kafka.Producer
+		ac      *kafka.AdminClient
+		cache   lruCache
+		modules []string
+		cfg     Config
+	}
 
-func New(cfg Config, modules []string, l zerolog.Logger) *Broker {
+	lruCache struct {
+		account        cacheI[string, int64]
+		validator      cacheI[string, int64]
+		valCommission  cacheI[string, int64]
+		valDescription cacheI[string, int64]
+		valInfo        cacheI[string, int64]
+		valStatus      cacheI[string, int64]
+	}
+
+	cacheI[K, V comparable] interface {
+		UpdateCacheValue(K, V) bool
+	}
+
+	opts func(b *Broker)
+)
+
+func New(cfg Config, modules []string, l zerolog.Logger, opts ...opts) *Broker {
 	l = l.With().Str("cmp", "broker").Logger()
 
-	return &Broker{
+	b := &Broker{
 		log:     &l,
 		cfg:     cfg,
 		modules: modules,
 	}
+
+	for _, opt := range opts {
+		opt(b)
+	}
+
+	return b
 }
 
 func (b *Broker) Start(ctx context.Context) error {
@@ -164,4 +188,40 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 	}
 
 	return topics
+}
+
+func WithAccountCache(accCache cacheI[string, int64]) func(b *Broker) {
+	return func(b *Broker) {
+		b.cache.account = accCache
+	}
+}
+
+func WithValidatorCache(valCache cacheI[string, int64]) func(b *Broker) {
+	return func(b *Broker) {
+		b.cache.validator = valCache
+	}
+}
+
+func WithValidatorCommissionCache(valCommissionCache cacheI[string, int64]) func(b *Broker) {
+	return func(b *Broker) {
+		b.cache.valCommission = valCommissionCache
+	}
+}
+
+func WithValidatorDescriptionCache(valDescriptionCache cacheI[string, int64]) func(b *Broker) {
+	return func(b *Broker) {
+		b.cache.valDescription = valDescriptionCache
+	}
+}
+
+func WithValidatorInfoCache(valInfoCache cacheI[string, int64]) func(b *Broker) {
+	return func(b *Broker) {
+		b.cache.valInfo = valInfoCache
+	}
+}
+
+func WithValidatorStatusCache(valStatusCache cacheI[string, int64]) func(b *Broker) {
+	return func(b *Broker) {
+		b.cache.valStatus = valStatusCache
+	}
 }

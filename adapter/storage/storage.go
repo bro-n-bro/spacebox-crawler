@@ -69,13 +69,14 @@ func (s *Storage) Start(ctx context.Context) error {
 		return err
 	}
 
-	return nil
+	// set error status for unprocessed blocks
+	return s.setErrorStatusForProcessing(ctx)
 }
 
 func (s *Storage) Stop(ctx context.Context) error {
 	s.log.Info().Msg("start setErrorStatusForProcessing")
 
-	// TODO:
+	// set error status for unprocessed blocks
 	if err := s.setErrorStatusForProcessing(ctx); err != nil {
 		s.log.Error().Err(err).Msg("setErrorStatusForProcessing error")
 		return err

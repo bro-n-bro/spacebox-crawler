@@ -17,7 +17,7 @@ import (
 )
 
 func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, cdc codec.Codec, modules []string,
-	addressesParser coreModule.MessageAddressesParser) []types.Module {
+	addressesParser coreModule.MessageAddressesParser, tallyCache govModule.TallyCache[uint64, int64]) []types.Module {
 
 	res := make([]types.Module, 0)
 
@@ -29,12 +29,15 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, cd
 		case "bank":
 			res = append(res, bankModule.New(b, cli, tbMapper, cdc, addressesParser))
 		case "gov":
-			res = append(res, govModule.New(b, cli, tbMapper, cdc))
+			gov := govModule.New(b, cli, tbMapper, cdc)
+			if tallyCache != nil {
+				gov.SetTallyCache(tallyCache)
+			}
+			res = append(res, gov)
 		case "mint":
 			res = append(res, mintModule.New(b, cli, tbMapper))
 		case "staking":
-			s := stakingModule.New(b, cli, tbMapper, cdc, modules)
-			res = append(res, s)
+			res = append(res, stakingModule.New(b, cli, tbMapper, cdc, modules))
 		case "distribution":
 			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))
 		case "core":

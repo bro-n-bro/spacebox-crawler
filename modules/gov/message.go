@@ -201,6 +201,11 @@ func (m *Module) handleMsgVote(ctx context.Context, tx *types.Tx, index int, msg
 		return err
 	}
 
+	// publish only newest heights
+	if m.tallyCache != nil && !m.tallyCache.UpdateCacheValue(msg.ProposalId, tx.Height) {
+		return nil
+	}
+
 	respPb, err := m.client.GovQueryClient.TallyResult(
 		ctx,
 		&govtypesv1beta1.QueryTallyResultRequest{ProposalId: msg.ProposalId},
@@ -228,6 +233,10 @@ func (m *Module) handleMsgVote(ctx context.Context, tx *types.Tx, index int, msg
 // handlerMsgVoteWeighted handles MsgVoteWeighted message.
 // Gets tallyResult data from node and publishes it to the broker.
 func (m *Module) handlerMsgVoteWeighted(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgVoteWeighted) error {
+	if m.tallyCache != nil && !m.tallyCache.UpdateCacheValue(msg.ProposalId, tx.Height) {
+		return nil
+	}
+
 	respPb, err := m.client.GovQueryClient.TallyResult(
 		ctx,
 		&govtypesv1beta1.QueryTallyResultRequest{ProposalId: msg.ProposalId},
