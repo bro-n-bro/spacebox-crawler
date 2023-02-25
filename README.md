@@ -10,4 +10,4 @@ docker build -t spacebox-crawler:latest .
 
 ## run
 
-Running crawler standalone is pretty much pointless, so please refer to the main [Sacebox repo](https://github.com/bro-n-bro/spacebox#readme) to find out how to start the whole setup.
+Running crawler standalone is pretty much pointless, so please refer to the main [Spacebox repo](https://github.com/bro-n-bro/spacebox#readme) to find out how to start the whole setup.
