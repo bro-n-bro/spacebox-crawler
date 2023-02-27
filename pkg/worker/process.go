@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	tmtcoreypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
@@ -173,7 +174,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 
 func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc) error {
 	var appState map[string]json.RawMessage
-	if err := json.Unmarshal(genesis.AppState, &appState); err != nil {
+	if err := jsoniter.Unmarshal(genesis.AppState, &appState); err != nil {
 		w.log.Err(err).Msgf("error unmarshalling genesis doc: %v", err)
 		return err
 	}
@@ -190,7 +191,7 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *tmtypes.GenesisDoc
 func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 	for _, m := range blockHandlers {
 		if err := m.HandleBlock(ctx, block); err != nil {
-			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleBlock error: %v", err)
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleBlock error: %v", err)
 			return err
 		}
 	}
@@ -201,7 +202,7 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 func (w *Worker) processValidators(ctx context.Context, vals *tmtcoreypes.ResultValidators) error {
 	for _, m := range validatorsHandlers {
 		if err := m.HandleValidators(ctx, vals); err != nil {
-			w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleValidators error: %v", err)
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleValidators error: %v", err)
 			return err
 		}
 	}
@@ -213,7 +214,7 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 	for _, tx := range txs {
 		for _, m := range transactionHandlers {
 			if err := m.HandleTx(ctx, tx); err != nil {
-				w.log.Error().Str(keyModule, m.Name()).Err(err).Msgf("HandleTX error %v", err)
+				w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleTX error %v", err)
 				return err
 			}
 		}
@@ -238,8 +239,9 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 			for _, m := range messageHandlers {
 				if err := m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
 					w.log.Error().
+						Err(err).
 						Int64("height", tx.Height).
-						Str(keyModule, m.Name()).Err(err).
+						Str(keyModule, m.Name()).
 						Msgf("HandleMessage error: %v", err)
 					return err
 				}

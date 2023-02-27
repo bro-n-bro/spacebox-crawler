@@ -82,7 +82,7 @@ func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse, cdc codec.Codec) Txs {
 	for i, tx := range txs {
 		var signer string
 		if tx.Tx.AuthInfo != nil {
-			if len(tx.Tx.AuthInfo.SignerInfos) > 0 {
+			if len(tx.Tx.AuthInfo.SignerInfos) > 0 && tx.Tx.AuthInfo.SignerInfos[0].PublicKey != nil {
 				var pk cryptotypes.PubKey
 				if err := cdc.UnpackAny(tx.Tx.AuthInfo.SignerInfos[0].PublicKey, &pk); err == nil {
 					signer, _ = ConvertAddressToBech32String(pk.Address())
