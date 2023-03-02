@@ -37,30 +37,6 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		// for debug
 		parsedCount++
 
-		if height == 0 {
-			// TODO: in bdjuno genesis can be gets from local path
-			w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
-
-			_genesisDur := time.Now()
-
-			genesis, err := w.rpcClient.Genesis(ctx)
-			if err != nil {
-				w.log.Error().Err(err).Msgf("get genesis error: %v", err)
-				continue
-			}
-
-			w.log.Info().
-				Int("worker_number", workerIndex).
-				Msgf("Get genesis dur: %v", time.Since(_genesisDur))
-
-			if err = w.processGenesis(ctx, genesis); err != nil {
-				w.log.Fatal().Err(err).Msgf("processHeight genesis error %v:", err)
-				continue
-			}
-
-			continue
-		} // TODO: what about storage?
-
 		if err := w.checkOrCreateBlockInStorage(ctx, height); err != nil {
 			switch {
 			case errors.Is(err, ErrBlockProcessed):
@@ -70,6 +46,35 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			case errors.Is(err, ErrBlockError):
 				w.log.Debug().Int64("height", height).Msg("block processed with error. " +
 					"if you want to process this height again see PROCESS_ERROR_BLOCKS ENV")
+			}
+
+			continue
+		}
+
+		if height == 0 {
+			w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
+
+			_genesisDur := time.Now()
+
+			genesis, err := w.rpcClient.Genesis(ctx)
+			if err != nil {
+				w.setErrorStatusWithLogging(ctx, height, err.Error())
+				w.log.Error().Err(err).Msgf("get genesis error: %v", err)
+				continue
+			}
+
+			w.log.Debug().
+				Int("worker_number", workerIndex).
+				Msgf("Get genesis dur: %v", time.Since(_genesisDur))
+
+			if err = w.processGenesis(ctx, genesis); err != nil {
+				w.log.Error().Err(err).Msgf("processHeight genesis error %v:", err)
+				w.setErrorStatusWithLogging(ctx, height, err.Error())
+				continue
+			}
+
+			if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
+				w.log.Error().Err(err).Int64("height", height).Msgf("cant set processed status in storage %v:", err)
 			}
 
 			continue
