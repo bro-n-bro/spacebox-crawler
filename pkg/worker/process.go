@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
+	abci "github.com/tendermint/tendermint/abci/types"
 	tmtcoreypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
@@ -16,10 +17,11 @@ import (
 )
 
 const (
+	keyHeight = "height"
 	keyModule = "module"
 )
 
-func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
+func (w *Worker) processHeight(ctx context.Context, workerIndex int) { // nolint:gocognit
 	var parsedCount int
 	defer w.wg.Done()
 	defer func() {
@@ -40,11 +42,11 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		if err := w.checkOrCreateBlockInStorage(ctx, height); err != nil {
 			switch {
 			case errors.Is(err, ErrBlockProcessed):
-				w.log.Debug().Int64("height", height).Msg("block already processed. skip height")
+				w.log.Debug().Int64(keyHeight, height).Msg("block already processed. skip height")
 			case errors.Is(err, ErrBlockProcessing):
-				w.log.Debug().Int64("height", height).Msg("block is already processing now. skip height")
+				w.log.Debug().Int64(keyHeight, height).Msg("block is already processing now. skip height")
 			case errors.Is(err, ErrBlockError):
-				w.log.Debug().Int64("height", height).Msg("block processed with error. " +
+				w.log.Debug().Int64(keyHeight, height).Msg("block processed with error. " +
 					"if you want to process this height again see PROCESS_ERROR_BLOCKS ENV")
 			}
 
@@ -74,7 +76,10 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			}
 
 			if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
-				w.log.Error().Err(err).Int64("height", height).Msgf("cant set processed status in storage %v:", err)
+				w.log.Error().
+					Err(err).
+					Int64(keyHeight, height).
+					Msgf("cant set processed status in storage %v:", err)
 			}
 
 			continue
@@ -85,8 +90,9 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		g, ctx2 := errgroup.WithContext(ctx)
 
 		var (
-			block *tmtcoreypes.ResultBlock
-			vals  *tmtcoreypes.ResultValidators
+			block                            *tmtcoreypes.ResultBlock
+			vals                             *tmtcoreypes.ResultValidators
+			beginBlockEvents, endBlockEvents []abci.Event
 		)
 
 		g.Go(func() error {
@@ -99,7 +105,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			w.log.Debug().
 				Int("worker_number", workerIndex).
 				Int64("block_height", height).
-				Dur("parse_block_dur", time.Since(_blockDur)).
+				Dur("get_block_dur", time.Since(_blockDur)).
 				Msg("Get block info")
 			return nil
 		})
@@ -113,7 +119,23 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 			w.log.Debug().
 				Int("worker_number", workerIndex).
 				Int64("block_height", height).
-				Dur("parse_block_dur", time.Since(_validatorsDur)).
+				Dur("get_validators_dur", time.Since(_validatorsDur)).
+				Msg("Get validators info")
+
+			return nil
+		})
+
+		g.Go(func() error {
+			var err error
+			_blockEventsDur := time.Now()
+			beginBlockEvents, endBlockEvents, err = w.rpcClient.GetBlockEvents(ctx2, height)
+			if err != nil {
+				return err
+			}
+			w.log.Debug().
+				Int("worker_number", workerIndex).
+				Int64("block_height", height).
+				Dur("get_block_events_dur", time.Since(_blockEventsDur)).
 				Msg("Get validators info")
 
 			return nil
@@ -165,6 +187,16 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 				return w.processMessages(ctx2, txs)
 			})
 		})
+		g.Go(func() error {
+			return w.withMetrics("beginblocker", func() error {
+				return w.processBeginBlockerEvents(ctx2, beginBlockEvents, height)
+			})
+		})
+		g.Go(func() error {
+			return w.withMetrics("endblocker", func() error {
+				return w.processEndBlockEvents(ctx2, endBlockEvents, height)
+			})
+		})
 
 		if err := g.Wait(); err != nil {
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
@@ -172,7 +204,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) {
 		}
 
 		if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
-			w.log.Error().Err(err).Int64("height", height).Msgf("cant set processed status in storage %v:", err)
+			w.log.Error().Err(err).Int64(keyHeight, height).Msgf("cant set processed status in storage %v:", err)
 		}
 	}
 }
@@ -200,7 +232,6 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -245,7 +276,7 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 				if err := m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
 					w.log.Error().
 						Err(err).
-						Int64("height", tx.Height).
+						Int64(keyHeight, tx.Height).
 						Str(keyModule, m.Name()).
 						Msgf("HandleMessage error: %v", err)
 					return err
@@ -254,5 +285,25 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 		}
 	}
 
+	return nil
+}
+
+func (w *Worker) processBeginBlockerEvents(ctx context.Context, events []abci.Event, height int64) error {
+	for _, m := range beginBlockerHandlers {
+		if err := m.HandleBeginBlocker(ctx, events, height); err != nil {
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleBeginBlocker error: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (w *Worker) processEndBlockEvents(ctx context.Context, events []abci.Event, height int64) error {
+	for _, m := range endBlockerHandlers {
+		if err := m.HandleEndBlocker(ctx, events, height); err != nil {
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleEndBlocker error: %v", err)
+			return err
+		}
+	}
 	return nil
 }

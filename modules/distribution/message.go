@@ -3,20 +3,13 @@ package distribution
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
 
-	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
-)
-
-var (
-	withdrawDelegationRewardRegex = regexp.MustCompile(`^(\-?[0-9]+(\.[0-9]+)?)([0-9a-zA-Z/]+)$`)
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -38,7 +31,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 		coin := types.Coins{}
 		if value != "" {
-			coin, err = coinsFromAttribute(value)
+			coin, err = utils.ParseCoinsFromString(value)
 			if err != nil {
 				m.log.Error().
 					Err(err).
@@ -60,25 +53,4 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	}
 
 	return nil
-}
-
-// coinsFromAttribute converts string to coin type
-func coinsFromAttribute(value string) (types.Coins, error) {
-	rows := strings.Split(value, ",")
-	res := make(types.Coins, len(rows))
-	for i, row := range rows {
-		bits := withdrawDelegationRewardRegex.FindStringSubmatch(row)
-		if len(bits) < 4 {
-			continue
-		}
-		amount, err := strconv.ParseFloat(bits[1], 64)
-		if err != nil {
-			return types.Coins{}, errors.Wrap(err, "failed to parse float")
-		}
-		res[i] = types.Coin{
-			Denom:  bits[3],
-			Amount: amount,
-		}
-	}
-	return res, nil
 }

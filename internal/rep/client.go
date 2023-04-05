@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/cosmos/cosmos-sdk/types/tx"
+	abci "github.com/tendermint/tendermint/abci/types"
 	tmcoretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -22,5 +23,6 @@ type (
 		SubscribeNewBlocks(ctx context.Context) (<-chan tmcoretypes.ResultEvent, error)
 		Genesis(ctx context.Context) (*tmtypes.GenesisDoc, error)
 		GetLastBlockHeight(ctx context.Context) (int64, error)
+		GetBlockEvents(ctx context.Context, height int64) (begin []abci.Event, end []abci.Event, err error)
 	}
 )

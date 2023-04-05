@@ -1,4 +1,4 @@
-package distribution
+package utils
 
 import (
 	"testing"
@@ -57,7 +57,7 @@ func TestCoinFromBytes(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.value, func(t *testing.T) {
-			got, err := coinsFromAttribute(tt.value)
+			got, err := ParseCoinsFromString(tt.value)
 			require.NoError(t, err)
 			require.Equal(t, tt.want, got)
 		})

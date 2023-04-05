@@ -66,6 +66,8 @@ func New(cfg Config, l zerolog.Logger, b rep.Broker, rpcCli rep.RPCClient, grpcC
 		tsM:        tsM,
 		wg:         &sync.WaitGroup{},
 	}
+
+	// fill modules based on enabled modules from config
 	w.fillModules()
 	return w
 }

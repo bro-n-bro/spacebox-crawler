@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -43,5 +44,17 @@ type (
 		Module
 		// HandleGenesis handles a genesis state.
 		HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error
+	}
+
+	BeginBlockerHandler interface {
+		Module
+		// HandleBeginBlocker handles of beginblocker events.
+		HandleBeginBlocker(ctx context.Context, events []abci.Event, height int64) error
+	}
+
+	EndBlockerHandler interface {
+		Module
+		// HandleEndBlocker handles of endblocker events.
+		HandleEndBlocker(ctx context.Context, events []abci.Event, height int64) error
 	}
 )
