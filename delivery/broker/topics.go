@@ -9,6 +9,7 @@ var (
 	DistributionParams         Topic = newTopic("distribution_params")
 	DelegationReward           Topic = newTopic("delegation_reward")
 	DelegationRewardMessage    Topic = newTopic("delegation_reward_message")
+	SetWithdrawAddressMessage  Topic = newTopic("set_withdraw_address_message")
 	Delegation                 Topic = newTopic("delegation")
 	DelegationMessage          Topic = newTopic("delegation_message")
 	GovParams                  Topic = newTopic("gov_params")
@@ -40,7 +41,7 @@ var (
 	bankTopics = Topics{Supply, AccountBalance, SendMessage, MultiSendMessage}
 
 	distributionTopics = Topics{DistributionParams, CommunityPool, /* TODO: validatorCommission, DelegationReward, */
-		DelegationRewardMessage}
+		DelegationRewardMessage, SetWithdrawAddressMessage}
 
 	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage}
 
