@@ -27,6 +27,7 @@ type Broker interface {
 	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
 	PublishValidatorCommission(ctx context.Context, commission model.ValidatorCommission) error
 	PublishSetWithdrawAddressMessage(_ context.Context, swm model.SetWithdrawAddressMessage) error
+	PublishProposerReward(ctx context.Context, pr model.ProposerReward) error
 
 	// staking
 	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error

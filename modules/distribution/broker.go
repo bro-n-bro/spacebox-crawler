@@ -12,4 +12,5 @@ type broker interface {
 	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
 	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
 	PublishSetWithdrawAddressMessage(ctx context.Context, message model.SetWithdrawAddressMessage) error
+	PublishProposerReward(ctx context.Context, pr model.ProposerReward) error
 }

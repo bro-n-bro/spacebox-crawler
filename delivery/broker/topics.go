@@ -20,6 +20,7 @@ var (
 	ProposalTallyResult        Topic = newTopic("proposal_tally_result")
 	ProposalDeposit            Topic = newTopic("proposal_deposit")
 	ProposalDepositMessage     Topic = newTopic("proposal_deposit_message")
+	ProposerReward             Topic = newTopic("proposer_reward")
 	Redelegation               Topic = newTopic("redelegation")
 	RedelegationMessage        Topic = newTopic("redelegation_message")
 	SendMessage                Topic = newTopic("send_message")
@@ -41,7 +42,7 @@ var (
 	bankTopics = Topics{Supply, AccountBalance, SendMessage, MultiSendMessage}
 
 	distributionTopics = Topics{DistributionParams, CommunityPool, /* TODO: validatorCommission, DelegationReward, */
-		DelegationRewardMessage, SetWithdrawAddressMessage}
+		DelegationRewardMessage, SetWithdrawAddressMessage, ProposerReward}
 
 	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage}
 
