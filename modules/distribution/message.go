@@ -57,6 +57,14 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			TxHash:           tx.TxHash,
 			MsgIndex:         int64(index),
 		})
+	case *distrtypes.MsgSetWithdrawAddress:
+		return m.broker.PublishSetWithdrawAddressMessage(ctx, model.SetWithdrawAddressMessage{
+			Height:           tx.Height,
+			DelegatorAddress: msg.DelegatorAddress,
+			WithdrawAddress:  msg.WithdrawAddress,
+			TxHash:           tx.TxHash,
+			MsgIndex:         int64(index),
+		})
 	}
 
 	return nil
