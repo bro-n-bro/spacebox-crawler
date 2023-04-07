@@ -8,7 +8,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
-	abci "github.com/tendermint/tendermint/abci/types"
 	tmtcoreypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	"golang.org/x/sync/errgroup"
@@ -92,7 +91,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) { // nolint
 		var (
 			block                            *tmtcoreypes.ResultBlock
 			vals                             *tmtcoreypes.ResultValidators
-			beginBlockEvents, endBlockEvents []abci.Event
+			beginBlockEvents, endBlockEvents types.BlockerEvents
 		)
 
 		g.Go(func() error {
@@ -288,7 +287,7 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 	return nil
 }
 
-func (w *Worker) processBeginBlockerEvents(ctx context.Context, events []abci.Event, height int64) error {
+func (w *Worker) processBeginBlockerEvents(ctx context.Context, events types.BlockerEvents, height int64) error {
 	for _, m := range beginBlockerHandlers {
 		if err := m.HandleBeginBlocker(ctx, events, height); err != nil {
 			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleBeginBlocker error: %v", err)
@@ -298,7 +297,7 @@ func (w *Worker) processBeginBlockerEvents(ctx context.Context, events []abci.Ev
 	return nil
 }
 
-func (w *Worker) processEndBlockEvents(ctx context.Context, events []abci.Event, height int64) error {
+func (w *Worker) processEndBlockEvents(ctx context.Context, events types.BlockerEvents, height int64) error {
 	for _, m := range endBlockerHandlers {
 		if err := m.HandleEndBlocker(ctx, events, height); err != nil {
 			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleEndBlocker error: %v", err)

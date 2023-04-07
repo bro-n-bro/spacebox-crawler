@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -49,12 +48,12 @@ type (
 	BeginBlockerHandler interface {
 		Module
 		// HandleBeginBlocker handles of beginblocker events.
-		HandleBeginBlocker(ctx context.Context, events []abci.Event, height int64) error
+		HandleBeginBlocker(ctx context.Context, eventsMap BlockerEvents, height int64) error
 	}
 
 	EndBlockerHandler interface {
 		Module
 		// HandleEndBlocker handles of endblocker events.
-		HandleEndBlocker(ctx context.Context, events []abci.Event, height int64) error
+		HandleEndBlocker(ctx context.Context, eventsMap BlockerEvents, height int64) error
 	}
 )
