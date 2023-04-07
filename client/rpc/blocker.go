@@ -3,13 +3,18 @@ package rpc
 import (
 	"context"
 
-	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
-func (c *Client) GetBlockEvents(ctx context.Context, height int64) (begin []abci.Event, end []abci.Event, err error) {
+// GetBlockEvents returns begin block and end block events.
+func (c *Client) GetBlockEvents(ctx context.Context, height int64) (begin, end types.BlockerEvents, err error) {
 	result, err := c.RPCClient.BlockResults(ctx, &height)
 	if err != nil {
 		return nil, nil, err
 	}
-	return result.BeginBlockEvents, result.EndBlockEvents, nil
+
+	begin = types.NewBlockerEventsAttributes(result.BeginBlockEvents)
+	end = types.NewBlockerEventsAttributes(result.EndBlockEvents)
+
+	return
 }

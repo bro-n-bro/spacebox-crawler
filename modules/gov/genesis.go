@@ -9,7 +9,6 @@ import (
 	govtypesv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -34,7 +33,7 @@ func (m *Module) publishProposals(ctx context.Context, proposals govtypesv1beta1
 		// Since it's not possible to get the proposer, set it to nil
 		content := proposal.GetContent()
 
-		contentBytes, err := utils.GetProposalContentBytes(content, m.cdc)
+		contentBytes, err := getProposalContentBytes(content, m.cdc)
 		if err != nil {
 			return err
 		}

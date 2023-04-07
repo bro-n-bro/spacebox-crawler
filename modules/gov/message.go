@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -59,34 +58,18 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 
 	proposalID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
+		m.log.Error().Err(err).Str("handler", "handleMsgSubmitProposal").Msg("parse uint error")
 		return err
 	}
 
-	// Get the proposal
-	respPb, err := m.client.GovQueryClient.Proposal(
-		ctx,
-		&govtypesv1beta1.QueryProposalRequest{ProposalId: proposalID},
-	)
-	if err != nil {
-		status, ok := status.FromError(err)
-		if ok && status.Code() == codes.NotFound {
-			return nil
-		}
-		return err
-	}
-
-	proposal := respPb.Proposal
-
-	// Unpack the content
-	var content govtypesv1beta1.Content
-	if err = m.cdc.UnpackAny(proposal.Content, &content); err != nil {
+	if err = m.getAndPublishProposal(ctx, proposalID, msg.Proposer); err != nil {
 		return err
 	}
 
 	// publish the deposit
 	// TODO: test it
 	if err = m.broker.PublishProposalDeposit(ctx, model.ProposalDeposit{
-		ProposalID:       proposal.ProposalId,
+		ProposalID:       proposalID,
 		Height:           tx.Height,
 		DepositorAddress: msg.Proposer,
 		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
@@ -97,36 +80,13 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 	// TODO: test it
 	if err = m.broker.PublishProposalDepositMessage(ctx, model.ProposalDepositMessage{
 		ProposalDeposit: model.ProposalDeposit{
-			ProposalID:       proposal.ProposalId,
+			ProposalID:       proposalID,
 			Height:           tx.Height,
 			DepositorAddress: msg.Proposer,
 			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),
-	}); err != nil {
-		return err
-	}
-
-	contentBytes, err := utils.GetProposalContentBytes(content, m.cdc)
-	if err != nil {
-		return err
-	}
-
-	// TODO: test it
-	if err = m.broker.PublishProposal(ctx, model.Proposal{
-		ID:              proposal.ProposalId,
-		Title:           content.GetTitle(),
-		Description:     content.GetDescription(),
-		ProposalRoute:   proposal.ProposalRoute(),
-		ProposalType:    proposal.ProposalType(),
-		ProposerAddress: msg.Proposer,
-		Status:          proposal.Status.String(),
-		Content:         contentBytes,
-		SubmitTime:      proposal.SubmitTime,
-		DepositEndTime:  proposal.DepositEndTime,
-		VotingStartTime: proposal.VotingStartTime,
-		VotingEndTime:   proposal.VotingEndTime,
 	}); err != nil {
 		return err
 	}
@@ -198,36 +158,11 @@ func (m *Module) handleMsgVote(ctx context.Context, tx *types.Tx, index int, msg
 		TxHash:       tx.TxHash,
 		MsgIndex:     int64(index),
 	}); err != nil {
+		m.log.Error().Err(err).Msg("error while publishing proposal vote message")
 		return err
 	}
 
-	// publish only newest heights
-	if m.tallyCache != nil && !m.tallyCache.UpdateCacheValue(msg.ProposalId, tx.Height) {
-		return nil
-	}
-
-	respPb, err := m.client.GovQueryClient.TallyResult(
-		ctx,
-		&govtypesv1beta1.QueryTallyResultRequest{ProposalId: msg.ProposalId},
-	)
-
-	if err != nil {
-		status, ok := status.FromError(err)
-		if ok && status.Code() == codes.NotFound {
-			return nil
-		}
-		return err
-	}
-
-	// TODO: TEST IT
-	return m.broker.PublishProposalTallyResult(ctx, model.ProposalTallyResult{
-		ProposalID: msg.ProposalId,
-		Yes:        respPb.Tally.Yes.Int64(),
-		No:         respPb.Tally.No.Int64(),
-		Abstain:    respPb.Tally.Abstain.Int64(),
-		NoWithVeto: respPb.Tally.NoWithVeto.Int64(),
-		Height:     tx.Height,
-	})
+	return m.getAndPublishTallyResult(ctx, msg.ProposalId, tx.Height)
 }
 
 // handlerMsgVoteWeighted handles MsgVoteWeighted message.
