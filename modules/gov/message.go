@@ -97,6 +97,19 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 // handleMsgDeposit handles a MsgDeposit message.
 // Publishes proposalDeposit and proposalDepositMessage data to the broker.
 func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, msg *govtypesv1beta1.MsgDeposit) error {
+	if err := m.broker.PublishProposalDepositMessage(ctx, model.ProposalDepositMessage{
+		ProposalDeposit: model.ProposalDeposit{
+			ProposalID:       msg.ProposalId,
+			DepositorAddress: msg.Depositor,
+			Height:           tx.Height,
+			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.Amount)),
+		},
+		TxHash:   tx.TxHash,
+		MsgIndex: int64(index),
+	}); err != nil {
+		return err
+	}
+
 	res, err := m.client.GovQueryClient.Deposit(
 		ctx,
 		&govtypesv1beta1.QueryDepositRequest{ProposalId: msg.ProposalId, Depositor: msg.Depositor},
@@ -125,20 +138,6 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		DepositorAddress: msg.Depositor,
 		Height:           tx.Height,
 		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
-	}); err != nil {
-		return err
-	}
-
-	// TODO: test it
-	if err = m.broker.PublishProposalDepositMessage(ctx, model.ProposalDepositMessage{
-		ProposalDeposit: model.ProposalDeposit{
-			ProposalID:       msg.ProposalId,
-			DepositorAddress: msg.Depositor,
-			Height:           tx.Height,
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
-		},
-		TxHash:   tx.TxHash,
-		MsgIndex: int64(index),
 	}); err != nil {
 		return err
 	}
