@@ -1,5 +1,8 @@
 # Spacebox-crawler
 
+![linter](https://github.com/bro-n-bro/spacebox-crawler/actions/workflows/lint.yml/badge.svg)
+
+
 Spacebox-crawler is a central part of [Spacebox](https://github.com/bro-n-bro/spacebox) indexer. Crawler pull data from the node, parse, and puts info into appropriate topics in the Apache Kafka.
 
 ## build
