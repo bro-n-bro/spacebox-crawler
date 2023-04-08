@@ -1,6 +1,6 @@
 module github.com/bro-n-bro/spacebox-crawler
 
-go 1.18
+go 1.20
 
 replace (
 	//github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
