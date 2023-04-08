@@ -6,6 +6,7 @@ var (
 	AnnualProvision            Topic = newTopic("annual_provision")
 	Block                      Topic = newTopic("block")
 	CommunityPool              Topic = newTopic("community_pool")
+	DistributionCommission     Topic = newTopic("distribution_commission")
 	DistributionParams         Topic = newTopic("distribution_params")
 	DelegationReward           Topic = newTopic("delegation_reward")
 	DelegationRewardMessage    Topic = newTopic("delegation_reward_message")
@@ -41,8 +42,10 @@ var (
 
 	bankTopics = Topics{Supply, AccountBalance, SendMessage, MultiSendMessage}
 
-	distributionTopics = Topics{DistributionParams, CommunityPool, /* TODO: validatorCommission, DelegationReward, */
-		DelegationRewardMessage, SetWithdrawAddressMessage, ProposerReward}
+	distributionTopics = Topics{DistributionCommission, DistributionParams, CommunityPool,
+		DelegationRewardMessage, SetWithdrawAddressMessage, ProposerReward,
+		/* TODO: validatorCommission, DelegationReward, */
+	}
 
 	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage}
 
