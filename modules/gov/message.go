@@ -142,6 +142,20 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		return err
 	}
 
+	if err = m.broker.PublishSubmitProposalMessage(ctx, model.SubmitProposalMessage{
+		Height:         tx.Height,
+		TxHash:         tx.TxHash,
+		MsgIndex:       int64(index),
+		Proposer:       "",
+		Messages:       "",
+		InitialDeposit: 0, //msg.InitialDeposit.String(),
+		Metadata:       "",
+		Title:          "",
+		Summary:        "",
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
