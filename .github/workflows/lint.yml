@@ -16,4 +16,4 @@ jobs:
         go-version: 1.18
 
     - name: lint
-      run: ls -lah
+      run: make lint
