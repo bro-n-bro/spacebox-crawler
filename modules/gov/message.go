@@ -35,7 +35,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	case *govtypesv1beta1.MsgVote:
 		return m.handleMsgVote(ctx, tx, index, msg)
 	case *govtypesv1beta1.MsgVoteWeighted:
-		return m.handlerMsgVoteWeighted(ctx, tx, msg)
+		return m.handlerMsgVoteWeighted(ctx, tx, index, msg)
 	}
 
 	return nil
@@ -166,7 +166,28 @@ func (m *Module) handleMsgVote(ctx context.Context, tx *types.Tx, index int, msg
 
 // handlerMsgVoteWeighted handles MsgVoteWeighted message.
 // Gets tallyResult data from node and publishes it to the broker.
-func (m *Module) handlerMsgVoteWeighted(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgVoteWeighted) error {
+func (m *Module) handlerMsgVoteWeighted(
+	ctx context.Context,
+	tx *types.Tx,
+	index int,
+	msg *govtypesv1beta1.MsgVoteWeighted) error {
+
+	ops := make([]string, 0, len(msg.Options))
+	for i := range msg.Options {
+		ops[i] = msg.Options[i].String()
+	}
+	if err := m.broker.PublishVoteWeightedMessage(ctx, model.VoteWeightedMessage{
+		Height:             tx.Height,
+		TxHash:             tx.TxHash,
+		MsgIndex:           int64(index),
+		ProposalId:         msg.ProposalId,
+		Voter:              msg.Voter,
+		WeightedVoteOption: ops,
+	}); err != nil {
+		m.log.Error().Err(err).Msg("error while publishing vote weighted message")
+		return err
+	}
+
 	if m.tallyCache != nil && !m.tallyCache.UpdateCacheValue(msg.ProposalId, tx.Height) {
 		return nil
 	}
@@ -183,7 +204,6 @@ func (m *Module) handlerMsgVoteWeighted(ctx context.Context, tx *types.Tx, msg *
 		}
 		return err
 	}
-
 	return m.broker.PublishProposalTallyResult(ctx, model.ProposalTallyResult{
 		ProposalID: msg.ProposalId,
 		Yes:        respPb.Tally.Yes.Int64(),

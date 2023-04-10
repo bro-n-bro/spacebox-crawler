@@ -13,4 +13,5 @@ type broker interface {
 	PublishProposalDepositMessage(ctx context.Context, pvm model.ProposalDepositMessage) error
 	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
 	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
+	PublishVoteWeightedMessage(ctx context.Context, vwm model.VoteWeightedMessage) error
 }
