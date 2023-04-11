@@ -28,10 +28,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	switch msg := cosmosMsg.(type) {
 	case *govtypesv1beta1.MsgSubmitProposal:
 		return m.handleMsgSubmitProposal(ctx, tx, index, msg)
-
 	case *govtypesv1beta1.MsgDeposit:
 		return m.handleMsgDeposit(ctx, tx, index, msg)
-
 	case *govtypesv1beta1.MsgVote:
 		return m.handleMsgVote(ctx, tx, index, msg)
 	case *govtypesv1beta1.MsgVoteWeighted:
