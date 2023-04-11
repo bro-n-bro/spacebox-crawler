@@ -7,6 +7,7 @@ var (
 	Block                      Topic = newTopic("block")
 	CommunityPool              Topic = newTopic("community_pool")
 	DistributionCommission     Topic = newTopic("distribution_commission")
+	DistributionReward         Topic = newTopic("distribution_reward")
 	DistributionParams         Topic = newTopic("distribution_params")
 	DelegationReward           Topic = newTopic("delegation_reward")
 	DelegationRewardMessage    Topic = newTopic("delegation_reward_message")
@@ -43,7 +44,7 @@ var (
 	bankTopics = Topics{Supply, AccountBalance, SendMessage, MultiSendMessage}
 
 	distributionTopics = Topics{DistributionCommission, DistributionParams, CommunityPool,
-		DelegationRewardMessage, SetWithdrawAddressMessage, ProposerReward,
+		DelegationRewardMessage, SetWithdrawAddressMessage, ProposerReward, DistributionReward,
 		/* TODO: validatorCommission, DelegationReward, */
 	}
 
