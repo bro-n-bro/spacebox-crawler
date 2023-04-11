@@ -132,9 +132,9 @@ func (m *Module) parseDistributionCommissionEvent(ctx context.Context, eventsMap
 		}
 
 		if err := m.broker.PublishDistributionCommission(ctx, model.DistributionCommission{
-			Height:     height,
-			Validator:  validator,
-			Commission: coin,
+			Height:    height,
+			Validator: validator,
+			Amount:    coin,
 		}); err != nil {
 			m.log.Error().
 				Err(err).
