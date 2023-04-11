@@ -101,6 +101,7 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 }
 
 // parseCommissionEvent parses distribution commission event.
+// nolint: dupl
 func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
 	events, ok := eventsMap[distrtypes.EventTypeCommission]
 	if !ok {
@@ -158,6 +159,7 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 }
 
 // parseRewardsEvent parses rewards event.
+// nolint:dupl
 func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
 	events, ok := eventsMap[distrtypes.EventTypeRewards]
 	if !ok {
