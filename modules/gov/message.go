@@ -148,10 +148,11 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		MsgIndex:       int64(index),
 		Proposer:       "",
 		Messages:       "",
-		InitialDeposit: 0, // msg.InitialDeposit.String(),
-		Metadata:       "",
+		InitialDeposit: 0,
 		Title:          "",
-		Summary:        "",
+		Description:    "",
+		Type:           "", // TODO ask about this fields
+		ProposalID:     msg.ProposalId,
 	}); err != nil {
 		return err
 	}
