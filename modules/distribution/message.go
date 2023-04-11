@@ -58,6 +58,14 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			TxHash:           tx.TxHash,
 			MsgIndex:         int64(index),
 		})
+	case *distrtypes.MsgWithdrawValidatorCommission:
+		return m.broker.PublishWithdrawValidatorCommissionMessage(ctx, model.WithdrawValidatorCommissionMessage{
+			Height:             tx.Height,
+			TxHash:             tx.TxHash,
+			MsgIndex:           int64(index),
+			WithdrawCommission: tx.GasUsed,
+			ValidatorAddress:   msg.ValidatorAddress,
+		})
 	}
 
 	return nil
