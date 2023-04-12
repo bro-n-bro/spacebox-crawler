@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	_ types.Module         = &Module{}
-	_ types.BlockHandler   = &Module{}
-	_ types.MessageHandler = &Module{}
+	_ types.Module              = &Module{}
+	_ types.BlockHandler        = &Module{}
+	_ types.MessageHandler      = &Module{}
+	_ types.BeginBlockerHandler = &Module{}
 )
 
 type Module struct {
