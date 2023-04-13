@@ -6,7 +6,6 @@ replace (
 	//latest grpc doesn't work with with our modified proto compiler, so we need to enforce
 	//the following version across all dependencies.
 	//google.golang.org/grpc => google.golang.org/grpc v1.33.2
-	github.com/bro-n-bro/spacebox => ../spacebox
 	//github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.46.1
@@ -23,7 +22,7 @@ replace (
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230411182909-193fb706c695
+	github.com/bro-n-bro/spacebox v0.0.0-20230413073834-d0400a5bbc0e
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1

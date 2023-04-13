@@ -174,7 +174,10 @@ func (m *Module) handlerMsgVoteWeighted(
 	for i, v := range msg.Options {
 		w, err := v.Weight.Float64()
 		if err != nil {
-			m.log.Error().Err(err).Msgf("cannot convert weight to float64")
+			m.log.Error().Err(err).Msgf(
+				"handlerMsgVoteWeighted.msg.Options.Weight.Float64() height:%v",
+				tx.Height,
+			)
 			return err
 		}
 		weightedVoteOptions[i] = model.WeightedVoteOption{
