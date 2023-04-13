@@ -193,7 +193,7 @@ func (m *Module) handlerMsgVoteWeighted(
 		Voter:              msg.Voter,
 		WeightedVoteOption: weightedVoteOptions,
 	}); err != nil {
-		m.log.Error().Err(err).Msg("error while publishing vote weighted message")
+		m.log.Error().Err(err).Int64("height", tx.Height).Msg("error while publishing vote weighted message")
 		return err
 	}
 
