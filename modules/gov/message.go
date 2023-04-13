@@ -170,9 +170,17 @@ func (m *Module) handlerMsgVoteWeighted(
 	index int,
 	msg *govtypesv1beta1.MsgVoteWeighted) error {
 
-	ops := make([]string, 0, len(msg.Options))
-	for i := range msg.Options {
-		ops[i] = msg.Options[i].String()
+	weightedVoteOptions := make([]model.WeightedVoteOption, 0, len(msg.Options))
+	for i, v := range msg.Options {
+		w, err := v.Weight.Float64()
+		if err != nil {
+			m.log.Error().Err(err).Msgf("cannot convert weight to float64")
+			return err
+		}
+		weightedVoteOptions[i] = model.WeightedVoteOption{
+			Option: int32(v.Option),
+			Weight: w,
+		}
 	}
 	if err := m.broker.PublishVoteWeightedMessage(ctx, model.VoteWeightedMessage{
 		Height:             tx.Height,
@@ -180,7 +188,7 @@ func (m *Module) handlerMsgVoteWeighted(
 		MsgIndex:           int64(index),
 		ProposalId:         msg.ProposalId,
 		Voter:              msg.Voter,
-		WeightedVoteOption: ops,
+		WeightedVoteOption: weightedVoteOptions,
 	}); err != nil {
 		m.log.Error().Err(err).Msg("error while publishing vote weighted message")
 		return err

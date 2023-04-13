@@ -3,6 +3,10 @@ module github.com/bro-n-bro/spacebox-crawler
 go 1.18
 
 replace (
+	//latest grpc doesn't work with with our modified proto compiler, so we need to enforce
+	//the following version across all dependencies.
+	//google.golang.org/grpc => google.golang.org/grpc v1.33.2
+	github.com/bro-n-bro/spacebox => ../spacebox
 	//github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.46.1
@@ -10,10 +14,6 @@ replace (
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.7.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	//latest grpc doesn't work with with our modified proto compiler, so we need to enforce
-	//the following version across all dependencies.
-	//google.golang.org/grpc => google.golang.org/grpc v1.33.2
-
 	//github.com/jhump/protoreflect => github.com/jhump/protoreflect v1.9.0
 
 	//github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d => github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4
@@ -23,7 +23,7 @@ replace (
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230411181234-5e08fe28b624
+	github.com/bro-n-bro/spacebox v0.0.0-20230411182909-193fb706c695
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
