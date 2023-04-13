@@ -174,8 +174,9 @@ func (m *Module) handlerMsgVoteWeighted(
 	for i, v := range msg.Options {
 		w, err := v.Weight.Float64()
 		if err != nil {
-			m.log.Error().Err(err).Int64("height", tx.Height).Msg(
-				"handlerMsgVoteWeighted.msg.Options.Weight.Float64()",
+			m.log.Error().Err(err).Int64("height", tx.Height).Str(
+				"function", "handlerMsgVoteWeighted").Msg(
+				"cannot convert weight to float64",
 			)
 			return err
 		}
