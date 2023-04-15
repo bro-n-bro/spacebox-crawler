@@ -22,7 +22,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 	switch msg := cosmosMsg.(type) {
 	case *stakingtypes.MsgCreateValidator:
-		return m.handleMsgCreateValidator(ctx, tx.Height, msg)
+		return m.handleMsgCreateValidator(ctx, tx, index, msg)
 	case *stakingtypes.MsgEditValidator:
 		return m.handleEditValidator(ctx, tx.Height, msg)
 	case *stakingtypes.MsgDelegate:
@@ -38,8 +38,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 // handleMsgCreateValidator handles MsgCreateValidator and publishes model.Validator, model.ValidatorDescription,
 // model.Account, model.ValidatorInfo and model.Delegation messages to broker.
-func (m *Module) handleMsgCreateValidator(ctx context.Context, height int64,
-	msg *stakingtypes.MsgCreateValidator) error {
+func (m *Module) handleMsgCreateValidator(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgCreateValidator) error {
 
 	var pubKey cryptotypes.PubKey
 	if err := m.cdc.UnpackAny(msg.Pubkey, &pubKey); err != nil {
@@ -56,8 +55,31 @@ func (m *Module) handleMsgCreateValidator(ctx context.Context, height int64,
 		return err
 	}
 
-	validator, err := convertValidator(m.cdc, stakingValidator, height)
+	validator, err := convertValidator(m.cdc, stakingValidator, tx.Height)
 	if err != nil {
+		return err
+	}
+	commissionRate, err := stakingValidator.Commission.Rate.Float64()
+	if err != nil {
+		return err
+	}
+	if err = m.broker.PublishCreateValidatorMessage(ctx, model.CreateValidatorMessage{
+		Height:           tx.Height,
+		TxHash:           tx.TxHash,
+		MsgIndex:         int64(index),
+		DelegatorAddress: msg.DelegatorAddress,
+		ValidatorAddress: msg.ValidatorAddress,
+		Description: model.Description{
+			Moniker:         msg.Description.Moniker,
+			Identity:        msg.Description.Identity,
+			Website:         msg.Description.Website,
+			SecurityContact: msg.Description.SecurityContact,
+			Details:         msg.Description.Details,
+		},
+		CommissionRates:   commissionRate,
+		MinSelfDelegation: stakingValidator.GetMinSelfDelegation().Int64(),
+		Pubkey:            pubKey.String(),
+	}); err != nil {
 		return err
 	}
 
@@ -70,7 +92,7 @@ func (m *Module) handleMsgCreateValidator(ctx context.Context, height int64,
 		SecurityContact: msg.Description.SecurityContact,
 		Details:         msg.Description.Details,
 		AvatarURL:       "", // TODO
-		Height:          height,
+		Height:          tx.Height,
 	}); err != nil {
 		return err
 	}
@@ -87,7 +109,7 @@ func (m *Module) handleMsgCreateValidator(ctx context.Context, height int64,
 	if err = m.broker.PublishDelegation(ctx, model.Delegation{
 		OperatorAddress:  msg.ValidatorAddress,
 		DelegatorAddress: msg.DelegatorAddress,
-		Height:           height,
+		Height:           tx.Height,
 		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Value)),
 	}); err != nil {
 		return err
