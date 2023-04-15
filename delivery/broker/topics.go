@@ -29,6 +29,7 @@ var (
 	SetWithdrawAddressMessage  Topic = newTopic("set_withdraw_address_message")
 	StakingParams              Topic = newTopic("staking_params")
 	StakingPool                Topic = newTopic("staking_pool")
+	SubmitProposalMessage      Topic = newTopic("submit_proposal_message")
 	Supply                     Topic = newTopic("supply")
 	Transaction                Topic = newTopic("transaction")
 	UnbondingDelegation        Topic = newTopic("unbonding_delegation")
@@ -48,7 +49,8 @@ var (
 		/* TODO: validatorCommission, DelegationReward, */
 	}
 
-	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage}
+	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage,
+		SubmitProposalMessage}
 
 	mintTopics = Topics{MintParams, AnnualProvision}
 
