@@ -104,7 +104,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
 		Title:          content.GetTitle(),
 		Description:    content.GetDescription(),
-		Type:           msg.Type(), // TODO ask about this fields
+		Type:           msg.Type(),
 		ProposalID:     proposalID,
 	}); err != nil {
 		return err
