@@ -91,6 +91,33 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		return err
 	}
 
+	var content govtypesv1beta1.Content
+	if err = m.cdc.UnpackAny(msg.Content, &content); err != nil {
+		return err
+	}
+	var msgs = make([][]byte, len(tx.Body.Messages))
+	for i, msg := range tx.Body.Messages {
+		msgBytes, err := m.cdc.MarshalJSON(msg)
+		if err != nil {
+			return err
+		}
+		msgs[i] = msgBytes
+	}
+	if err = m.broker.PublishSubmitProposalMessage(ctx, model.SubmitProposalMessage{
+		Height:         tx.Height,
+		TxHash:         tx.TxHash,
+		MsgIndex:       int64(index),
+		Proposer:       msg.Proposer,
+		Messages:       msgs,
+		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		Title:          content.GetTitle(),
+		Description:    content.GetDescription(),
+		Type:           msg.Type(), // TODO ask about this fields
+		ProposalID:     proposalID,
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -138,21 +165,6 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		DepositorAddress: msg.Depositor,
 		Height:           tx.Height,
 		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
-	}); err != nil {
-		return err
-	}
-
-	if err = m.broker.PublishSubmitProposalMessage(ctx, model.SubmitProposalMessage{
-		Height:         tx.Height,
-		TxHash:         tx.TxHash,
-		MsgIndex:       int64(index),
-		Proposer:       "",
-		Messages:       "",
-		InitialDeposit: 0,
-		Title:          "",
-		Description:    "",
-		Type:           "", // TODO ask about this fields
-		ProposalID:     msg.ProposalId,
 	}); err != nil {
 		return err
 	}
