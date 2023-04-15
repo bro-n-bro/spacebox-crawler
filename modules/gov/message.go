@@ -61,6 +61,24 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		m.log.Error().Err(err).Str("handler", "handleMsgSubmitProposal").Msg("parse uint error")
 		return err
 	}
+	var content govtypesv1beta1.Content
+	if err = m.cdc.UnpackAny(msg.Content, &content); err != nil {
+		return err
+	}
+
+	if err = m.broker.PublishSubmitProposalMessage(ctx, model.SubmitProposalMessage{
+		Height:         tx.Height,
+		TxHash:         tx.TxHash,
+		MsgIndex:       int64(index),
+		Proposer:       msg.Proposer,
+		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		Title:          content.GetTitle(),
+		Description:    content.GetDescription(),
+		Type:           content.ProposalType(),
+		ProposalID:     proposalID,
+	}); err != nil {
+		return err
+	}
 
 	if err = m.getAndPublishProposal(ctx, proposalID, msg.Proposer); err != nil {
 		return err
@@ -87,25 +105,6 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),
-	}); err != nil {
-		return err
-	}
-
-	var content govtypesv1beta1.Content
-	if err = m.cdc.UnpackAny(msg.Content, &content); err != nil {
-		return err
-	}
-
-	if err = m.broker.PublishSubmitProposalMessage(ctx, model.SubmitProposalMessage{
-		Height:         tx.Height,
-		TxHash:         tx.TxHash,
-		MsgIndex:       int64(index),
-		Proposer:       msg.Proposer,
-		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
-		Title:          content.GetTitle(),
-		Description:    content.GetDescription(),
-		Type:           msg.Type(),
-		ProposalID:     proposalID,
 	}); err != nil {
 		return err
 	}
