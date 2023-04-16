@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -28,6 +29,7 @@ type Client struct {
 	MintQueryClient         minttypes.QueryClient
 	StakingQueryClient      stakingtypes.QueryClient
 	DistributionQueryClient distributiontypes.QueryClient
+	FeegrantQueryClient     feegranttypes.QueryClient
 	conn                    *grpc.ClientConn
 	cfg                     Config
 }

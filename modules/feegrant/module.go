@@ -1,4 +1,4 @@
-package distribution
+package feegrant
 
 import (
 	"os"
@@ -12,14 +12,12 @@ import (
 )
 
 const (
-	moduleName = "distribution"
+	moduleName = "feegrant"
 )
 
 var (
-	_ types.Module              = &Module{}
-	_ types.BlockHandler        = &Module{}
-	_ types.MessageHandler      = &Module{}
-	_ types.BeginBlockerHandler = &Module{}
+	_ types.Module         = &Module{}
+	_ types.MessageHandler = &Module{}
 )
 
 type Module struct {

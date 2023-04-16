@@ -13,6 +13,10 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
+const (
+	moduleName = "bank"
+)
+
 var (
 	_ types.Module         = &Module{}
 	_ types.GenesisHandler = &Module{}
@@ -33,7 +37,7 @@ func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec,
 	parser core.MessageAddressesParser) *Module {
 
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", "bank").Logger()
+		Str("module", moduleName).Logger()
 
 	return &Module{
 		log:    &l,
@@ -45,4 +49,4 @@ func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec,
 	}
 }
 
-func (m *Module) Name() string { return "bank" }
+func (m *Module) Name() string { return moduleName }
