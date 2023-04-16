@@ -172,6 +172,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace (
-	github.com/bro-n-bro/spacebox => ../space-box/spacebox
-)
+replace github.com/bro-n-bro/spacebox => ../space-box/spacebox
