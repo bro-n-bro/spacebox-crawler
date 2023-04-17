@@ -6,6 +6,7 @@ import (
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	authModule "github.com/bro-n-bro/spacebox-crawler/modules/auth"
+	authzModule "github.com/bro-n-bro/spacebox-crawler/modules/authz"
 	bankModule "github.com/bro-n-bro/spacebox-crawler/modules/bank"
 	coreModule "github.com/bro-n-bro/spacebox-crawler/modules/core"
 	distributionModule "github.com/bro-n-bro/spacebox-crawler/modules/distribution"
@@ -42,6 +43,8 @@ func BuildModules(b rep.Broker, cli *grpcClient.Client, tbMapper tb.ToBroker, cd
 			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))
 		case "core":
 			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
+		case "authz":
+			res = append(res, authzModule.New(b, cli, tbMapper, cdc))
 		default:
 			// TODO: log
 			continue

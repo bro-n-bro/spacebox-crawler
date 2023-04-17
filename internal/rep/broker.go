@@ -58,4 +58,9 @@ type Broker interface {
 	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
 	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
 	PublishSubmitProposalMessage(ctx context.Context, spm model.SubmitProposalMessage) error
+
+	// authz module
+	PublishGrantMessage(context.Context, model.GrantMessage) error
+	PublishRevokeMessage(context.Context, model.RevokeMessage) error
+	PublishExecMessage(context.Context, model.ExecMessage) error
 }

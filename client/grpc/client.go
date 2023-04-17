@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -28,6 +29,7 @@ type Client struct {
 	MintQueryClient         minttypes.QueryClient
 	StakingQueryClient      stakingtypes.QueryClient
 	DistributionQueryClient distributiontypes.QueryClient
+	AuthzQueryClient        authztypes.QueryClient
 	conn                    *grpc.ClientConn
 	cfg                     Config
 }
@@ -79,6 +81,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.SlashingQueryClient = slashingtypes.NewQueryClient(grpcConn)
 	c.StakingQueryClient = stakingtypes.NewQueryClient(grpcConn)
 	c.DistributionQueryClient = distributiontypes.NewQueryClient(grpcConn)
+	c.AuthzQueryClient = authztypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 

@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -24,6 +25,7 @@ var CosmosMessageAddressesParser = JoinMessageParsers(
 	IBCTransferMessagesParser,
 	SlashingMessagesParser,
 	StakingMessagesParser,
+	AuthzMessagesParser,
 	DefaultMessagesParser,
 )
 
@@ -206,12 +208,27 @@ func StakingMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
 }
 
 // IBCTransferMessagesParser returns the list of all the accounts involved in the given
-// message if it's related to the x/iBCTransfer module
+// message if it's related to the x/IBCTransfer module
 func IBCTransferMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
 	// nolint:gocritic
 	switch msg := cosmosMsg.(type) {
 	case *ibctransfertypes.MsgTransfer:
 		return []string{msg.Sender, msg.Receiver}
+	}
+
+	return nil
+}
+
+// AuthzMessagesParser returns the list of all the accounts involved in the given
+// message if it's related to the x/authz module
+func AuthzMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
+	switch msg := cosmosMsg.(type) {
+	case *authztypes.MsgGrant:
+		return []string{msg.Grantee, msg.Granter}
+	case *authztypes.MsgRevoke:
+		return []string{msg.Grantee, msg.Granter}
+	case *authztypes.MsgExec:
+		return []string{msg.Grantee}
 	}
 
 	return nil

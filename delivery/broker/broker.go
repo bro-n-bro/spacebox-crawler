@@ -181,6 +181,8 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, distributionTopics.ToStringSlice()...)
 		case "core":
 			topics = append(topics, coreTopics.ToStringSlice()...)
+		case "authz":
+			topics = append(topics, authzTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Msgf("unknown module in config: %v", m)
 			continue
