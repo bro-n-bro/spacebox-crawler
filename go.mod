@@ -23,7 +23,7 @@ replace (
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230415104349-5150c5ec6424
+	github.com/bro-n-bro/spacebox v0.0.0-20230417164317-9465832d0180
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
@@ -171,5 +171,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
-
-replace github.com/bro-n-bro/spacebox => ../space-box/spacebox
