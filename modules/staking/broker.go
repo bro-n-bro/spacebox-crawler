@@ -22,4 +22,5 @@ type broker interface {
 	PublishValidatorCommission(ctx context.Context, commission model.ValidatorCommission) error
 	PublishRedelegation(context.Context, model.Redelegation) error
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
+	PublishCreateValidatorMessage(ctx context.Context, cvm model.CreateValidatorMessage) error
 }
