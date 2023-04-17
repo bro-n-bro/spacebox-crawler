@@ -43,7 +43,8 @@ func (m *Module) handleMsgCreateValidator(
 	height int64,
 	hash string,
 	index int,
-	msg *stakingtypes.MsgCreateValidator) error {
+	msg *stakingtypes.MsgCreateValidator,
+) error {
 
 	var pubKey cryptotypes.PubKey
 	if err := m.cdc.UnpackAny(msg.Pubkey, &pubKey); err != nil {
@@ -88,7 +89,6 @@ func (m *Module) handleMsgCreateValidator(
 		return err
 	}
 
-	// TODOL test it
 	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
@@ -103,13 +103,11 @@ func (m *Module) handleMsgCreateValidator(
 	}
 
 	// TODO: save to mongo?
-	// TODO: test it
 	if err = m.PublishValidatorsData(ctx, []types.StakingValidator{validator}); err != nil {
 		return err
 	}
 
 	// TODO: save to mongo?
-	// TODO: test it
 	// Save the first self-delegation
 	if err = m.broker.PublishDelegation(ctx, model.Delegation{
 		OperatorAddress:  msg.ValidatorAddress,
