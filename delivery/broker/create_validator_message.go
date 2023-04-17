@@ -9,7 +9,7 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (b *Broker) PublishCreateValidatorMessage(ctx context.Context, cvm model.CreateValidatorMessage) error {
+func (b *Broker) PublishCreateValidatorMessage(_ context.Context, cvm model.CreateValidatorMessage) error {
 	data, err := jsoniter.Marshal(cvm)
 	if err != nil {
 		return errors.Wrap(err, MsgErrJSONMarshalFail)

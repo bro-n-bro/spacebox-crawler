@@ -88,7 +88,7 @@ func (m *Module) parseGenesisTransactions(ctx context.Context, doc *tmtypes.Gene
 				continue
 			}
 
-			if err := m.handleMsgCreateValidator(ctx, genTx, 0, createValMsg); err != nil {
+			if err := m.handleMsgCreateValidator(ctx, doc.InitialHeight, "", 0, createValMsg); err != nil {
 				return err
 			}
 		}
