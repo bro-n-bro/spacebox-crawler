@@ -40,6 +40,7 @@ var (
 	ValidatorStatus            Topic = newTopic("validator_status")
 	ValidatorDescription       Topic = newTopic("validator_description")
 	ValidatorCommission        Topic = newTopic("validator_commission")
+	VoteWeightedMessage        Topic = newTopic("vote_weighted_message")
 
 	authTopics = Topics{Account}
 
@@ -51,7 +52,7 @@ var (
 	}
 
 	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage,
-		SubmitProposalMessage}
+		VoteWeightedMessage, SubmitProposalMessage}
 
 	mintTopics = Topics{MintParams, AnnualProvision}
 
