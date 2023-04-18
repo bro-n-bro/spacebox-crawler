@@ -6,6 +6,7 @@ var (
 	AnnualProvision            Topic = newTopic("annual_provision")
 	Block                      Topic = newTopic("block")
 	CommunityPool              Topic = newTopic("community_pool")
+	CreateValidatorMessage     Topic = newTopic("create_validator_message")
 	DistributionCommission     Topic = newTopic("distribution_commission")
 	DistributionReward         Topic = newTopic("distribution_reward")
 	DistributionParams         Topic = newTopic("distribution_params")
@@ -29,6 +30,7 @@ var (
 	SetWithdrawAddressMessage  Topic = newTopic("set_withdraw_address_message")
 	StakingParams              Topic = newTopic("staking_params")
 	StakingPool                Topic = newTopic("staking_pool")
+	SubmitProposalMessage      Topic = newTopic("submit_proposal_message")
 	Supply                     Topic = newTopic("supply")
 	Transaction                Topic = newTopic("transaction")
 	UnbondingDelegation        Topic = newTopic("unbonding_delegation")
@@ -50,13 +52,13 @@ var (
 	}
 
 	govTopics = Topics{GovParams, Proposal, ProposalDepositMessage, ProposalTallyResult, ProposalVoteMessage,
-		VoteWeightedMessage}
+		VoteWeightedMessage, SubmitProposalMessage}
 
 	mintTopics = Topics{MintParams, AnnualProvision}
 
 	stakingTopics = Topics{Validator, ValidatorStatus, ValidatorInfo, ValidatorDescription, StakingParams,
 		StakingPool, Redelegation, RedelegationMessage, UnbondingDelegation, UnbondingDelegationMessage,
-		Delegation, DelegationMessage,
+		Delegation, DelegationMessage, CreateValidatorMessage,
 	}
 
 	coreTopics = Topics{Block, Transaction, Message}
