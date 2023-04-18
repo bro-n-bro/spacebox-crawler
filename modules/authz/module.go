@@ -21,6 +21,7 @@ var (
 	_ types.MessageHandler = &Module{}
 )
 
+// Module is a module for authz.
 type Module struct {
 	log    *zerolog.Logger
 	client *grpcClient.Client
@@ -29,8 +30,8 @@ type Module struct {
 	cdc    codec.Codec
 }
 
+// New creates a new authz module.
 func New(b rep.Broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec) *Module {
-
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", moduleName).Logger()
 
@@ -43,4 +44,5 @@ func New(b rep.Broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec) 
 	}
 }
 
+// Name returns the module name.
 func (m *Module) Name() string { return moduleName }

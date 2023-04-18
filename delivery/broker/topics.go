@@ -2,6 +2,7 @@ package broker
 
 var (
 	Account                    Topic = newTopic("account")
+	AuthzGrant                 Topic = newTopic("authz_grant")
 	AccountBalance             Topic = newTopic("account_balance")
 	AnnualProvision            Topic = newTopic("annual_provision")
 	Block                      Topic = newTopic("block")
@@ -64,7 +65,7 @@ var (
 
 	coreTopics = Topics{Block, Transaction, Message}
 
-	authzTopics = Topics{GrantMessage, RevokeMessage, ExecMessage}
+	authzTopics = Topics{AuthzGrant, GrantMessage, RevokeMessage, ExecMessage}
 )
 
 type (

@@ -61,6 +61,7 @@ type Broker interface {
 
 	// authz module
 	PublishGrantMessage(context.Context, model.GrantMessage) error
+	PublishAuthzGrant(context.Context, model.AuthzGrant) error
 	PublishRevokeMessage(context.Context, model.RevokeMessage) error
 	PublishExecMessage(context.Context, model.ExecMessage) error
 }
