@@ -30,6 +30,7 @@ type Broker interface {
 	PublishProposerReward(ctx context.Context, pr model.ProposerReward) error
 	PublishDistributionCommission(ctx context.Context, commission model.DistributionCommission) error
 	PublishDistributionReward(ctx context.Context, reward model.DistributionReward) error
+	PublishWithdrawValidatorCommissionMessage(_ context.Context, wvcm model.WithdrawValidatorCommissionMessage) error
 
 	// staking
 	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
