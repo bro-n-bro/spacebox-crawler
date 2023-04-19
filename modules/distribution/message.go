@@ -59,11 +59,33 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			MsgIndex:         int64(index),
 		})
 	case *distrtypes.MsgWithdrawValidatorCommission:
+		event, err := tx.FindEventByType(index, distrtypes.EventTypeWithdrawRewards)
+		if err != nil {
+			return err
+		}
+
+		value, err := tx.FindAttributeByKey(event, "amount")
+		if err != nil {
+			return err
+		}
+
+		coins := types.Coins{}
+		if value != "" {
+			coins, err = utils.ParseCoinsFromString(value)
+			if err != nil {
+				m.log.Error().
+					Err(err).
+					Str("tx_hash", tx.TxHash).
+					Int64("height", tx.Height).
+					Msg("failed to convert string to coin by MsgWithdrawValidatorCommission height")
+				return fmt.Errorf("%w failed to convert %s string to coin height:%v", err, value, tx.Height)
+			}
+		}
 		return m.broker.PublishWithdrawValidatorCommissionMessage(ctx, model.WithdrawValidatorCommissionMessage{
 			Height:             tx.Height,
 			TxHash:             tx.TxHash,
 			MsgIndex:           int64(index),
-			WithdrawCommission: tx.GasUsed,
+			WithdrawCommission: coins,
 			ValidatorAddress:   msg.ValidatorAddress,
 		})
 	}
