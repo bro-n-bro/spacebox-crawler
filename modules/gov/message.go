@@ -28,14 +28,12 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	switch msg := cosmosMsg.(type) {
 	case *govtypesv1beta1.MsgSubmitProposal:
 		return m.handleMsgSubmitProposal(ctx, tx, index, msg)
-
 	case *govtypesv1beta1.MsgDeposit:
 		return m.handleMsgDeposit(ctx, tx, index, msg)
-
 	case *govtypesv1beta1.MsgVote:
 		return m.handleMsgVote(ctx, tx, index, msg)
 	case *govtypesv1beta1.MsgVoteWeighted:
-		return m.handlerMsgVoteWeighted(ctx, tx, msg)
+		return m.handlerMsgVoteWeighted(ctx, tx, index, msg)
 	}
 
 	return nil
@@ -59,6 +57,24 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 	proposalID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		m.log.Error().Err(err).Str("handler", "handleMsgSubmitProposal").Msg("parse uint error")
+		return err
+	}
+	var content govtypesv1beta1.Content
+	if err = m.cdc.UnpackAny(msg.Content, &content); err != nil {
+		return err
+	}
+
+	if err = m.broker.PublishSubmitProposalMessage(ctx, model.SubmitProposalMessage{
+		Height:         tx.Height,
+		TxHash:         tx.TxHash,
+		MsgIndex:       int64(index),
+		Proposer:       msg.Proposer,
+		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		Title:          content.GetTitle(),
+		Description:    content.GetDescription(),
+		Type:           content.ProposalType(),
+		ProposalID:     proposalID,
+	}); err != nil {
 		return err
 	}
 
@@ -166,7 +182,39 @@ func (m *Module) handleMsgVote(ctx context.Context, tx *types.Tx, index int, msg
 
 // handlerMsgVoteWeighted handles MsgVoteWeighted message.
 // Gets tallyResult data from node and publishes it to the broker.
-func (m *Module) handlerMsgVoteWeighted(ctx context.Context, tx *types.Tx, msg *govtypesv1beta1.MsgVoteWeighted) error {
+func (m *Module) handlerMsgVoteWeighted(
+	ctx context.Context,
+	tx *types.Tx,
+	index int,
+	msg *govtypesv1beta1.MsgVoteWeighted) error {
+
+	weightedVoteOptions := make([]model.WeightedVoteOption, 0, len(msg.Options))
+	for i, v := range msg.Options {
+		w, err := v.Weight.Float64()
+		if err != nil {
+			m.log.Error().Err(err).Int64("height", tx.Height).Str(
+				"function", "handlerMsgVoteWeighted").Msg(
+				"cannot convert weight to float64",
+			)
+			return err
+		}
+		weightedVoteOptions[i] = model.WeightedVoteOption{
+			Option: int32(v.Option),
+			Weight: w,
+		}
+	}
+	if err := m.broker.PublishVoteWeightedMessage(ctx, model.VoteWeightedMessage{
+		Height:             tx.Height,
+		TxHash:             tx.TxHash,
+		MsgIndex:           int64(index),
+		ProposalId:         msg.ProposalId,
+		Voter:              msg.Voter,
+		WeightedVoteOption: weightedVoteOptions,
+	}); err != nil {
+		m.log.Error().Err(err).Int64("height", tx.Height).Msg("error while publishing vote weighted message")
+		return err
+	}
+
 	if m.tallyCache != nil && !m.tallyCache.UpdateCacheValue(msg.ProposalId, tx.Height) {
 		return nil
 	}
@@ -183,7 +231,6 @@ func (m *Module) handlerMsgVoteWeighted(ctx context.Context, tx *types.Tx, msg *
 		}
 		return err
 	}
-
 	return m.broker.PublishProposalTallyResult(ctx, model.ProposalTallyResult{
 		ProposalID: msg.ProposalId,
 		Yes:        respPb.Tally.Yes.Int64(),

@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	_ types.Module         = &Module{}
-	_ types.GenesisHandler = &Module{}
-	_ types.BlockHandler   = &Module{}
-	_ types.MessageHandler = &Module{}
+	_ types.Module            = &Module{}
+	_ types.GenesisHandler    = &Module{}
+	_ types.BlockHandler      = &Module{}
+	_ types.MessageHandler    = &Module{}
+	_ types.EndBlockerHandler = &Module{}
 )
 
 type (

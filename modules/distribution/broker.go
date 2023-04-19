@@ -13,5 +13,7 @@ type broker interface {
 	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
 	PublishSetWithdrawAddressMessage(ctx context.Context, message model.SetWithdrawAddressMessage) error
 	PublishProposerReward(ctx context.Context, pr model.ProposerReward) error
+	PublishDistributionCommission(ctx context.Context, commission model.DistributionCommission) error
+	PublishDistributionReward(ctx context.Context, reward model.DistributionReward) error
 	PublishWithdrawValidatorCommissionMessage(_ context.Context, wvcm model.WithdrawValidatorCommissionMessage) error
 }
