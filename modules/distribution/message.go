@@ -64,7 +64,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			return err
 		}
 
-		value, err := tx.FindAttributeByKey(event, "amount")
+		value, err := tx.FindAttributeByKey(event, sdk.AttributeKeyAmount)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Height:             tx.Height,
 			TxHash:             tx.TxHash,
 			MsgIndex:           int64(index),
-			WithdrawCommission: coins,
+			WithdrawCommission: m.tbM.MapCoins(coins),
 			ValidatorAddress:   msg.ValidatorAddress,
 		})
 	}
