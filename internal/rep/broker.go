@@ -30,6 +30,7 @@ type Broker interface {
 	PublishProposerReward(ctx context.Context, pr model.ProposerReward) error
 	PublishDistributionCommission(ctx context.Context, commission model.DistributionCommission) error
 	PublishDistributionReward(ctx context.Context, reward model.DistributionReward) error
+	PublishWithdrawValidatorCommissionMessage(_ context.Context, wvcm model.WithdrawValidatorCommissionMessage) error
 
 	// staking
 	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
@@ -45,6 +46,7 @@ type Broker interface {
 	PublishValidatorInfo(ctx context.Context, info model.ValidatorInfo) error
 	PublishValidatorStatus(ctx context.Context, status model.ValidatorStatus) error
 	PublishValidatorDescription(ctx context.Context, description model.ValidatorDescription) error
+	PublishCreateValidatorMessage(ctx context.Context, cvm model.CreateValidatorMessage) error
 
 	// mint module
 	PublishMintParams(ctx context.Context, mp model.MintParams) error
@@ -58,6 +60,7 @@ type Broker interface {
 	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
 	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
 	PublishSubmitProposalMessage(ctx context.Context, spm model.SubmitProposalMessage) error
+	PublishVoteWeightedMessage(ctx context.Context, vwm model.VoteWeightedMessage) error
 
 	// feegrant module
 	PublishFeeAllowance(context.Context, model.FeeAllowance) error
