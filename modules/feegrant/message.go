@@ -2,6 +2,7 @@ package feegrant
 
 import (
 	"context"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
@@ -17,18 +18,37 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 	switch msg := cosmosMsg.(type) {
 	case *feegranttypes.MsgGrantAllowance:
+
+		var (
+			allowance  feegranttypes.FeeAllowanceI
+			expiration time.Time
+		)
+		if err := m.cdc.UnpackAny(msg.Allowance, &allowance); err != nil {
+			return err
+		}
+
+		ex, err := allowance.ExpiresAt()
+		if err != nil {
+			return err
+		}
+
+		if ex != nil {
+			expiration = *ex
+		}
+
 		data, err := m.cdc.MarshalJSON(msg.Allowance)
 		if err != nil {
 			return err
 		}
 
 		if err = m.broker.PublishGrantAllowanceMessage(ctx, model.GrantAllowanceMessage{
-			Height:    tx.Height,
-			MsgIndex:  int64(index),
-			TxHash:    tx.TxHash,
-			Granter:   msg.Granter,
-			Grantee:   msg.Grantee,
-			Allowance: data,
+			Height:     tx.Height,
+			MsgIndex:   int64(index),
+			TxHash:     tx.TxHash,
+			Granter:    msg.Granter,
+			Grantee:    msg.Grantee,
+			Expiration: expiration,
+			Allowance:  data,
 		}); err != nil {
 			m.log.Err(err).Int64("height", tx.Height).Msg("error while publishing grant allowance message")
 			return err
@@ -72,6 +92,14 @@ func (m *Module) publishFeeAllowance(ctx context.Context, granter, grantee strin
 		Grantee: grantee,
 	})
 	if err != nil {
+		// set fee allowance to inactive if it was not found
+		if err.Error() == "rpc error: code = Internal desc = fee-grant not found: unauthorized" {
+			return m.broker.PublishFeeAllowance(ctx, model.FeeAllowance{
+				Granter:  granter,
+				Grantee:  grantee,
+				IsActive: false,
+			})
+		}
 		return err
 	}
 
@@ -80,9 +108,28 @@ func (m *Module) publishFeeAllowance(ctx context.Context, granter, grantee strin
 		return err
 	}
 
+	var (
+		allowance  feegranttypes.FeeAllowanceI
+		expiration time.Time
+	)
+	if err = m.cdc.UnpackAny(respPb.Allowance.Allowance, &allowance); err != nil {
+		return err
+	}
+
+	ex, err := allowance.ExpiresAt()
+	if err != nil {
+		return err
+	}
+
+	if ex != nil {
+		expiration = *ex
+	}
+
 	return m.broker.PublishFeeAllowance(ctx, model.FeeAllowance{
-		Granter:   granter,
-		Grantee:   grantee,
-		Allowance: allowanceBytes,
+		Granter:    granter,
+		Grantee:    grantee,
+		Allowance:  allowanceBytes,
+		Expiration: expiration,
+		IsActive:   len(allowanceBytes) > 0,
 	})
 }

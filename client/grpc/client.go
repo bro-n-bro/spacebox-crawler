@@ -81,6 +81,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.SlashingQueryClient = slashingtypes.NewQueryClient(grpcConn)
 	c.StakingQueryClient = stakingtypes.NewQueryClient(grpcConn)
 	c.DistributionQueryClient = distributiontypes.NewQueryClient(grpcConn)
+	c.FeegrantQueryClient = feegranttypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 
