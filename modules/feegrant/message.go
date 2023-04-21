@@ -54,14 +54,6 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			return err
 		}
 
-		if err = m.publishFeeAllowance(ctx, msg.Granter, msg.Grantee); err != nil {
-			m.log.Err(err).
-				Int64("height", tx.Height).
-				Str("message", "MsgGrantAllowance").
-				Msg("error while publishing fee allowance")
-			return err
-		}
-
 	case *feegranttypes.MsgRevokeAllowance:
 		if err := m.broker.PublishRevokeAllowanceMessage(ctx, model.RevokeAllowanceMessage{
 			Height:   tx.Height,
@@ -73,63 +65,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			m.log.Err(err).Int64("height", tx.Height).Msg("error while publishing grant allowance message")
 			return err
 		}
-
-		if err := m.publishFeeAllowance(ctx, msg.Granter, msg.Grantee); err != nil {
-			m.log.Err(err).
-				Int64("height", tx.Height).
-				Str("message", "MsgRevokeAllowance").
-				Msg("error while publishing fee allowance")
-			return err
-		}
 	}
 
 	return nil
-}
-
-func (m *Module) publishFeeAllowance(ctx context.Context, granter, grantee string) error {
-	respPb, err := m.client.FeegrantQueryClient.Allowance(ctx, &feegranttypes.QueryAllowanceRequest{
-		Granter: granter,
-		Grantee: grantee,
-	})
-	if err != nil {
-		// set fee allowance to inactive if it was not found
-		if err.Error() == "rpc error: code = Internal desc = fee-grant not found: unauthorized" {
-			return m.broker.PublishFeeAllowance(ctx, model.FeeAllowance{
-				Granter:  granter,
-				Grantee:  grantee,
-				IsActive: false,
-			})
-		}
-		return err
-	}
-
-	allowanceBytes, err := m.cdc.MarshalJSON(respPb.Allowance)
-	if err != nil {
-		return err
-	}
-
-	var (
-		allowance  feegranttypes.FeeAllowanceI
-		expiration time.Time
-	)
-	if err = m.cdc.UnpackAny(respPb.Allowance.Allowance, &allowance); err != nil {
-		return err
-	}
-
-	ex, err := allowance.ExpiresAt()
-	if err != nil {
-		return err
-	}
-
-	if ex != nil {
-		expiration = *ex
-	}
-
-	return m.broker.PublishFeeAllowance(ctx, model.FeeAllowance{
-		Granter:    granter,
-		Grantee:    grantee,
-		Allowance:  allowanceBytes,
-		Expiration: expiration,
-		IsActive:   len(allowanceBytes) > 0,
-	})
 }
