@@ -100,8 +100,8 @@ github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d h1:xDfNPAt8lFiC1U
 github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d/go.mod h1:6QX/PXZ00z/TKoufEY6K/a0k6AhaJrQKdFe6OfVXsa4=
 github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQkY=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
-github.com/bro-n-bro/spacebox v0.0.0-20230418182317-123031fd8278 h1:5HADqlr2FMjVGG2aCqpwuB+st0UPKV4Q7VLaajFAhUc=
-github.com/bro-n-bro/spacebox v0.0.0-20230418182317-123031fd8278/go.mod h1:HtLDKfstS5gaocXKym0e1LLygmxLFHgn4UxBbDzTyLg=
+github.com/bro-n-bro/spacebox v0.0.0-20230419190224-1bbaac88da23 h1:o9PgRosow7aa65V2nsZWKZIyfXIFR8EBZbWZRF9K4mE=
+github.com/bro-n-bro/spacebox v0.0.0-20230419190224-1bbaac88da23/go.mod h1:HtLDKfstS5gaocXKym0e1LLygmxLFHgn4UxBbDzTyLg=
 github.com/btcsuite/btcd v0.0.0-20190115013929-ed77733ec07d/go.mod h1:d3C0AkH6BRcvO8T0UEPu53cnw4IbV63x1bEjildYhO0=
 github.com/btcsuite/btcd v0.20.1-beta/go.mod h1:wVuoA8VJLEcwgqHBwHmzLRazpKxTv13Px/pDuV7OomQ=
 github.com/btcsuite/btcd v0.22.1 h1:CnwP9LM/M9xuRrGSCGeMVs9iv09uMqwsVX7EeIpgV2c=
