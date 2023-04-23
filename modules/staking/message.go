@@ -24,7 +24,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	case *stakingtypes.MsgCreateValidator:
 		return m.handleMsgCreateValidator(ctx, tx.Height, tx.TxHash, index, msg)
 	case *stakingtypes.MsgEditValidator:
-		return m.handleEditValidator(ctx, tx.Height, msg)
+		return m.handleEditValidator(ctx, tx.Height, tx.TxHash, index, msg)
 	case *stakingtypes.MsgDelegate:
 		return m.handleMsgDelegate(ctx, tx, msg, index)
 	case *stakingtypes.MsgBeginRedelegate:
@@ -75,7 +75,7 @@ func (m *Module) handleMsgCreateValidator(
 		MsgIndex:         int64(index),
 		DelegatorAddress: msg.DelegatorAddress,
 		ValidatorAddress: msg.ValidatorAddress,
-		Description: model.CreateValidatorMessageDescription{
+		Description: model.ValidatorMessageDescription{
 			Moniker:         msg.Description.Moniker,
 			Identity:        msg.Description.Identity,
 			Website:         msg.Description.Website,
@@ -206,7 +206,6 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 	if err != nil {
 		return err
 	}
-
 	// TODO: test it
 	if err = m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
 		Height:              tx.Height,
@@ -289,8 +288,22 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 }
 
 // handleEditValidator handles MsgEditValidator and publishes model.ValidatorDescription to broker.
-func (m *Module) handleEditValidator(ctx context.Context, height int64, msg *stakingtypes.MsgEditValidator) error {
-	return m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
+func (m *Module) handleEditValidator(ctx context.Context, height int64, hash string, index int, msg *stakingtypes.MsgEditValidator) error {
+	if err := m.broker.PublishEditValidatorMessage(ctx, model.EditValidatorMessage{
+		Height: height,
+		Hash:   hash,
+		Index:  int64(index),
+		Description: model.ValidatorMessageDescription{
+			Moniker:         msg.Description.Moniker,
+			Identity:        msg.Description.Identity,
+			Website:         msg.Description.Website,
+			SecurityContact: msg.Description.SecurityContact,
+			Details:         msg.Description.Details,
+		},
+	}); err != nil {
+		return err
+	}
+	if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
 		Identity:        msg.Description.Identity,
@@ -299,7 +312,10 @@ func (m *Module) handleEditValidator(ctx context.Context, height int64, msg *sta
 		Details:         msg.Description.Details,
 		AvatarURL:       "", // TODO:
 		Height:          height,
-	})
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // UpdateDelegationsAndReplaceExisting updates the delegations of the given delegator by querying them at the
