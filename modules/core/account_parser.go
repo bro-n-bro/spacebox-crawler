@@ -8,6 +8,7 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -25,6 +26,7 @@ var CosmosMessageAddressesParser = JoinMessageParsers(
 	IBCTransferMessagesParser,
 	SlashingMessagesParser,
 	StakingMessagesParser,
+	FeeGrantMessagesParser,
 	AuthzMessagesParser,
 	DefaultMessagesParser,
 )
@@ -214,6 +216,19 @@ func IBCTransferMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
 	switch msg := cosmosMsg.(type) {
 	case *ibctransfertypes.MsgTransfer:
 		return []string{msg.Sender, msg.Receiver}
+	}
+
+	return nil
+}
+
+// FeeGrantMessagesParser returns the list of all the accounts involved in the given
+// message if it's related to the x/feegrant module
+func FeeGrantMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
+	switch msg := cosmosMsg.(type) {
+	case *feegranttypes.MsgGrantAllowance:
+		return []string{msg.Granter, msg.Grantee}
+	case *feegranttypes.MsgRevokeAllowance:
+		return []string{msg.Granter, msg.Grantee}
 	}
 
 	return nil

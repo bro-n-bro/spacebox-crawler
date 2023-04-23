@@ -7,9 +7,12 @@ import (
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
+)
+
+const (
+	moduleName = "staking"
 )
 
 var (
@@ -29,9 +32,9 @@ type Module struct {
 	enabledModules []string // xxx fixme
 }
 
-func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string) *Module {
+func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", "staking").Logger()
+		Str("module", moduleName).Logger()
 
 	return &Module{
 		log:            &l,
@@ -43,4 +46,4 @@ func New(b rep.Broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec,
 	}
 }
 
-func (m *Module) Name() string { return "staking" }
+func (m *Module) Name() string { return moduleName }

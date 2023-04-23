@@ -6,9 +6,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
-	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
+)
+
+const (
+	moduleName = "core"
 )
 
 var (
@@ -26,9 +29,9 @@ type Module struct {
 	parser MessageAddressesParser
 }
 
-func New(b rep.Broker, tbM tb.ToBroker, cdc codec.Codec, parser MessageAddressesParser) *Module {
+func New(b broker, tbM tb.ToBroker, cdc codec.Codec, parser MessageAddressesParser) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", "core").Logger()
+		Str("module", moduleName).Logger()
 
 	return &Module{
 		log:    &l,
@@ -39,4 +42,4 @@ func New(b rep.Broker, tbM tb.ToBroker, cdc codec.Codec, parser MessageAddresses
 	}
 }
 
-func (m *Module) Name() string { return "core" }
+func (m *Module) Name() string { return moduleName }

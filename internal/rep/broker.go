@@ -67,4 +67,9 @@ type Broker interface {
 	PublishAuthzGrant(context.Context, model.AuthzGrant) error
 	PublishRevokeMessage(context.Context, model.RevokeMessage) error
 	PublishExecMessage(context.Context, model.ExecMessage) error
+
+	// feegrant module
+	PublishFeeAllowance(context.Context, model.FeeAllowance) error
+	PublishGrantAllowanceMessage(context.Context, model.GrantAllowanceMessage) error
+	PublishRevokeAllowanceMessage(context.Context, model.RevokeAllowanceMessage) error
 }
