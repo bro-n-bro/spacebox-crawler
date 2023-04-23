@@ -7,6 +7,7 @@ import (
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	authModule "github.com/bro-n-bro/spacebox-crawler/modules/auth"
+	authzModule "github.com/bro-n-bro/spacebox-crawler/modules/authz"
 	bankModule "github.com/bro-n-bro/spacebox-crawler/modules/bank"
 	coreModule "github.com/bro-n-bro/spacebox-crawler/modules/core"
 	distributionModule "github.com/bro-n-bro/spacebox-crawler/modules/distribution"
@@ -52,6 +53,9 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 		case "core":
 			log.Info().Msg("core module registered")
 			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
+		case "authz":
+			log.Info().Msg("authz module registered")
+			res = append(res, authzModule.New(b, cli, tbMapper, cdc))
 		case "feegrant":
 			log.Info().Msg("feegrant module registered")
 			res = append(res, feegrantModule.New(b, cli, tbMapper, cdc))

@@ -2,6 +2,7 @@ package broker
 
 var (
 	Account                            Topic = newTopic("account")
+	AuthzGrant                         Topic = newTopic("authz_grant")
 	AccountBalance                     Topic = newTopic("account_balance")
 	AnnualProvision                    Topic = newTopic("annual_provision")
 	Block                              Topic = newTopic("block")
@@ -14,8 +15,10 @@ var (
 	DelegationRewardMessage            Topic = newTopic("delegation_reward_message")
 	Delegation                         Topic = newTopic("delegation")
 	DelegationMessage                  Topic = newTopic("delegation_message")
+	ExecMessage                        Topic = newTopic("exec_message")
 	FeeAllowance                       Topic = newTopic("fee_allowance")
 	GovParams                          Topic = newTopic("gov_params")
+	GrantMessage                       Topic = newTopic("grant_message")
 	GrantAllowanceMessage              Topic = newTopic("grant_allowance_message")
 	Message                            Topic = newTopic("message")
 	MintParams                         Topic = newTopic("mint_params")
@@ -29,6 +32,7 @@ var (
 	RevokeAllowanceMessage             Topic = newTopic("revoke_allowance_message")
 	Redelegation                       Topic = newTopic("redelegation")
 	RedelegationMessage                Topic = newTopic("redelegation_message")
+	RevokeMessage                      Topic = newTopic("revoke_message")
 	SendMessage                        Topic = newTopic("send_message")
 	SetWithdrawAddressMessage          Topic = newTopic("set_withdraw_address_message")
 	StakingParams                      Topic = newTopic("staking_params")
@@ -65,6 +69,8 @@ var (
 	}
 
 	coreTopics = Topics{Block, Transaction, Message}
+
+	authzTopics = Topics{AuthzGrant, GrantMessage, RevokeMessage, ExecMessage}
 
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 )
