@@ -15,6 +15,7 @@ var (
 	DelegationRewardMessage            Topic = newTopic("delegation_reward_message")
 	Delegation                         Topic = newTopic("delegation")
 	DelegationMessage                  Topic = newTopic("delegation_message")
+	EditValidatorMessage               Topic = newTopic("edit_validator_message")
 	ExecMessage                        Topic = newTopic("exec_message")
 	FeeAllowance                       Topic = newTopic("fee_allowance")
 	GovParams                          Topic = newTopic("gov_params")
@@ -65,7 +66,7 @@ var (
 
 	stakingTopics = Topics{Validator, ValidatorStatus, ValidatorInfo, ValidatorDescription, StakingParams,
 		StakingPool, Redelegation, RedelegationMessage, UnbondingDelegation, UnbondingDelegationMessage,
-		Delegation, DelegationMessage, CreateValidatorMessage,
+		Delegation, DelegationMessage, CreateValidatorMessage, EditValidatorMessage,
 	}
 
 	coreTopics = Topics{Block, Transaction, Message}
