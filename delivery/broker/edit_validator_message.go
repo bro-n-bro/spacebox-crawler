@@ -10,7 +10,6 @@ import (
 )
 
 func (b *Broker) PublishEditValidatorMessage(_ context.Context, msg model.EditValidatorMessage) error {
-
 	data, err := jsoniter.Marshal(msg)
 	if err != nil {
 		return errors.Wrap(err, MsgErrJSONMarshalFail)

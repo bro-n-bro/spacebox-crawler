@@ -288,7 +288,14 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 }
 
 // handleEditValidator handles MsgEditValidator and publishes model.ValidatorDescription to broker.
-func (m *Module) handleEditValidator(ctx context.Context, height int64, hash string, index int, msg *stakingtypes.MsgEditValidator) error {
+func (m *Module) handleEditValidator(
+	ctx context.Context,
+	height int64,
+	hash string,
+	index int,
+	msg *stakingtypes.MsgEditValidator,
+) error {
+
 	if err := m.broker.PublishEditValidatorMessage(ctx, model.EditValidatorMessage{
 		Height: height,
 		Hash:   hash,
