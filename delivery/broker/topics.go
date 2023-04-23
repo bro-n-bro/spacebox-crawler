@@ -14,7 +14,9 @@ var (
 	DelegationRewardMessage            Topic = newTopic("delegation_reward_message")
 	Delegation                         Topic = newTopic("delegation")
 	DelegationMessage                  Topic = newTopic("delegation_message")
+	FeeAllowance                       Topic = newTopic("fee_allowance")
 	GovParams                          Topic = newTopic("gov_params")
+	GrantAllowanceMessage              Topic = newTopic("grant_allowance_message")
 	Message                            Topic = newTopic("message")
 	MintParams                         Topic = newTopic("mint_params")
 	MultiSendMessage                   Topic = newTopic("multisend_message")
@@ -24,6 +26,7 @@ var (
 	ProposalDeposit                    Topic = newTopic("proposal_deposit")
 	ProposalDepositMessage             Topic = newTopic("proposal_deposit_message")
 	ProposerReward                     Topic = newTopic("proposer_reward")
+	RevokeAllowanceMessage             Topic = newTopic("revoke_allowance_message")
 	Redelegation                       Topic = newTopic("redelegation")
 	RedelegationMessage                Topic = newTopic("redelegation_message")
 	SendMessage                        Topic = newTopic("send_message")
@@ -62,6 +65,8 @@ var (
 	}
 
 	coreTopics = Topics{Block, Transaction, Message}
+
+	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 )
 
 type (

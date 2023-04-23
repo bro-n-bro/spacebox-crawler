@@ -61,4 +61,9 @@ type Broker interface {
 	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
 	PublishSubmitProposalMessage(ctx context.Context, spm model.SubmitProposalMessage) error
 	PublishVoteWeightedMessage(ctx context.Context, vwm model.VoteWeightedMessage) error
+
+	// feegrant module
+	PublishFeeAllowance(context.Context, model.FeeAllowance) error
+	PublishGrantAllowanceMessage(context.Context, model.GrantAllowanceMessage) error
+	PublishRevokeAllowanceMessage(context.Context, model.RevokeAllowanceMessage) error
 }

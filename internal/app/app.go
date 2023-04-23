@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibcstypes "github.com/cosmos/ibc-go/v5/modules/core/types"
 	"github.com/pkg/errors"
@@ -129,7 +130,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	tallyCache.SetCompareFn(lessInt64)
 
-	modules := modules.BuildModules(b, grpcCli, *tb, cdc, a.cfg.Modules, parser, tallyCache)
+	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, tallyCache)
 	ts := ts.NewToStorage()
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 	server := server.New(a.cfg.Server, s, *a.log)
@@ -220,6 +221,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	ibctransfertypes.RegisterInterfaces(ir)
 	liquiditytypes.RegisterInterfaces(ir)
 	cryptocodec.RegisterInterfaces(ir)
+	feegrant.RegisterInterfaces(ir)
 
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
