@@ -24,4 +24,5 @@ type broker interface {
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
 	PublishCreateValidatorMessage(ctx context.Context, cvm model.CreateValidatorMessage) error
 	PublishEditValidatorMessage(ctx context.Context, message model.EditValidatorMessage) error
+	PublishCancelUnbondingDelegationMessage(_ context.Context, description model.CancelUnbondingDelegationMessage) error
 }

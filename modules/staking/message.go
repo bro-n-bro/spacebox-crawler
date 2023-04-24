@@ -31,6 +31,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return m.handleMsgBeginRedelegate(ctx, tx, index, msg)
 	case *stakingtypes.MsgUndelegate:
 		return m.handleMsgUndelegate(ctx, tx, index, msg)
+	case *stakingtypes.MsgCancelUnbondingDelegation:
+		return m.handleMsgCancelUnbondingDelegation(ctx, tx, index, msg)
 	}
 
 	return nil
@@ -361,4 +363,22 @@ func (m *Module) updateDelegationsAndReplaceExisting(
 	}
 
 	return err
+}
+
+// handleMsgCancelUnbondingDelegation handles MsgCancelUnbondingDelegation
+// and publishes model.CancelUnbondingDelegationMessage to broker.
+func (m *Module) handleMsgCancelUnbondingDelegation(
+	ctx context.Context,
+	tx *types.Tx,
+	index int,
+	msg *stakingtypes.MsgCancelUnbondingDelegation,
+) error {
+
+	return m.broker.PublishCancelUnbondingDelegationMessage(ctx, model.CancelUnbondingDelegationMessage{
+		Height:           tx.Height,
+		TxHash:           tx.TxHash,
+		MsgIndex:         int64(index),
+		ValidatorAddress: msg.ValidatorAddress,
+		DelegatorAddress: msg.DelegatorAddress,
+	})
 }
