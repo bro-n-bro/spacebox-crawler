@@ -9,7 +9,11 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (b *Broker) PublishCancelUnbondingDelegationMessage(_ context.Context, description model.CancelUnbondingDelegationMessage) error {
+func (b *Broker) PublishCancelUnbondingDelegationMessage(
+	_ context.Context,
+	description model.CancelUnbondingDelegationMessage,
+) error {
+
 	data, err := jsoniter.Marshal(description)
 	if err != nil {
 		return errors.Wrap(err, MsgErrJSONMarshalFail)

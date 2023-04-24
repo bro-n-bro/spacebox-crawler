@@ -365,8 +365,14 @@ func (m *Module) updateDelegationsAndReplaceExisting(
 	return err
 }
 
-// handleMsgCancelUnbondingDelegation handles MsgCancelUnbondingDelegation and publishes model.CancelUnbondingDelegationMessage to broker.
-func (m *Module) handleMsgCancelUnbondingDelegation(ctx context.Context, tx *types.Tx, index int, msg *stakingtypes.MsgCancelUnbondingDelegation) error {
+// handleMsgCancelUnbondingDelegation handles MsgCancelUnbondingDelegation
+// and publishes model.CancelUnbondingDelegationMessage to broker.
+func (m *Module) handleMsgCancelUnbondingDelegation(
+	ctx context.Context,
+	tx *types.Tx,
+	index int,
+	msg *stakingtypes.MsgCancelUnbondingDelegation,
+) error {
 
 	return m.broker.PublishCancelUnbondingDelegationMessage(ctx, model.CancelUnbondingDelegationMessage{
 		Height:           tx.Height,
