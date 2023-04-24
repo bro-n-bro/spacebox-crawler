@@ -6,6 +6,7 @@ var (
 	AccountBalance                     Topic = newTopic("account_balance")
 	AnnualProvision                    Topic = newTopic("annual_provision")
 	Block                              Topic = newTopic("block")
+	CancelUnbondingDelegationMessage   Topic = newTopic("cancel_unbonding_delegation_message")
 	CommunityPool                      Topic = newTopic("community_pool")
 	CreateValidatorMessage             Topic = newTopic("create_validator_message")
 	DistributionCommission             Topic = newTopic("distribution_commission")
@@ -66,7 +67,7 @@ var (
 
 	stakingTopics = Topics{Validator, ValidatorStatus, ValidatorInfo, ValidatorDescription, StakingParams,
 		StakingPool, Redelegation, RedelegationMessage, UnbondingDelegation, UnbondingDelegationMessage,
-		Delegation, DelegationMessage, CreateValidatorMessage, EditValidatorMessage,
+		Delegation, DelegationMessage, CreateValidatorMessage, EditValidatorMessage, CancelUnbondingDelegationMessage,
 	}
 
 	coreTopics = Topics{Block, Transaction, Message}
