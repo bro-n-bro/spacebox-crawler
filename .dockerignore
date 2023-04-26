@@ -6,3 +6,4 @@ scripts/build_m1.sh
 Dockerfile*
 README.md
 .env*
+.github/
