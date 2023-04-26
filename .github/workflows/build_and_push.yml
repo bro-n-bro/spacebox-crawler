@@ -20,7 +20,11 @@ jobs:
       run: |
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build the Docker image
-      run: docker build --tag hexydev/spacebox-crawler:${{github.ref}} --target=app .
+      run: |
+        echo ${{github.ref}}
+        echo ${{github.head_ref}}
+        echo ${{github.base_ref}}
+        docker build --tag hexydev/spacebox-crawler:${{github.ref}} --target=app .
     - name: push to registry
       run: |
         docker ps
