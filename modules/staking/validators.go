@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
+	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -23,10 +24,11 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 		return err
 	}
 
-	// TODO: test it
 	if err = m.PublishValidatorsData(ctx, validators); err != nil {
 		return err
 	}
+
+	var avatarURL string
 
 	for _, val := range vals {
 		consAddr, err := getValidatorConsAddr(m.cdc, val)
@@ -34,7 +36,6 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 			return fmt.Errorf("error while getting validator consensus address: %w", err)
 		}
 
-		// TODO: test it
 		if err = m.broker.PublishValidatorStatus(ctx, model.ValidatorStatus{
 			Height:           tmValidators.BlockHeight,
 			ValidatorAddress: consAddr.String(),
@@ -44,7 +45,16 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 			return err
 		}
 
-		// TODO: test it
+		avatarURL, err = keybase.GetAvatarURL(val.Description.Identity)
+		if err != nil {
+			m.log.Warn().
+				Err(err).
+				Str("operator_address", val.OperatorAddress).
+				Str("identity", val.Description.Identity).
+				Int64("height", tmValidators.BlockHeight).
+				Msg("failed to get avatar url")
+		}
+
 		if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 			OperatorAddress: val.OperatorAddress,
 			Moniker:         val.Description.Moniker,
@@ -52,13 +62,12 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 			Website:         val.Description.Website,
 			SecurityContact: val.Description.SecurityContact,
 			Details:         val.Description.Details,
-			AvatarURL:       "",
+			AvatarURL:       avatarURL,
 			Height:          tmValidators.BlockHeight,
 		}); err != nil {
 			return err
 		}
 
-		// TODO: test it
 		if err := m.broker.PublishValidatorCommission(ctx, model.ValidatorCommission{
 			Height:          tmValidators.BlockHeight,
 			OperatorAddress: val.OperatorAddress,

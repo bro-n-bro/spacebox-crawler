@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -91,6 +92,17 @@ func (m *Module) handleMsgCreateValidator(
 		return err
 	}
 
+	var avatarURL string
+	avatarURL, err = keybase.GetAvatarURL(msg.Description.Identity)
+	if err != nil {
+		m.log.Warn().
+			Err(err).
+			Str("operator_address", msg.ValidatorAddress).
+			Str("identity", msg.Description.Identity).
+			Int64("height", height).
+			Msg("cant get avatar url")
+	}
+
 	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
@@ -98,7 +110,7 @@ func (m *Module) handleMsgCreateValidator(
 		Website:         msg.Description.Website,
 		SecurityContact: msg.Description.SecurityContact,
 		Details:         msg.Description.Details,
-		AvatarURL:       "", // TODO
+		AvatarURL:       avatarURL,
 		Height:          height,
 	}); err != nil {
 		return err
@@ -312,18 +324,34 @@ func (m *Module) handleEditValidator(
 	}); err != nil {
 		return err
 	}
-	if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
+
+	var (
+		avatarURL string
+		err       error
+	)
+	avatarURL, err = keybase.GetAvatarURL(msg.Description.Identity)
+	if err != nil {
+		m.log.Warn().
+			Err(err).
+			Str("operator_address", msg.ValidatorAddress).
+			Str("identity", msg.Description.Identity).
+			Int64("height", height).
+			Msg("cant get avatar url")
+	}
+
+	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
 		Identity:        msg.Description.Identity,
 		Website:         msg.Description.Website,
 		SecurityContact: msg.Description.SecurityContact,
 		Details:         msg.Description.Details,
-		AvatarURL:       "", // TODO:
+		AvatarURL:       avatarURL,
 		Height:          height,
 	}); err != nil {
 		return err
 	}
+
 	return nil
 }
 
