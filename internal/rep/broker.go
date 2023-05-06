@@ -74,4 +74,7 @@ type Broker interface {
 	PublishFeeAllowance(context.Context, model.FeeAllowance) error
 	PublishGrantAllowanceMessage(context.Context, model.GrantAllowanceMessage) error
 	PublishRevokeAllowanceMessage(context.Context, model.RevokeAllowanceMessage) error
+
+	// slashing module
+	PublishUnjailMessage(context.Context, model.UnjailMessage) error
 }

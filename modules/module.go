@@ -14,6 +14,7 @@ import (
 	feegrantModule "github.com/bro-n-bro/spacebox-crawler/modules/feegrant"
 	govModule "github.com/bro-n-bro/spacebox-crawler/modules/gov"
 	mintModule "github.com/bro-n-bro/spacebox-crawler/modules/mint"
+	slashingModule "github.com/bro-n-bro/spacebox-crawler/modules/slashing"
 	stakingModule "github.com/bro-n-bro/spacebox-crawler/modules/staking"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -59,6 +60,9 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 		case "feegrant":
 			log.Info().Msg("feegrant module registered")
 			res = append(res, feegrantModule.New(b, cli, tbMapper, cdc))
+		case "slashing":
+			log.Info().Msg("slashing module registered")
+			res = append(res, slashingModule.New(b, cli, tbMapper, cdc))
 		default:
 			// TODO: log
 			log.Warn().Msgf("unknown module: %v", m)

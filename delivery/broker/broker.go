@@ -185,6 +185,8 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, authzTopics.ToStringSlice()...)
 		case "feegrant":
 			topics = append(topics, feegrantTopics.ToStringSlice()...)
+		case "slashing":
+			topics = append(topics, slashingTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Msgf("unknown module in config: %v", m)
 			continue
