@@ -62,7 +62,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			res = append(res, feegrantModule.New(b, cli, tbMapper, cdc))
 		case "slashing":
 			log.Info().Msg("slashing module registered")
-			res = append(res, slashingModule.New(b, cli, tbMapper, cdc))
+			res = append(res, slashingModule.New(b))
 		default:
 			// TODO: log
 			log.Warn().Msgf("unknown module: %v", m)
