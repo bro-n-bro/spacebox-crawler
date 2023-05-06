@@ -44,6 +44,7 @@ var (
 	Transaction                        Topic = newTopic("transaction")
 	UnbondingDelegation                Topic = newTopic("unbonding_delegation")
 	UnbondingDelegationMessage         Topic = newTopic("unbonding_delegation_message")
+	UnjailMessage                      Topic = newTopic("unjail_message")
 	Validator                          Topic = newTopic("validator")
 	ValidatorInfo                      Topic = newTopic("validator_info")
 	ValidatorStatus                    Topic = newTopic("validator_status")
@@ -75,6 +76,8 @@ var (
 	authzTopics = Topics{AuthzGrant, GrantMessage, RevokeMessage, ExecMessage}
 
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
+
+	slashingTopics = Topics{UnjailMessage}
 )
 
 type (

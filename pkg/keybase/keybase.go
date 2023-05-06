@@ -3,7 +3,7 @@ package keybase
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
@@ -56,7 +56,7 @@ func queryKeyBase(endpoint string, data interface{}) error {
 
 	defer resp.Body.Close()
 
-	bz, err := ioutil.ReadAll(resp.Body)
+	bz, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
