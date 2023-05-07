@@ -2,6 +2,7 @@ package staking
 
 import (
 	"os"
+	"sync"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
@@ -23,26 +24,30 @@ var (
 	_ types.ValidatorsHandler = &Module{}
 )
 
-type Module struct {
-	log            *zerolog.Logger
-	client         *grpcClient.Client
-	broker         broker
-	tbM            tb.ToBroker
-	cdc            codec.Codec
-	enabledModules []string // xxx fixme
-}
+type (
+	Module struct {
+		log                    *zerolog.Logger
+		client                 *grpcClient.Client
+		broker                 broker
+		tbM                    tb.ToBroker
+		cdc                    codec.Codec
+		validatorIdentityCache sync.Map
+		enabledModules         []string // xxx fixme
+	}
+)
 
 func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", moduleName).Logger()
 
 	return &Module{
-		log:            &l,
-		broker:         b,
-		client:         cli,
-		tbM:            tbM,
-		cdc:            cdc,
-		enabledModules: modules,
+		log:                    &l,
+		broker:                 b,
+		client:                 cli,
+		tbM:                    tbM,
+		cdc:                    cdc,
+		enabledModules:         modules,
+		validatorIdentityCache: sync.Map{},
 	}
 }
 

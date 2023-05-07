@@ -23,7 +23,7 @@ replace (
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
-	github.com/bro-n-bro/spacebox v0.0.0-20230424172140-ad82366b27f8
+	github.com/bro-n-bro/spacebox v0.0.0-20230507130849-2e6aa974954d
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/cosmos/cosmos-sdk v0.46.1
@@ -43,6 +43,7 @@ require (
 	golang.org/x/crypto v0.1.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
+	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	google.golang.org/grpc v1.50.1
 )
 
