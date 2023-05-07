@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
@@ -28,7 +29,9 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 		return err
 	}
 
-	var avatarURL string
+	if err = m.publishValidatorDescriptions(vals, tmValidators.BlockHeight); err != nil {
+		return err
+	}
 
 	for _, val := range vals {
 		consAddr, err := getValidatorConsAddr(m.cdc, val)
@@ -41,29 +44,6 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 			ValidatorAddress: consAddr.String(),
 			Status:           int64(val.GetStatus()),
 			Jailed:           val.IsJailed(),
-		}); err != nil {
-			return err
-		}
-
-		avatarURL, err = keybase.GetAvatarURL(val.Description.Identity)
-		if err != nil {
-			m.log.Warn().
-				Err(err).
-				Str("operator_address", val.OperatorAddress).
-				Str("identity", val.Description.Identity).
-				Int64("height", tmValidators.BlockHeight).
-				Msg("failed to get avatar url")
-		}
-
-		if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
-			OperatorAddress: val.OperatorAddress,
-			Moniker:         val.Description.Moniker,
-			Identity:        val.Description.Identity,
-			Website:         val.Description.Website,
-			SecurityContact: val.Description.SecurityContact,
-			Details:         val.Description.Details,
-			AvatarURL:       avatarURL,
-			Height:          tmValidators.BlockHeight,
 		}); err != nil {
 			return err
 		}
@@ -129,4 +109,57 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 	}
 
 	return nil
+}
+
+func (m *Module) publishValidatorDescriptions(vals stakingtypes.Validators, height int64) error {
+	for _, val := range vals {
+		go m.publishValidatorDescription(val, height)
+	}
+
+	return nil
+}
+
+func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height int64) {
+	var (
+		avatarURL   string
+		cacheValStr string
+		err         error
+		ctx         = context.Background()
+	)
+
+	cacheVal, ok := m.validatorIdentityCache.Load(val.OperatorAddress)
+	if ok {
+		cacheValStr, _ = cacheVal.(string)
+	}
+
+	// no cacheValStr in cache
+	if !ok || cacheValStr != val.Description.Identity {
+		avatarURL, err = keybase.GetAvatarURL(ctx, val.Description.Identity)
+		if err != nil {
+			m.log.Warn().
+				Err(err).
+				Str("operator_address", val.OperatorAddress).
+				Str("identity", val.Description.Identity).
+				Int64("height", height).
+				Msg("failed to get avatar url")
+		}
+		m.validatorIdentityCache.Store(val.OperatorAddress, val.Description.Identity)
+	}
+
+	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
+		OperatorAddress: val.OperatorAddress,
+		Moniker:         val.Description.Moniker,
+		Identity:        val.Description.Identity,
+		Website:         val.Description.Website,
+		SecurityContact: val.Description.SecurityContact,
+		Details:         val.Description.Details,
+		AvatarURL:       avatarURL,
+		Height:          height,
+	}); err != nil {
+		m.log.Error().Err(err).
+			Str("operator_address", val.OperatorAddress).
+			Str("identity", val.Description.Identity).
+			Int64("height", height).
+			Msg("failed to publish validator description")
+	}
 }

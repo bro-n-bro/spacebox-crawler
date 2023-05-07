@@ -2,6 +2,7 @@ package slashing
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -13,6 +14,14 @@ import (
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	if len(tx.Logs) == 0 {
 		return nil
+	}
+
+	for _, logs := range tx.Logs {
+		for _, ev := range logs.Events {
+			if ev.Type == slashtypes.EventTypeSlash {
+				fmt.Println("@")
+			}
+		}
 	}
 
 	switch msg := cosmosMsg.(type) {

@@ -93,7 +93,7 @@ func (m *Module) handleMsgCreateValidator(
 	}
 
 	var avatarURL string
-	avatarURL, err = keybase.GetAvatarURL(msg.Description.Identity)
+	avatarURL, err = keybase.GetAvatarURL(ctx, msg.Description.Identity)
 	if err != nil {
 		m.log.Warn().
 			Err(err).
@@ -329,7 +329,7 @@ func (m *Module) handleEditValidator(
 		avatarURL string
 		err       error
 	)
-	avatarURL, err = keybase.GetAvatarURL(msg.Description.Identity)
+	avatarURL, err = keybase.GetAvatarURL(ctx, msg.Description.Identity)
 	if err != nil {
 		m.log.Warn().
 			Err(err).

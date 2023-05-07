@@ -17,7 +17,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return nil
 	}
 
-	switch msg := cosmosMsg.(type) { // nolint: gocritic
+	switch msg := cosmosMsg.(type) {
 	case *distrtypes.MsgWithdrawDelegatorReward:
 		event, err := tx.FindEventByType(index, distrtypes.EventTypeWithdrawRewards)
 		if err != nil {
@@ -59,7 +59,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			MsgIndex:         int64(index),
 		})
 	case *distrtypes.MsgWithdrawValidatorCommission:
-		event, err := tx.FindEventByType(index, distrtypes.EventTypeWithdrawRewards)
+		event, err := tx.FindEventByType(index, distrtypes.EventTypeWithdrawCommission)
 		if err != nil {
 			return err
 		}

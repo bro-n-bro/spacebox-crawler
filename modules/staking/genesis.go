@@ -12,7 +12,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -54,8 +53,8 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 		return fmt.Errorf("error while storing staking genesis redelegations: %w", err)
 	}
 
-	// Save the description
-	if err := m.publishValidatorDescription(ctx, doc, genState.Validators); err != nil {
+	// Publish the description
+	if err := m.publishValidatorDescriptions(genState.Validators, doc.InitialHeight); err != nil {
 		return fmt.Errorf("error while storing staking genesis validator descriptions: %w", err)
 	}
 
@@ -223,42 +222,6 @@ func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisD
 			}); err != nil {
 				return err
 			}
-		}
-	}
-
-	return nil
-}
-
-func (m *Module) publishValidatorDescription(ctx context.Context, doc *tmtypes.GenesisDoc,
-	validators stakingtypes.Validators) error {
-
-	var (
-		avatarURL string
-		err       error
-	)
-
-	for _, val := range validators {
-		avatarURL, err = keybase.GetAvatarURL(val.Description.Identity)
-		if err != nil {
-			m.log.Warn().
-				Err(err).
-				Str("operator_address", val.OperatorAddress).
-				Str("identity", val.Description.Identity).
-				Int64("height", doc.InitialHeight).
-				Msg("cant get avatar url")
-		}
-
-		if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
-			OperatorAddress: val.OperatorAddress,
-			Moniker:         val.GetMoniker(),
-			Identity:        val.Description.Identity,
-			Website:         val.Description.Website,
-			SecurityContact: val.Description.SecurityContact,
-			Details:         val.Description.Details,
-			AvatarURL:       avatarURL,
-			Height:          doc.InitialHeight,
-		}); err != nil {
-			return err
 		}
 	}
 
