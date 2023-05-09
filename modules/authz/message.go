@@ -125,6 +125,7 @@ func (m *Module) findAndPublishAuthzGrants(ctx context.Context, granter, grantee
 }
 
 // typeUrlFromAnyPtr returns typeUrl from *codec.Any. If any is nil, returns "".
+// nolint: stylecheck
 func typeUrlFromAnyPtr(any *codec.Any) string {
 	if any == nil {
 		return ""
