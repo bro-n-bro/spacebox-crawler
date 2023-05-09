@@ -2,11 +2,11 @@ package feegrant
 
 import (
 	"context"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
 
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -20,8 +20,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	case *feegranttypes.MsgGrantAllowance:
 
 		var (
-			allowance  feegranttypes.FeeAllowanceI
-			expiration time.Time
+			allowance feegranttypes.FeeAllowanceI
 		)
 		if err := m.cdc.UnpackAny(msg.Allowance, &allowance); err != nil {
 			return err
@@ -30,10 +29,6 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		ex, err := allowance.ExpiresAt()
 		if err != nil {
 			return err
-		}
-
-		if ex != nil {
-			expiration = *ex
 		}
 
 		data, err := m.cdc.MarshalJSON(msg.Allowance)
@@ -47,7 +42,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			TxHash:     tx.TxHash,
 			Granter:    msg.Granter,
 			Grantee:    msg.Grantee,
-			Expiration: expiration,
+			Expiration: utils.TimeFromPtr(ex),
 			Allowance:  data,
 		}); err != nil {
 			m.log.Err(err).Int64("height", tx.Height).Msg("error while publishing grant allowance message")

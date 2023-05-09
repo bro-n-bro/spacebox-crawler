@@ -2,11 +2,13 @@ package authz
 
 import (
 	"context"
-	"time"
 
+	codec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -16,29 +18,21 @@ import (
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	switch msg := cosmosMsg.(type) {
 	case *authztypes.MsgGrant:
-		var (
-			expiration time.Time
-			msgType    string
-		)
-		if msg.Grant.Expiration != nil {
-			expiration = *msg.Grant.Expiration
-		}
-		if msg.Grant.Authorization != nil {
-			msgType = msg.Grant.Authorization.TypeUrl
-		}
-
 		if err := m.broker.PublishGrantMessage(ctx, model.GrantMessage{
 			Height:     tx.Height,
 			MsgIndex:   int64(index),
 			TxHash:     tx.TxHash,
 			Granter:    msg.Granter,
 			Grantee:    msg.Grantee,
-			Expiration: expiration,
-			MsgType:    msgType,
+			Expiration: utils.TimeFromPtr(msg.Grant.Expiration),
+			MsgType:    typeUrlFromAnyPtr(msg.Grant.Authorization),
 		}); err != nil {
 			return err
 		}
 
+		if err := m.findAndPublishAuthzGrants(ctx, msg.Granter, msg.Grantee, tx.Height); err != nil {
+			return err
+		}
 	case *authztypes.MsgRevoke:
 		if err := m.broker.PublishRevokeMessage(ctx, model.RevokeMessage{
 			Height:   tx.Height,
@@ -51,6 +45,9 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			return err
 		}
 
+		if err := m.findAndPublishAuthzGrants(ctx, msg.Granter, msg.Grantee, tx.Height); err != nil {
+			return err
+		}
 	case *authztypes.MsgExec:
 		messages := make([][]byte, 0, len(msg.Msgs))
 		for _, message := range msg.Msgs {
@@ -72,4 +69,66 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	}
 
 	return nil
+}
+
+// findAndPublishAuthzGrants finds all authz grants for the given granter and grantee and publishes data to the broker.
+func (m *Module) findAndPublishAuthzGrants(ctx context.Context, granter, grantee string, height int64) error {
+	var nextKey []byte
+
+	for {
+		respPb, err := m.client.AuthzQueryClient.Grants(
+			ctx,
+			&authztypes.QueryGrantsRequest{
+				Granter: granter,
+				Grantee: grantee,
+				Pagination: &query.PageRequest{
+					Key:   nextKey,
+					Limit: 150,
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		nextKey = respPb.Pagination.NextKey
+		if len(respPb.Grants) > 0 {
+			for _, grant := range respPb.Grants {
+				if err = m.broker.PublishAuthzGrant(ctx, model.AuthzGrant{
+					Height:         height,
+					GranterAddress: granter,
+					GranteeAddress: grantee,
+					Expiration:     utils.TimeFromPtr(grant.Expiration),
+					MsgType:        typeUrlFromAnyPtr(grant.Authorization),
+				}); err != nil {
+					m.log.Err(err).Int64("height", height).Msg("error while publishing authz grant")
+					return err
+				}
+			}
+		} else {
+			if err = m.broker.PublishAuthzGrant(ctx, model.AuthzGrant{
+				Height:         height,
+				GranterAddress: granter,
+				GranteeAddress: grantee,
+			}); err != nil {
+				m.log.Err(err).Int64("height", height).Msg("error while publishing authz grant")
+				return err
+			}
+		}
+
+		if len(respPb.Pagination.NextKey) == 0 {
+			break
+		}
+	}
+
+	return nil
+}
+
+// typeUrlFromAnyPtr returns typeUrl from *codec.Any. If any is nil, returns "".
+func typeUrlFromAnyPtr(any *codec.Any) string {
+	if any == nil {
+		return ""
+	}
+
+	return any.TypeUrl
 }
