@@ -19,10 +19,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 	switch msg := cosmosMsg.(type) {
 	case *feegranttypes.MsgGrantAllowance:
-
-		var (
-			allowance feegranttypes.FeeAllowanceI
-		)
+		var allowance feegranttypes.FeeAllowanceI
 		if err := m.cdc.UnpackAny(msg.Allowance, &allowance); err != nil {
 			return err
 		}
@@ -111,10 +108,7 @@ func (m *Module) publishFeeAllowance(ctx context.Context, height int64, granter,
 		return err
 	}
 
-	var (
-		allowance  feegranttypes.FeeAllowanceI
-		expiration time.Time
-	)
+	var allowance feegranttypes.FeeAllowanceI
 	if err = m.cdc.UnpackAny(respPb.Allowance.Allowance, &allowance); err != nil {
 		return err
 	}
@@ -124,15 +118,11 @@ func (m *Module) publishFeeAllowance(ctx context.Context, height int64, granter,
 		return err
 	}
 
-	if ex != nil {
-		expiration = *ex
-	}
-
 	return m.broker.PublishFeeAllowance(ctx, model.FeeAllowance{
 		Granter:    granter,
 		Grantee:    grantee,
 		Allowance:  allowanceBytes,
-		Expiration: expiration,
+		Expiration: utils.TimeFromPtr(ex),
 		Height:     height,
 	})
 }
