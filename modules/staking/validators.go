@@ -111,6 +111,7 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 	return nil
 }
 
+// publishValidatorDescriptions process validator descriptions and publish them to the broker.
 func (m *Module) publishValidatorDescriptions(vals stakingtypes.Validators, height int64) error {
 	for _, val := range vals {
 		go m.publishValidatorDescription(val, height)
@@ -119,12 +120,14 @@ func (m *Module) publishValidatorDescriptions(vals stakingtypes.Validators, heig
 	return nil
 }
 
+// publishValidatorDescription process validator description and publish it to the broker.
+// It also gets avatar url from the keybase.
+// Contains the cache for validator identity to skip the keybase API call as it might be stopped due to rate limits.
 func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height int64) {
 	var (
-		avatarURL   string
-		cacheValStr string
-		err         error
-		ctx         = context.Background()
+		avatarURL, cacheValStr string
+		err                    error
+		ctx                    = context.Background()
 	)
 
 	cacheVal, ok := m.validatorIdentityCache.Load(val.OperatorAddress)
@@ -132,8 +135,9 @@ func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height 
 		cacheValStr, _ = cacheVal.(string)
 	}
 
-	// no cacheValStr in cache
+	// not exists or value is not equal to the current one
 	if !ok || cacheValStr != val.Description.Identity {
+		// get avatar url from the keybase API
 		avatarURL, err = keybase.GetAvatarURL(ctx, val.Description.Identity)
 		if err != nil {
 			m.log.Warn().
@@ -143,6 +147,7 @@ func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height 
 				Int64("height", height).
 				Msg("failed to get avatar url")
 		}
+		// update the cache
 		m.validatorIdentityCache.Store(val.OperatorAddress, val.Description.Identity)
 	}
 

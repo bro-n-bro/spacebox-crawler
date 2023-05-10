@@ -325,11 +325,7 @@ func (m *Module) handleEditValidator(
 		return err
 	}
 
-	var (
-		avatarURL string
-		err       error
-	)
-	avatarURL, err = keybase.GetAvatarURL(ctx, msg.Description.Identity)
+	avatarURL, err := keybase.GetAvatarURL(ctx, msg.Description.Identity)
 	if err != nil {
 		m.log.Warn().
 			Err(err).

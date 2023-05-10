@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	cli = &RLHTTPClient{
+	// DefaultHTTPClient is the default rate limited HTTP client
+	DefaultHTTPClient = &RLHTTPClient{
 		client:      http.DefaultClient,
-		Ratelimiter: rate.NewLimiter(rate.Every(1*time.Second), 25), // 500 request every 10 seconds,
+		Ratelimiter: rate.NewLimiter(rate.Every(1*time.Second), 25), // 25 request per 1 second
 	}
 )
 

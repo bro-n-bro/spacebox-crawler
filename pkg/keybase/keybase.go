@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	keyBaseEndpoint = "https://keybase.io/_/api/1.0"
+	fmtKeyBaseEndpoint = "https://keybase.io/_/api/1.0/user/lookup.json?key_suffix=%[1]s&fields=basics&fields=pictures"
 )
 
 var (
@@ -26,8 +26,7 @@ func GetAvatarURL(ctx context.Context, identity string) (string, error) {
 	}
 
 	var response IdentityQueryResponse
-	endpoint := fmt.Sprintf("/user/lookup.json?key_suffix=%[1]s&fields=basics&fields=pictures", identity)
-	if err := queryKeyBase(ctx, endpoint, &response); err != nil {
+	if err := queryKeyBase(ctx, identity, &response); err != nil {
 		return "", err
 	}
 
@@ -53,19 +52,22 @@ func GetAvatarURL(ctx context.Context, identity string) (string, error) {
 
 // queryKeyBase queries the KeyBase APIs for the given endpoint, and deserializes
 // the response as a JSON object inside the given data.
-func queryKeyBase(ctx context.Context, endpoint string, data interface{}) error {
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s%s", keyBaseEndpoint, endpoint), nil)
+// Uses custom HTTP client to rate limit the requests to avoid 429 error code from API.
+func queryKeyBase(ctx context.Context, identity string, data interface{}) error {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(fmtKeyBaseEndpoint, identity), nil)
 	if err != nil {
 		return err
 	}
 
-	resp, err := cli.Do(ctx, req)
+	// call the API
+	resp, err := DefaultHTTPClient.Do(ctx, req)
 	if err != nil {
 		return err
 	}
 
 	defer resp.Body.Close()
 
+	// check status code
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("%w: %v", errInvalidStatusCode, resp.Status)
 	}
