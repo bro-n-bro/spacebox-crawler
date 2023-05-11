@@ -8,4 +8,5 @@ import (
 
 type broker interface {
 	PublishUnjailMessage(ctx context.Context, msg model.UnjailMessage) error
+	PublishHandleValidatorSignature(ctx context.Context, msg model.HandleValidatorSignature) error
 }
