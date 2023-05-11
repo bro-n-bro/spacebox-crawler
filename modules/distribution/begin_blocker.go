@@ -115,7 +115,10 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 
 	for _, event := range events {
 		if len(event.Attributes) < 2 {
-			m.log.Warn().Str("func", "parseCommissionEvent").Msg("not enough attributes in event")
+			m.log.Warn().
+				Str("event", distrtypes.EventTypeCommission).
+				Int64("height", height).
+				Msg("not enough attributes in event")
 			continue
 		}
 
@@ -159,7 +162,6 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 }
 
 // parseRewardsEvent parses rewards event.
-// nolint:dupl
 func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
 	events, ok := eventsMap[distrtypes.EventTypeRewards]
 	if !ok {

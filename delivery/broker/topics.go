@@ -22,6 +22,7 @@ var (
 	GovParams                          Topic = newTopic("gov_params")
 	GrantMessage                       Topic = newTopic("grant_message")
 	GrantAllowanceMessage              Topic = newTopic("grant_allowance_message")
+	HandleValidatorSignature           Topic = newTopic("handle_validator_signature")
 	Message                            Topic = newTopic("message")
 	MintParams                         Topic = newTopic("mint_params")
 	MultiSendMessage                   Topic = newTopic("multisend_message")
