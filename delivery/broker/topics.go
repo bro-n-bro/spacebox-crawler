@@ -78,7 +78,7 @@ var (
 
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 
-	slashingTopics = Topics{UnjailMessage}
+	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature}
 )
 
 type (
