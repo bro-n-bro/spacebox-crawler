@@ -18,6 +18,11 @@ const (
 	defaultLimit = 150
 )
 
+type avatarURLCache struct {
+	Identity  string
+	AvatarURL string
+}
+
 // HandleValidators handles validators for each block height.
 func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.ResultValidators) error {
 	vals, validators, err := GetValidators(ctx, tmValidators.BlockHeight, m.client.StakingQueryClient, m.cdc)
@@ -125,18 +130,19 @@ func (m *Module) publishValidatorDescriptions(vals stakingtypes.Validators, heig
 // Contains the cache for validator identity to skip the keybase API call as it might be stopped due to rate limits.
 func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height int64) {
 	var (
-		avatarURL, cacheValStr string
-		err                    error
-		ctx                    = context.Background()
+		avatarURL string
+		cacheItem avatarURLCache
+		err       error
+		ctx       = context.Background()
 	)
 
-	cacheVal, ok := m.validatorIdentityCache.Load(val.OperatorAddress)
+	cacheVal, ok := m.avatarURLCache.Load(val.OperatorAddress)
 	if ok {
-		cacheValStr, _ = cacheVal.(string)
+		cacheItem, ok = cacheVal.(avatarURLCache)
 	}
 
 	// not exists or value is not equal to the current one
-	if !ok || cacheValStr != val.Description.Identity {
+	if !ok || cacheItem.Identity != val.Description.Identity {
 		// get avatar url from the keybase API
 		avatarURL, err = keybase.GetAvatarURL(ctx, val.Description.Identity)
 		if err != nil {
@@ -148,8 +154,13 @@ func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height 
 				Msg("failed to get avatar url")
 		} else {
 			// update the cache
-			m.validatorIdentityCache.Store(val.OperatorAddress, val.Description.Identity)
+			m.avatarURLCache.Store(val.OperatorAddress, avatarURLCache{
+				Identity:  val.Description.Identity,
+				AvatarURL: avatarURL,
+			})
 		}
+	} else { // can get from cache
+		avatarURL = cacheItem.AvatarURL
 	}
 
 	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{

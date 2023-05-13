@@ -26,13 +26,13 @@ var (
 
 type (
 	Module struct {
-		log                    *zerolog.Logger
-		client                 *grpcClient.Client
-		broker                 broker
-		tbM                    tb.ToBroker
-		cdc                    codec.Codec
-		validatorIdentityCache sync.Map
-		enabledModules         []string // xxx fixme
+		log            *zerolog.Logger
+		client         *grpcClient.Client
+		broker         broker
+		tbM            tb.ToBroker
+		cdc            codec.Codec
+		avatarURLCache sync.Map
+		enabledModules []string // xxx fixme
 	}
 )
 
@@ -41,13 +41,13 @@ func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, mod
 		Str("module", moduleName).Logger()
 
 	return &Module{
-		log:                    &l,
-		broker:                 b,
-		client:                 cli,
-		tbM:                    tbM,
-		cdc:                    cdc,
-		enabledModules:         modules,
-		validatorIdentityCache: sync.Map{},
+		log:            &l,
+		broker:         b,
+		client:         cli,
+		tbM:            tbM,
+		cdc:            cdc,
+		enabledModules: modules,
+		avatarURLCache: sync.Map{},
 	}
 }
 
