@@ -146,9 +146,10 @@ func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height 
 				Str("identity", val.Description.Identity).
 				Int64("height", height).
 				Msg("failed to get avatar url")
+		} else {
+			// update the cache
+			m.validatorIdentityCache.Store(val.OperatorAddress, val.Description.Identity)
 		}
-		// update the cache
-		m.validatorIdentityCache.Store(val.OperatorAddress, val.Description.Identity)
 	}
 
 	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
