@@ -75,11 +75,11 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 		}
 
 		if err = m.broker.PublishAnnualProvision(ctx, model.AnnualProvision{
-			Height:          height,
-			Amount:          amount,
-			AnnualProvision: annualProvisions,
-			BondedRatio:     bondedRatio,
-			Inflation:       inflation,
+			Height:           height,
+			Amount:           amount,
+			AnnualProvisions: annualProvisions,
+			BondedRatio:      bondedRatio,
+			Inflation:        inflation,
 		}); err != nil {
 			m.log.Error().
 				Err(err).

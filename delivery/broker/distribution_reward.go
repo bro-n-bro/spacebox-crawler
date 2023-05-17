@@ -15,5 +15,5 @@ func (b *Broker) PublishDistributionReward(_ context.Context, reward model.Distr
 		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
-	return b.produce(DistributionCommission, data)
+	return b.produce(DistributionReward, data)
 }
