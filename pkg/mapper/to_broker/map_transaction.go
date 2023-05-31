@@ -1,6 +1,8 @@
 package tobroker
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -20,7 +22,11 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 	for i, msg := range tx.Body.Messages {
 		msgBytes, err := tb.cdc.MarshalJSON(msg)
 		if err != nil {
-			return model.Transaction{}, err
+			if strings.HasPrefix(err.Error(), "unable to resolve type URL") {
+				msgBytes = msg.Value
+			} else {
+				return model.Transaction{}, err
+			}
 		}
 		msgs[i] = msgBytes
 	}

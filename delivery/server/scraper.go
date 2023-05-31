@@ -33,6 +33,13 @@ func (s *Server) startMetricsScrapper() {
 			Help:      "Last processed block height",
 		})
 
+		// count of error messages in storage
+		errorMessagesCount = promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "total_error_messages",
+			Help:      "Total error messages",
+		})
+
 		statusMap map[string]int
 		ctx       = context.Background()
 		ticker    = time.NewTicker(1 * time.Minute)
@@ -74,6 +81,13 @@ func (s *Server) startMetricsScrapper() {
 			for statusName, count := range statusMap {
 				statusMetric.With(prometheus.Labels{"status": statusName}).Set(float64(count))
 			}
+
+			count, err := s.storage.CountErrorMessages(ctx)
+			if err != nil {
+				s.log.Error().Err(err).Msg("can't get count of error messages")
+				continue
+			}
+			errorMessagesCount.Set(float64(count))
 		}
 	}
 }

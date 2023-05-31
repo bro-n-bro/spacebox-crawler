@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -268,6 +269,23 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 			var stdMsg sdk.Msg
 			if err := w.cdc.UnpackAny(msg, &stdMsg); err != nil {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
+
+				if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
+					if err = w.storage.InsertErrorMessage(
+						ctx,
+						w.tsM.NewErrorMessage(tx.Height, err.Error()),
+					); err != nil {
+						w.log.Error().
+							Err(err).
+							Int64(keyHeight, tx.Height).
+							Msgf("Fail to insert error_message: %v", err)
+
+						return err
+					}
+					// just skip unsupported message
+					continue
+				}
+
 				return err
 			}
 
@@ -278,6 +296,7 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 						Int64(keyHeight, tx.Height).
 						Str(keyModule, m.Name()).
 						Msgf("HandleMessage error: %v", err)
+
 					return err
 				}
 			}
