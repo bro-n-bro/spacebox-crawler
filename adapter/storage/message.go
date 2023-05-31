@@ -14,6 +14,6 @@ func (s *Storage) InsertErrorMessage(ctx context.Context, message model.Message)
 	return nil
 }
 
-func (s *Storage) CountErrorMessage(ctx context.Context) (int64, error) {
+func (s *Storage) CountErrorMessages(ctx context.Context) (int64, error) {
 	return s.messagesCollection.CountDocuments(ctx, nil)
 }

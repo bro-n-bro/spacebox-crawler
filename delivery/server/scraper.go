@@ -82,7 +82,7 @@ func (s *Server) startMetricsScrapper() {
 				statusMetric.With(prometheus.Labels{"status": statusName}).Set(float64(count))
 			}
 
-			count, err := s.storage.CountErrorMessage(ctx)
+			count, err := s.storage.CountErrorMessages(ctx)
 			if err != nil {
 				s.log.Error().Err(err).Msg("can't get count of error messages")
 				continue

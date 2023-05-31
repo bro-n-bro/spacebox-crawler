@@ -282,7 +282,7 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 
 						return err
 					}
-					// just skip unsupported messages message
+					// just skip unsupported message
 					continue
 				}
 
