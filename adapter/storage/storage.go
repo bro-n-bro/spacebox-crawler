@@ -11,9 +11,10 @@ import (
 )
 
 type Storage struct {
-	log        *zerolog.Logger
-	cli        *mongo.Client
-	collection *mongo.Collection
+	log                *zerolog.Logger
+	cli                *mongo.Client
+	blocksCollection   *mongo.Collection
+	messagesCollection *mongo.Collection
 
 	cfg Config
 }
@@ -57,15 +58,16 @@ func (s *Storage) Start(ctx context.Context) error {
 		return err
 	}
 
-	collection := s.cli.Database("spacebox").Collection("blocks")
-	s.collection = collection
+	blocksCollection := s.cli.Database("spacebox").Collection("blocks")
+	s.blocksCollection = blocksCollection
+	s.messagesCollection = s.cli.Database("spacebox").Collection("error_messages")
 
 	mod := mongo.IndexModel{
 		Keys: bson.M{"height": 1}, // index in ascending order or -1 for descending order
 		// Options: options.Index().SetUnique(true),
 	}
 
-	if _, err := collection.Indexes().CreateOne(ctx, mod); err != nil {
+	if _, err := blocksCollection.Indexes().CreateOne(ctx, mod); err != nil {
 		return err
 	}
 
