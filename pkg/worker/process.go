@@ -271,7 +271,10 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
 
 				if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
-					if err = w.storage.InsertErrorMessage(ctx, w.tsM.NewErrorMessage(tx.Height, err.Error())); err != nil {
+					if err = w.storage.InsertErrorMessage(
+						ctx,
+						w.tsM.NewErrorMessage(tx.Height, err.Error()),
+					); err != nil {
 						w.log.Error().
 							Err(err).
 							Int64(keyHeight, tx.Height).

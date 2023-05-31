@@ -32,6 +32,7 @@ func (s *Server) startMetricsScrapper() {
 			Name:      "last_processed_block_height",
 			Help:      "Last processed block height",
 		})
+
 		// count of error messages in storage
 		errorMessagesCount = promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
@@ -87,7 +88,6 @@ func (s *Server) startMetricsScrapper() {
 				continue
 			}
 			errorMessagesCount.Set(float64(count))
-
 		}
 	}
 }
