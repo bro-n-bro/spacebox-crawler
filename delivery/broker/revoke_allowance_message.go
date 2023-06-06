@@ -15,5 +15,5 @@ func (b *Broker) PublishRevokeAllowanceMessage(ctx context.Context, ram model.Re
 		return errors.Wrap(err, MsgErrJSONMarshalFail)
 	}
 
-	return b.produce(GrantAllowanceMessage, data)
+	return b.produce(RevokeAllowanceMessage, data)
 }
