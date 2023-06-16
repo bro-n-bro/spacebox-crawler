@@ -189,7 +189,7 @@ func (m *Module) handlerMsgVoteWeighted(
 	msg *govtypesv1beta1.MsgVoteWeighted) error {
 
 	weightedVoteOptions := make([]model.WeightedVoteOption, 0, len(msg.Options))
-	for i, v := range msg.Options {
+	for _, v := range msg.Options {
 		w, err := v.Weight.Float64()
 		if err != nil {
 			m.log.Error().Err(err).Int64("height", tx.Height).Str(
@@ -198,10 +198,10 @@ func (m *Module) handlerMsgVoteWeighted(
 			)
 			return err
 		}
-		weightedVoteOptions[i] = model.WeightedVoteOption{
+		weightedVoteOptions = append(weightedVoteOptions, model.WeightedVoteOption{
 			Option: int32(v.Option),
 			Weight: w,
-		}
+		})
 	}
 	if err := m.broker.PublishVoteWeightedMessage(ctx, model.VoteWeightedMessage{
 		Height:             tx.Height,
