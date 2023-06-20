@@ -117,7 +117,13 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 }
 
 // asyncPublishValidatorDescriptions process validator descriptions and publish them to the broker.
-func (m *Module) publishValidatorDescriptions(ctx context.Context, vals stakingtypes.Validators, height int64, parseAvatarURL bool) error {
+func (m *Module) publishValidatorDescriptions(
+	ctx context.Context,
+	vals stakingtypes.Validators,
+	height int64,
+	parseAvatarURL bool,
+) error {
+
 	for _, val := range vals {
 		if parseAvatarURL {
 			go func(val stakingtypes.Validator) {
@@ -138,7 +144,13 @@ func (m *Module) publishValidatorDescriptions(ctx context.Context, vals stakingt
 // publishValidatorDescription process validator description and publish it to the broker.
 // It also gets avatar url from the keybase.
 // Contains the cache for validator identity to skip the keybase API call as it might be stopped due to rate limits.
-func (m *Module) publishValidatorDescription(ctx context.Context, val stakingtypes.Validator, avatarURL string, height int64) error {
+func (m *Module) publishValidatorDescription(
+	ctx context.Context,
+	val stakingtypes.Validator,
+	avatarURL string,
+	height int64,
+) error {
+
 	if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: val.OperatorAddress,
 		Moniker:         val.Description.Moniker,
