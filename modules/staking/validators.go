@@ -34,7 +34,7 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.Re
 		return err
 	}
 
-	if err = m.publishValidatorDescriptions(vals, tmValidators.BlockHeight); err != nil {
+	if err = m.publishValidatorDescriptions(ctx, vals, tmValidators.BlockHeight, m.parseAvatarURL); err != nil {
 		return err
 	}
 
@@ -116,10 +116,26 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 	return nil
 }
 
-// publishValidatorDescriptions process validator descriptions and publish them to the broker.
-func (m *Module) publishValidatorDescriptions(vals stakingtypes.Validators, height int64) error {
+// asyncPublishValidatorDescriptions process validator descriptions and publish them to the broker.
+func (m *Module) publishValidatorDescriptions(
+	ctx context.Context,
+	vals stakingtypes.Validators,
+	height int64,
+	parseAvatarURL bool,
+) error {
+
 	for _, val := range vals {
-		go m.publishValidatorDescription(val, height)
+		if parseAvatarURL {
+			go func(val stakingtypes.Validator) {
+				ctx = context.Background()
+				avatarURL := m.getAvatarURL(val.OperatorAddress, val.Description.Identity, height)
+				_ = m.publishValidatorDescription(ctx, val, avatarURL, height)
+			}(val)
+		} else {
+			if err := m.publishValidatorDescription(ctx, val, "", height); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -128,42 +144,14 @@ func (m *Module) publishValidatorDescriptions(vals stakingtypes.Validators, heig
 // publishValidatorDescription process validator description and publish it to the broker.
 // It also gets avatar url from the keybase.
 // Contains the cache for validator identity to skip the keybase API call as it might be stopped due to rate limits.
-func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height int64) {
-	var (
-		avatarURL string
-		cacheItem avatarURLCache
-		err       error
-		ctx       = context.Background()
-	)
+func (m *Module) publishValidatorDescription(
+	ctx context.Context,
+	val stakingtypes.Validator,
+	avatarURL string,
+	height int64,
+) error {
 
-	cacheVal, ok := m.avatarURLCache.Load(val.OperatorAddress)
-	if ok {
-		cacheItem, ok = cacheVal.(avatarURLCache)
-	}
-
-	// not exists or value is not equal to the current one
-	if !ok || cacheItem.Identity != val.Description.Identity {
-		// get avatar url from the keybase API
-		avatarURL, err = keybase.GetAvatarURL(ctx, val.Description.Identity)
-		if err != nil {
-			m.log.Warn().
-				Err(err).
-				Str("operator_address", val.OperatorAddress).
-				Str("identity", val.Description.Identity).
-				Int64("height", height).
-				Msg("failed to get avatar url")
-		} else {
-			// update the cache
-			m.avatarURLCache.Store(val.OperatorAddress, avatarURLCache{
-				Identity:  val.Description.Identity,
-				AvatarURL: avatarURL,
-			})
-		}
-	} else { // can get from cache
-		avatarURL = cacheItem.AvatarURL
-	}
-
-	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
+	if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: val.OperatorAddress,
 		Moniker:         val.Description.Moniker,
 		Identity:        val.Description.Identity,
@@ -178,5 +166,46 @@ func (m *Module) publishValidatorDescription(val stakingtypes.Validator, height 
 			Str("identity", val.Description.Identity).
 			Int64("height", height).
 			Msg("failed to publish validator description")
+		return err
 	}
+
+	return nil
+}
+
+func (m *Module) getAvatarURL(operatorAddress, identity string, height int64) string {
+	var (
+		avatarURL string
+		cacheItem avatarURLCache
+		err       error
+		ctx       = context.Background()
+	)
+
+	cacheVal, ok := m.avatarURLCache.Load(operatorAddress)
+	if ok {
+		cacheItem, ok = cacheVal.(avatarURLCache)
+	}
+
+	// not exists or value is not equal to the current one
+	if !ok || cacheItem.Identity != identity {
+		// get avatar url from the keybase API
+		avatarURL, err = keybase.GetAvatarURL(ctx, identity)
+		if err != nil {
+			m.log.Error().
+				Err(err).
+				Str("operator_address", operatorAddress).
+				Str("identity", identity).
+				Int64("height", height).
+				Msg("failed to get avatar url")
+		} else {
+			// update the cache
+			m.avatarURLCache.Store(operatorAddress, avatarURLCache{
+				Identity:  identity,
+				AvatarURL: avatarURL,
+			})
+		}
+	} else { // can get from cache
+		avatarURL = cacheItem.AvatarURL
+	}
+
+	return avatarURL
 }
