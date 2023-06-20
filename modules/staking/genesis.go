@@ -54,7 +54,7 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	}
 
 	// Publish the description
-	if err := m.publishValidatorDescriptions(genState.Validators, doc.InitialHeight); err != nil {
+	if err := m.publishValidatorDescriptions(ctx, genState.Validators, doc.InitialHeight, m.parseAvatarURL); err != nil {
 		return fmt.Errorf("error while storing staking genesis validator descriptions: %w", err)
 	}
 
