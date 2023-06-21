@@ -20,7 +20,6 @@ type (
 
 	// validator allows to easily implement the Validator interface
 	stakingValidator struct {
-		MinSelfDelegation   int64
 		MaxChangeRate       *sdk.Dec
 		MaxRate             *sdk.Dec
 		Description         stakingtypes.Description
@@ -29,6 +28,7 @@ type (
 		SelfDelegateAddress string
 		ConsensusAddr       string
 		Height              int64
+		MinSelfDelegation   int64
 	}
 )
 
