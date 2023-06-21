@@ -11,7 +11,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -68,10 +67,12 @@ func (m *Module) handleMsgCreateValidator(
 	if err != nil {
 		return err
 	}
+
 	commissionRate, err := stakingValidator.Commission.Rate.Float64()
 	if err != nil {
 		return err
 	}
+
 	if err = m.broker.PublishCreateValidatorMessage(ctx, model.CreateValidatorMessage{
 		Height:           height,
 		TxHash:           hash,
@@ -93,14 +94,8 @@ func (m *Module) handleMsgCreateValidator(
 	}
 
 	var avatarURL string
-	avatarURL, err = keybase.GetAvatarURL(ctx, msg.Description.Identity)
-	if err != nil {
-		m.log.Warn().
-			Err(err).
-			Str("operator_address", msg.ValidatorAddress).
-			Str("identity", msg.Description.Identity).
-			Int64("height", height).
-			Msg("cant get avatar url")
+	if m.parseAvatarURL {
+		avatarURL = m.getAvatarURL(msg.ValidatorAddress, msg.Description.Identity, height)
 	}
 
 	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
@@ -325,17 +320,12 @@ func (m *Module) handleEditValidator(
 		return err
 	}
 
-	avatarURL, err := keybase.GetAvatarURL(ctx, msg.Description.Identity)
-	if err != nil {
-		m.log.Warn().
-			Err(err).
-			Str("operator_address", msg.ValidatorAddress).
-			Str("identity", msg.Description.Identity).
-			Int64("height", height).
-			Msg("cant get avatar url")
+	var avatarURL string
+	if m.parseAvatarURL {
+		avatarURL = m.getAvatarURL(msg.ValidatorAddress, msg.Description.Identity, height)
 	}
 
-	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
+	if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
 		Identity:        msg.Description.Identity,
