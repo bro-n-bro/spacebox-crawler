@@ -76,7 +76,6 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 
 	for _, val := range sVals {
-		// TODO: test it
 		if err := m.broker.PublishValidator(ctx, model.Validator{
 			ConsensusAddress: val.GetConsAddr(),
 			ConsensusPubkey:  val.GetConsPubKey(),
@@ -87,7 +86,6 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 		}
 
 		if strings.HasPrefix(val.GetSelfDelegateAddress(), prefix) {
-			// TODO: test it
 			if err := m.broker.PublishAccount(ctx, model.Account{
 				Address: val.GetSelfDelegateAddress(),
 				Height:  val.GetHeight(),
@@ -96,17 +94,11 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 			}
 		}
 
-		var minSelfDelegation int64
-		if val.GetMinSelfDelegation() != nil {
-			minSelfDelegation = val.GetMinSelfDelegation().Int64()
-		}
-
-		// TODO: test it
 		if err := m.broker.PublishValidatorInfo(ctx, model.ValidatorInfo{
 			ConsensusAddress:    val.GetConsAddr(),
 			OperatorAddress:     val.GetOperator(),
 			SelfDelegateAddress: val.GetSelfDelegateAddress(),
-			MinSelfDelegation:   minSelfDelegation,
+			MinSelfDelegation:   val.GetMinSelfDelegation(),
 			Height:              val.GetHeight(),
 		}); err != nil {
 			return err

@@ -107,6 +107,11 @@ func convertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 		return nil, err
 	}
 
+	var minSelfDelegation int64
+	if !validator.MinSelfDelegation.IsNil() {
+		minSelfDelegation = validator.MinSelfDelegation.Int64()
+	}
+
 	return types.NewStakingValidator(
 		consAddr.String(),
 		validator.OperatorAddress,
@@ -116,5 +121,6 @@ func convertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 		&validator.Commission.MaxRate,
 		validator.Description,
 		height,
+		minSelfDelegation,
 	), nil
 }
