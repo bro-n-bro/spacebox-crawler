@@ -41,17 +41,17 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 
 		var burnedCoin *model.Coin
 		for _, attr := range e.Attributes {
-			switch string(attr.Key) {
+			switch attr.Key {
 			case slashingtypes.AttributeKeyAddress: // required
-				address = string(attr.Value)
+				address = attr.Value
 			case slashingtypes.AttributeKeyPower: // required
-				power = string(attr.Value)
+				power = attr.Value
 			case slashingtypes.AttributeKeyReason: // required
-				reason = string(attr.Value)
+				reason = attr.Value
 			case slashingtypes.AttributeKeyJailed: // required
-				jailed = string(attr.Value)
+				jailed = attr.Value
 			case slashingtypes.AttributeKeyBurnedCoins: // not required
-				coins, err := utils.ParseCoinsFromString(string(attr.Value))
+				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -59,7 +59,7 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 						Int64("height", height).
 						Msg("failed to convert string to coins by commissionEvent")
 
-					return fmt.Errorf("failed to convert %q to coin: %w", string(attr.Value), err)
+					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
 				}
 				if len(coins) > 0 {
 					coin := m.tbM.MapCoin(coins[0])
@@ -114,10 +114,10 @@ func getCoin(eventsMap types.BlockerEvents, mapper tb.ToBroker) (model.Coin, err
 		return res, errCantFindBurnedCoin
 	}
 	for _, bankAttr := range bankEvents[0].Attributes {
-		if string(bankAttr.Key) == sdk.AttributeKeyAmount {
-			coins, err := utils.ParseCoinsFromString(string(bankAttr.Value))
+		if bankAttr.Key == sdk.AttributeKeyAmount {
+			coins, err := utils.ParseCoinsFromString(bankAttr.Value)
 			if err != nil {
-				err = fmt.Errorf("failed to convert %q to coin: %w", string(bankAttr.Value), err)
+				err = fmt.Errorf("failed to convert %q to coin: %w", bankAttr.Value, err)
 				return model.Coin{}, err
 			}
 			if len(coins) > 0 {

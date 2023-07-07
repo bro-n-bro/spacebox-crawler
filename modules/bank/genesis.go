@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	cometbfttypes "github.com/cometbft/cometbft/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -14,7 +14,11 @@ import (
 
 // HandleGenesis handles the genesis state of the x/bank module in order to store the initial values
 // of the different account balances.
-func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(
+	ctx context.Context,
+	doc *cometbfttypes.GenesisDoc,
+	appState map[string]json.RawMessage) error {
+
 	var bankState banktypes.GenesisState
 	if err := m.cdc.UnmarshalJSON(appState[banktypes.ModuleName], &bankState); err != nil {
 		return err

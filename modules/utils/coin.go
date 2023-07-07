@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"cosmossdk.io/errors"
+	"github.com/pkg/errors"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )

@@ -4,15 +4,15 @@ import (
 	"context"
 	"net/http"
 
-	tmHttp "github.com/tendermint/tendermint/rpc/client/http"
-	jsonrpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
+	cometbftHttp "github.com/cometbft/cometbft/rpc/client/http"
+	jsonrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )
 
 type Client struct {
 	*jsonrpcclient.WSClient
-	*tmHttp.WSEvents
+	*cometbftHttp.WSEvents
 
-	RPCClient  *tmHttp.HTTP
+	RPCClient  *cometbftHttp.HTTP
 	HTTPClient *http.Client
 
 	cfg Config
@@ -31,9 +31,9 @@ func (c *Client) Start(ctx context.Context) error {
 	c.HTTPClient = httpCli
 
 	// FIXME: does not work without websocket connection
-	var rpcCli *tmHttp.HTTP
+	var rpcCli *cometbftHttp.HTTP
 	if c.cfg.WSEnabled {
-		rpcCli, err = tmHttp.NewWithClient(c.cfg.Host, "/websocket", httpCli)
+		rpcCli, err = cometbftHttp.NewWithClient(c.cfg.Host, "/websocket", httpCli)
 		if err != nil {
 			return err
 		}
@@ -42,7 +42,7 @@ func (c *Client) Start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		rpcCli, err = tmHttp.NewWithClient(c.cfg.Host, "", httpCli)
+		rpcCli, err = cometbftHttp.NewWithClient(c.cfg.Host, "", httpCli)
 		if err != nil {
 			return err
 		}

@@ -30,9 +30,9 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 		}
 
 		for _, attr := range event.Attributes {
-			switch string(attr.Key) {
+			switch attr.Key {
 			case minttypes.AttributeKeyBondedRatio:
-				bondedRatio, err = strconv.ParseFloat(string(attr.Value), 64)
+				bondedRatio, err = strconv.ParseFloat(attr.Value, 64)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -42,7 +42,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 					return err
 				}
 			case minttypes.AttributeKeyInflation:
-				inflation, err = strconv.ParseFloat(string(attr.Value), 64)
+				inflation, err = strconv.ParseFloat(attr.Value, 64)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -52,7 +52,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 					return err
 				}
 			case minttypes.AttributeKeyAnnualProvisions:
-				annualProvisions, err = strconv.ParseFloat(string(attr.Value), 64)
+				annualProvisions, err = strconv.ParseFloat(attr.Value, 64)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -62,7 +62,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 					return err
 				}
 			case sdk.AttributeKeyAmount:
-				amount, err = strconv.ParseInt(string(attr.Value), 10, 64)
+				amount, err = strconv.ParseInt(attr.Value, 10, 64)
 				if err != nil {
 					m.log.Error().
 						Err(err).

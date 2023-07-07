@@ -62,11 +62,11 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 		}
 
 		for _, attr := range event.Attributes {
-			switch string(attr.Key) {
+			switch attr.Key {
 			case distrtypes.AttributeKeyValidator:
-				validator = string(attr.Value)
+				validator = attr.Value
 			case sdk.AttributeKeyAmount:
-				coins, err := utils.ParseCoinsFromString(string(attr.Value))
+				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -74,7 +74,7 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 						Int64("height", height).
 						Msg("failed to convert string to coins by proposalRewardEvent")
 
-					return fmt.Errorf("failed to convert %q to coin: %w", string(attr.Value), err)
+					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
 				}
 
 				if len(coins) > 0 {
@@ -122,9 +122,9 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 		}
 
 		for _, attr := range event.Attributes {
-			switch string(attr.Key) {
+			switch attr.Key {
 			case sdk.AttributeKeyAmount:
-				coins, err := utils.ParseCoinsFromString(string(attr.Value))
+				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -132,14 +132,14 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 						Int64("height", height).
 						Msg("failed to convert string to coins by commissionEvent")
 
-					return fmt.Errorf("failed to convert %q to coin: %w", string(attr.Value), err)
+					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
 				}
 
 				if len(coins) > 0 {
 					coin = m.tbM.MapCoin(coins[0])
 				}
 			case distrtypes.AttributeKeyValidator:
-				validator = string(attr.Value)
+				validator = attr.Value
 			}
 		}
 
@@ -179,9 +179,9 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 		}
 
 		for _, attr := range event.Attributes {
-			switch string(attr.Key) {
+			switch attr.Key {
 			case sdk.AttributeKeyAmount:
-				coins, err := utils.ParseCoinsFromString(string(attr.Value))
+				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
 						Err(err).
@@ -189,14 +189,14 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 						Int64("height", height).
 						Msg("failed to convert string to coins by rewardsEvent")
 
-					return fmt.Errorf("failed to convert %q to coin: %w", string(attr.Value), err)
+					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
 				}
 
 				if len(coins) > 0 {
 					coin = m.tbM.MapCoin(coins[0])
 				}
 			case distrtypes.AttributeKeyValidator:
-				validator = string(attr.Value)
+				validator = attr.Value
 			}
 		}
 

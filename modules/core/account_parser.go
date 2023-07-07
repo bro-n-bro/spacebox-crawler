@@ -12,7 +12,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
 
 // CosmosMessageAddressesParser represents a MessageAddressesParser that parses a
@@ -141,7 +141,7 @@ func GovMessagesParser(cdc codec.Codec, cosmosMsg sdk.Msg) []string {
 			return nil
 		}
 
-		// nolint:gocritic
+		// nolint:gocritic,staticcheck
 		// Get addresses from contents
 		switch content := content.(type) {
 		case *distrtypes.CommunityPoolSpendProposal:
