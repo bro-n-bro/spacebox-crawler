@@ -276,6 +276,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	ibctransfertypes.RegisterInterfaces(ir)
 	cryptocodec.RegisterInterfaces(ir)
 	interchaintypes.RegisterInterfaces(ir)
+	liquiditytypes.RegisterInterfaces(ir)
 
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
