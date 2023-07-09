@@ -6,17 +6,22 @@ import (
 	"fmt"
 	"strings"
 
+	cometbfttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(
+	ctx context.Context,
+	doc *cometbfttypes.GenesisDoc,
+	appState map[string]json.RawMessage,
+) error {
+
 	// Read the genesis state
 	var genState stakingtypes.GenesisState
 	if err := m.cdc.UnmarshalJSON(appState[stakingtypes.ModuleName], &genState); err != nil {
@@ -66,8 +71,11 @@ func (m *Module) HandleGenesis(ctx context.Context, doc *tmtypes.GenesisDoc, app
 	return nil
 }
 
-func (m *Module) parseGenesisTransactions(ctx context.Context, doc *tmtypes.GenesisDoc,
-	appState map[string]json.RawMessage) error {
+func (m *Module) parseGenesisTransactions(
+	ctx context.Context,
+	doc *cometbfttypes.GenesisDoc,
+	appState map[string]json.RawMessage,
+) error {
 
 	var genUtilState genutiltypes.GenesisState
 	if err := m.cdc.UnmarshalJSON(appState[genutiltypes.ModuleName], &genUtilState); err != nil {
@@ -119,7 +127,12 @@ func (m *Module) publishParams(ctx context.Context, height int64, params staking
 }
 
 // publishValidators publishes the validators data present inside the given genesis state to the broker.
-func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc, validators stakingtypes.Validators) error {
+func (m *Module) publishValidators(
+	ctx context.Context,
+	doc *cometbfttypes.GenesisDoc,
+	validators stakingtypes.Validators,
+) error {
+
 	vals := make([]types.StakingValidator, len(validators))
 
 	for i, val := range validators {
@@ -137,7 +150,12 @@ func (m *Module) publishValidators(ctx context.Context, doc *tmtypes.GenesisDoc,
 }
 
 // publishDelegations publishes the delegations and account data present inside the given genesis state to the broker.
-func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc, genState stakingtypes.GenesisState) error {
+func (m *Module) publishDelegations(
+	ctx context.Context,
+	doc *cometbfttypes.GenesisDoc,
+	genState stakingtypes.GenesisState,
+) error {
+
 	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 
 	for _, validator := range genState.Validators {
@@ -176,7 +194,7 @@ func (m *Module) publishDelegations(ctx context.Context, doc *tmtypes.GenesisDoc
 }
 
 // publishUnbondingDelegations publishes the unbonding delegations data present inside the given genesis state to the broker.
-func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.GenesisDoc,
+func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *cometbfttypes.GenesisDoc,
 	genState stakingtypes.GenesisState) error {
 
 	var coin types.Coin
@@ -204,7 +222,7 @@ func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *tmtypes.G
 }
 
 // publishRedelegations publishes the redelegations data present inside the given genesis state to the broker.
-func (m *Module) publishRedelegations(ctx context.Context, doc *tmtypes.GenesisDoc,
+func (m *Module) publishRedelegations(ctx context.Context, doc *cometbfttypes.GenesisDoc,
 	genState stakingtypes.GenesisState) error {
 
 	for _, genRedelegation := range genState.Redelegations {

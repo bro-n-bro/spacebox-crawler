@@ -22,8 +22,8 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 		}
 
 		for _, attr := range event.Attributes {
-			if string(attr.Key) == govtypes.AttributeKeyProposalID {
-				pID, err := strconv.ParseUint(string(attr.Value), 10, 64)
+			if attr.Key == govtypes.AttributeKeyProposalID {
+				pID, err := strconv.ParseUint(attr.Value, 10, 64)
 				if err != nil {
 					m.log.Error().Err(err).Str("handler", "HandleEndBlocker").Msg("parse uint error")
 					return err

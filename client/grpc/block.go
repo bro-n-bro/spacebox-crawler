@@ -3,12 +3,12 @@ package grpc
 import (
 	"context"
 
+	cometbftcoretypes "github.com/cometbft/cometbft/rpc/core/types"
+	cometbfttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
-	tmccoretypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmctypes "github.com/tendermint/tendermint/types"
 )
 
-func (c *Client) Block(ctx context.Context, height int64) (*tmccoretypes.ResultBlock, error) {
+func (c *Client) Block(ctx context.Context, height int64) (*cometbftcoretypes.ResultBlock, error) {
 	resp, err := c.TmsService.GetBlockByHeight(
 		ctx,
 		&tmservice.GetBlockByHeightRequest{
@@ -19,17 +19,17 @@ func (c *Client) Block(ctx context.Context, height int64) (*tmccoretypes.ResultB
 		return nil, err
 	}
 
-	block, err := tmctypes.BlockFromProto(resp.Block) // nolint:staticcheck
+	block, err := cometbfttypes.BlockFromProto(resp.Block) // nolint:staticcheck
 	if err != nil {
 		return nil, err
 	}
 
-	blockID, err := tmctypes.BlockIDFromProto(resp.BlockId)
+	blockID, err := cometbfttypes.BlockIDFromProto(resp.BlockId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &tmccoretypes.ResultBlock{
+	return &cometbftcoretypes.ResultBlock{
 		Block:   block,
 		BlockID: *blockID,
 	}, nil

@@ -1,3 +1,3 @@
 #!/bin/sh
 #https://golangci-lint.run/usage/quick-start/
-golangci-lint run -v --config golangci.yml --timeout 3m
+golangci-lint run -v --config golangci.yml --timeout 5m

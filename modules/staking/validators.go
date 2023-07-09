@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	cometbftcoretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -24,7 +24,7 @@ type avatarURLCache struct {
 }
 
 // HandleValidators handles validators for each block height.
-func (m *Module) HandleValidators(ctx context.Context, tmValidators *tmctypes.ResultValidators) error {
+func (m *Module) HandleValidators(ctx context.Context, tmValidators *cometbftcoretypes.ResultValidators) error {
 	vals, validators, err := GetValidators(ctx, tmValidators.BlockHeight, m.client.StakingQueryClient, m.cdc)
 	if err != nil {
 		return err

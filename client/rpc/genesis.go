@@ -3,10 +3,10 @@ package rpc
 import (
 	"context"
 
-	tmtypes "github.com/tendermint/tendermint/types"
+	cometbfttypes "github.com/cometbft/cometbft/types"
 )
 
-func (c *Client) Genesis(ctx context.Context) (*tmtypes.GenesisDoc, error) {
+func (c *Client) Genesis(ctx context.Context) (*cometbfttypes.GenesisDoc, error) {
 	g, err := c.RPCClient.Genesis(ctx)
 	if err != nil {
 		return nil, err

@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	tmtcoreypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtypes "github.com/tendermint/tendermint/types"
+	cometbftcoreypes "github.com/cometbft/cometbft/rpc/core/types"
+	cometbfttypes "github.com/cometbft/cometbft/types"
 )
 
 func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHeight, stopHeight int64) {
@@ -29,7 +29,7 @@ func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHei
 	}
 }
 
-func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan tmtcoreypes.ResultEvent) {
+func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan cometbftcoreypes.ResultEvent) {
 	ctx, w.stopWsListener = context.WithCancel(ctx)
 	defer w.stopWsListener()
 	w.log.Info().Msg("listening for new block events...")
@@ -40,7 +40,7 @@ func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan tmtcoreype
 			w.log.Info().Msg("stop new block listener")
 			return
 		case e := <-eventCh:
-			newBlock, ok := e.Data.(tmtypes.EventDataNewBlock)
+			newBlock, ok := e.Data.(cometbfttypes.EventDataNewBlock)
 			if !ok {
 				w.log.Warn().Msg("failed to cast ws event to EventDataNewBlock type")
 				continue

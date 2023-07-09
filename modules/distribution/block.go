@@ -3,8 +3,8 @@ package distribution
 import (
 	"context"
 
-	"cosmossdk.io/errors"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/pkg/errors"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -55,14 +55,12 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 		return err
 	}
 
-	// TODO: maybe check diff from mongo in my side?
-	// TODO: test it
 	if err := m.broker.PublishDistributionParams(ctx, model.DistributionParams{
 		Height: height,
 		Params: model.DParams{
 			CommunityTax:        res.Params.CommunityTax.MustFloat64(),
-			BaseProposerReward:  res.Params.BaseProposerReward.MustFloat64(),
-			BonusProposerReward: res.Params.BonusProposerReward.MustFloat64(),
+			BaseProposerReward:  res.Params.BaseProposerReward.MustFloat64(),  //nolint:staticcheck
+			BonusProposerReward: res.Params.BonusProposerReward.MustFloat64(), //nolint:staticcheck
 			WithdrawAddrEnabled: res.Params.WithdrawAddrEnabled,
 		},
 	}); err != nil {

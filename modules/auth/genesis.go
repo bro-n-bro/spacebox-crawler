@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"strings"
 
+	cometbfttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (m *Module) HandleGenesis(ctx context.Context, _ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(ctx context.Context, _ *cometbfttypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	accounts, err := utils.GetGenesisAccounts(appState, m.cdc)
 	if err != nil {
 		return err

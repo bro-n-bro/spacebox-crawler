@@ -3,9 +3,9 @@ package rpc
 import (
 	"context"
 
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
+	cometbftcoretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
-func (c *Client) SubscribeNewBlocks(ctx context.Context) (<-chan tmctypes.ResultEvent, error) {
+func (c *Client) SubscribeNewBlocks(ctx context.Context) (<-chan cometbftcoretypes.ResultEvent, error) {
 	return c.RPCClient.Subscribe(ctx, "", "tm.event = 'NewBlock'")
 }
