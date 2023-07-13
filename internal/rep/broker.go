@@ -78,4 +78,9 @@ type Broker interface {
 	// slashing module
 	PublishUnjailMessage(context.Context, model.UnjailMessage) error
 	PublishHandleValidatorSignature(ctx context.Context, msg model.HandleValidatorSignature) error
+
+	// ibc
+	PublishTransferMessage(context.Context, model.TransferMessage) error
+	PublishAcknowledgementMessage(context.Context, model.AcknowledgementMessage) error
+	PublishReceivePacketMessage(context.Context, model.RecvPacketMessage) error
 }

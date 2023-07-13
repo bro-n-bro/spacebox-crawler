@@ -13,6 +13,7 @@ import (
 	distributionModule "github.com/bro-n-bro/spacebox-crawler/modules/distribution"
 	feegrantModule "github.com/bro-n-bro/spacebox-crawler/modules/feegrant"
 	govModule "github.com/bro-n-bro/spacebox-crawler/modules/gov"
+	ibcModule "github.com/bro-n-bro/spacebox-crawler/modules/ibc"
 	mintModule "github.com/bro-n-bro/spacebox-crawler/modules/mint"
 	slashingModule "github.com/bro-n-bro/spacebox-crawler/modules/slashing"
 	stakingModule "github.com/bro-n-bro/spacebox-crawler/modules/staking"
@@ -63,6 +64,9 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 		case "slashing":
 			log.Info().Msg("slashing module registered")
 			res = append(res, slashingModule.New(b, tbMapper))
+		case "ibc":
+			log.Info().Msg("ibc module registered")
+			res = append(res, ibcModule.New(b, tbMapper))
 		default:
 			// TODO: log
 			log.Warn().Msgf("unknown module: %v", m)
