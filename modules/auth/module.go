@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -32,7 +31,7 @@ type Module struct {
 	parser core.MessageAddressesParser
 }
 
-func New(b rep.Broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec,
+func New(b broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec,
 	parser core.MessageAddressesParser) *Module {
 
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().

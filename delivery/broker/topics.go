@@ -3,6 +3,7 @@ package broker
 var (
 	Account                            Topic = newTopic("account")
 	AuthzGrant                         Topic = newTopic("authz_grant")
+	AcknowledgementMessage             Topic = newTopic("acknowledgement_message")
 	AccountBalance                     Topic = newTopic("account_balance")
 	AnnualProvision                    Topic = newTopic("annual_provision")
 	Block                              Topic = newTopic("block")
@@ -36,6 +37,7 @@ var (
 	Redelegation                       Topic = newTopic("redelegation")
 	RedelegationMessage                Topic = newTopic("redelegation_message")
 	RevokeMessage                      Topic = newTopic("revoke_message")
+	ReceivePacketMessage               Topic = newTopic("receive_packet_message")
 	SendMessage                        Topic = newTopic("send_message")
 	SetWithdrawAddressMessage          Topic = newTopic("set_withdraw_address_message")
 	StakingParams                      Topic = newTopic("staking_params")
@@ -43,6 +45,7 @@ var (
 	SubmitProposalMessage              Topic = newTopic("submit_proposal_message")
 	Supply                             Topic = newTopic("supply")
 	Transaction                        Topic = newTopic("transaction")
+	TransferMessage                    Topic = newTopic("transfer_message")
 	UnbondingDelegation                Topic = newTopic("unbonding_delegation")
 	UnbondingDelegationMessage         Topic = newTopic("unbonding_delegation_message")
 	UnjailMessage                      Topic = newTopic("unjail_message")
@@ -79,6 +82,8 @@ var (
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 
 	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature}
+
+	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage}
 )
 
 type (
