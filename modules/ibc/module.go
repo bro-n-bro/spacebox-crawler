@@ -23,8 +23,8 @@ var (
 
 type (
 	denomCache struct {
-		mu          sync.RWMutex
 		denomHashes map[string]struct{}
+		mu          sync.RWMutex
 	}
 
 	Module struct {
