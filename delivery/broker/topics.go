@@ -17,6 +17,7 @@ var (
 	DelegationRewardMessage            Topic = newTopic("delegation_reward_message")
 	Delegation                         Topic = newTopic("delegation")
 	DelegationMessage                  Topic = newTopic("delegation_message")
+	DenomTrace                         Topic = newTopic("denom_trace")
 	EditValidatorMessage               Topic = newTopic("edit_validator_message")
 	ExecMessage                        Topic = newTopic("exec_message")
 	FeeAllowance                       Topic = newTopic("fee_allowance")
@@ -83,7 +84,7 @@ var (
 
 	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature}
 
-	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage}
+	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
 )
 
 type (
