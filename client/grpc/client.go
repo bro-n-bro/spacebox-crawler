@@ -15,6 +15,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -32,6 +33,7 @@ type Client struct {
 	DistributionQueryClient distributiontypes.QueryClient
 	AuthzQueryClient        authztypes.QueryClient
 	FeegrantQueryClient     feegranttypes.QueryClient
+	IbcTransferQueryClient  ibctransfertypes.QueryClient
 	conn                    *grpc.ClientConn
 	cfg                     Config
 }
@@ -85,6 +87,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.DistributionQueryClient = distributiontypes.NewQueryClient(grpcConn)
 	c.AuthzQueryClient = authztypes.NewQueryClient(grpcConn)
 	c.FeegrantQueryClient = feegranttypes.NewQueryClient(grpcConn)
+	c.IbcTransferQueryClient = ibctransfertypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 

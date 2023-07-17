@@ -66,7 +66,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			res = append(res, slashingModule.New(b, tbMapper))
 		case "ibc":
 			log.Info().Msg("ibc module registered")
-			res = append(res, ibcModule.New(b, tbMapper))
+			res = append(res, ibcModule.New(b, tbMapper, cli))
 		default:
 			// TODO: log
 			log.Warn().Msgf("unknown module: %v", m)
