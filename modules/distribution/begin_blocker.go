@@ -139,7 +139,18 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 
 		for _, attr := range event.Attributes {
 			switch attr.Key {
-			case sdk.AttributeKeyAmount:
+			case base64KeyValidator, base64KeyAmount:
+				var err error
+				attr.Value, err = utils.DecodeToString(attr.Value)
+				if err != nil {
+					return err
+				}
+			}
+
+			switch attr.Key {
+			case distrtypes.AttributeKeyValidator, base64KeyValidator:
+				validator = attr.Value
+			case sdk.AttributeKeyAmount, base64KeyAmount:
 				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
@@ -154,8 +165,6 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 				if len(coins) > 0 {
 					coin = m.tbM.MapCoin(coins[0])
 				}
-			case distrtypes.AttributeKeyValidator:
-				validator = attr.Value
 			}
 		}
 
@@ -196,7 +205,18 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 
 		for _, attr := range event.Attributes {
 			switch attr.Key {
-			case sdk.AttributeKeyAmount:
+			case base64KeyValidator, base64KeyAmount:
+				var err error
+				attr.Value, err = utils.DecodeToString(attr.Value)
+				if err != nil {
+					return err
+				}
+			}
+
+			switch attr.Key {
+			case distrtypes.AttributeKeyValidator, base64KeyValidator:
+				validator = attr.Value
+			case sdk.AttributeKeyAmount, base64KeyAmount:
 				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
@@ -211,8 +231,6 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 				if len(coins) > 0 {
 					coin = m.tbM.MapCoin(coins[0])
 				}
-			case distrtypes.AttributeKeyValidator:
-				validator = attr.Value
 			}
 		}
 
