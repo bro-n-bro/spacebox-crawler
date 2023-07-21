@@ -2,6 +2,7 @@ package distribution
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,6 +11,11 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
+)
+
+var (
+	base64KeyValidator = base64.StdEncoding.EncodeToString([]byte(distrtypes.AttributeKeyValidator))
+	base64KeyAmount    = base64.StdEncoding.EncodeToString([]byte(sdk.AttributeKeyAmount))
 )
 
 func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
@@ -62,6 +68,16 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 		}
 
 		for _, attr := range event.Attributes {
+			// try to decode value if needed
+			switch attr.Key {
+			case base64KeyValidator, base64KeyAmount:
+				var err error
+				attr.Value, err = utils.DecodeToString(attr.Value)
+				if err != nil {
+					return err
+				}
+			}
+
 			switch attr.Key {
 			case distrtypes.AttributeKeyValidator:
 				validator = attr.Value
