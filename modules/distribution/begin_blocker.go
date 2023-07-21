@@ -79,9 +79,9 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 			}
 
 			switch attr.Key {
-			case distrtypes.AttributeKeyValidator:
+			case distrtypes.AttributeKeyValidator, base64KeyValidator:
 				validator = attr.Value
-			case sdk.AttributeKeyAmount:
+			case sdk.AttributeKeyAmount, base64KeyAmount:
 				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().

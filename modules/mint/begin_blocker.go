@@ -49,7 +49,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 			}
 
 			switch attr.Key {
-			case minttypes.AttributeKeyBondedRatio:
+			case minttypes.AttributeKeyBondedRatio, base64KeyBondedRatio:
 				bondedRatio, err = strconv.ParseFloat(attr.Value, 64)
 				if err != nil {
 					m.log.Error().
@@ -59,7 +59,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 						Msg("failed to convert string to float64 for AttributeKeyBondedRatio")
 					return err
 				}
-			case minttypes.AttributeKeyInflation:
+			case minttypes.AttributeKeyInflation, base64KeyInflation:
 				inflation, err = strconv.ParseFloat(attr.Value, 64)
 				if err != nil {
 					m.log.Error().
@@ -69,7 +69,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 						Msg("failed to convert string to float64 for AttributeKeyBondedRatio")
 					return err
 				}
-			case minttypes.AttributeKeyAnnualProvisions:
+			case minttypes.AttributeKeyAnnualProvisions, base64KeyAnnualProvisions:
 				annualProvisions, err = strconv.ParseFloat(attr.Value, 64)
 				if err != nil {
 					m.log.Error().
@@ -79,7 +79,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 						Msg("failed to convert string to float64 for AttributeKeyBondedRatio")
 					return err
 				}
-			case sdk.AttributeKeyAmount:
+			case sdk.AttributeKeyAmount, base64KeyAmount:
 				amount, err = strconv.ParseInt(attr.Value, 10, 64)
 				if err != nil {
 					m.log.Error().

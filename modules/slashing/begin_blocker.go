@@ -59,15 +59,15 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 			}
 
 			switch attr.Key {
-			case slashingtypes.AttributeKeyAddress: // required
+			case slashingtypes.AttributeKeyAddress, base64KeyAddress: // required
 				address = attr.Value
-			case slashingtypes.AttributeKeyPower: // required
+			case slashingtypes.AttributeKeyPower, base64KeyPower: // required
 				power = attr.Value
-			case slashingtypes.AttributeKeyReason: // required
+			case slashingtypes.AttributeKeyReason, base64KeyReason: // required
 				reason = attr.Value
-			case slashingtypes.AttributeKeyJailed: // required
+			case slashingtypes.AttributeKeyJailed, base64KeyJailed: // required
 				jailed = attr.Value
-			case slashingtypes.AttributeKeyBurnedCoins: // not required
+			case slashingtypes.AttributeKeyBurnedCoins, base64KeyBurnedCoins: // not required
 				coins, err := utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
