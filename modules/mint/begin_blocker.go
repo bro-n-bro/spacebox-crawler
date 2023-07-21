@@ -20,6 +20,7 @@ var (
 	base64KeyAmount           = base64.StdEncoding.EncodeToString([]byte(sdk.AttributeKeyAmount))
 )
 
+//nolint:gocognit
 func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
 	events, ok := eventsMap[minttypes.EventTypeMint]
 	if !ok {

@@ -30,6 +30,7 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 	return m.handleSlashEvent(ctx, eventsMap, height)
 }
 
+// nolint:gocognit
 func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
 	events, ok := eventsMap[slashingtypes.EventTypeSlash]
 	if !ok {
