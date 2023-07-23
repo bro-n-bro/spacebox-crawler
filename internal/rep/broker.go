@@ -84,4 +84,7 @@ type Broker interface {
 	PublishAcknowledgementMessage(context.Context, model.AcknowledgementMessage) error
 	PublishReceivePacketMessage(context.Context, model.RecvPacketMessage) error
 	PublishDenomTrace(context.Context, model.DenomTrace) error
+
+	// liquidity
+	PublishSwap(ctx context.Context, swap model.Swap) error
 }

@@ -45,6 +45,7 @@ var (
 	StakingPool                        Topic = newTopic("staking_pool")
 	SubmitProposalMessage              Topic = newTopic("submit_proposal_message")
 	Supply                             Topic = newTopic("supply")
+	Swap                               Topic = newTopic("swap")
 	Transaction                        Topic = newTopic("transaction")
 	TransferMessage                    Topic = newTopic("transfer_message")
 	UnbondingDelegation                Topic = newTopic("unbonding_delegation")
@@ -85,6 +86,8 @@ var (
 	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature}
 
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
+
+	liquidityTopics = Topics{Swap}
 )
 
 type (
