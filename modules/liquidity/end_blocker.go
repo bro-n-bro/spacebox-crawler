@@ -13,8 +13,9 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
+//nolint:lll
 var (
-	base64KeyPoolID                    = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValuePoolId))
+	base64KeyPoolID                    = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValuePoolID))
 	base64KeyBatchIndex                = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueBatchIndex))
 	base64KeyMsgIndex                  = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueMsgIndex))
 	base64KeySwapRequester             = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueSwapRequester))
@@ -32,6 +33,7 @@ var (
 	base64KeySuccess                   = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueSuccess))
 )
 
+//nolint:gocyclo
 func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
 	events, ok := eventsMap[liquidity.EventTypeSwapTransacted]
 	if !ok {
@@ -51,8 +53,8 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			exchangedCoinFeeAmount, orderPrice, swapPrice  float64
 			success                                        bool
 
-			offerCoinAmount, exchangedDemandCoinAmount, transactedCoinAmount, offerCoinFeeAmount, orderExpiryHeight,
-			remainingOfferCoinAmount int64
+			offerCoinAmount, exchangedDemandCoinAmount, transactedCoinAmount, offerCoinFeeAmount,
+			orderExpiryHeight, remainingOfferCoinAmount int64
 		)
 
 		for _, attr := range event.Attributes {
@@ -61,8 +63,9 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			case base64KeyPoolID, base64KeyBatchIndex, base64KeyMsgIndex, base64KeySwapRequester,
 				base64KeyOfferCoinDenom, base64KeyExchangedOfferCoinAmount, base64KeyDemandCoinDenom,
 				base64KeyOrderPrice, base64KeySwapPrice, base64KeyTransactedCoinAmount,
-				base64KeyRemainingOfferCoinAmount, base64KeyExchangedDemandCoinAmount, base64KeyOfferCoinFeeAmount,
-				base64KeyExchangedCoinFeeAmount, base64KeyOrderExpiryHeight, base64KeySuccess:
+				base64KeyRemainingOfferCoinAmount, base64KeyExchangedDemandCoinAmount,
+				base64KeyOfferCoinFeeAmount, base64KeyExchangedCoinFeeAmount, base64KeyOrderExpiryHeight,
+				base64KeySuccess:
 
 				attr.Value, err = utils.DecodeToString(attr.Value)
 				if err != nil {
@@ -71,7 +74,7 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			}
 
 			switch attr.Key {
-			case liquidity.AttributeValuePoolId, base64KeyPoolID:
+			case liquidity.AttributeValuePoolID, base64KeyPoolID:
 				var id uint64
 				id, err = strconv.ParseUint(attr.Value, 10, 32)
 				poolID = uint32(id)
