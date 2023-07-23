@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/bro-n-bro/spacebox v0.1.3
+	github.com/bro-n-bro/spacebox v0.1.4
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/cometbft/cometbft v0.37.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
@@ -188,8 +188,4 @@ require (
 	nhooyr.io/websocket v1.8.6 // indirect
 	pgregory.net/rapid v0.5.5 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
-)
-
-replace (
-	github.com/bro-n-bro/spacebox => ../space-box/spacebox
 )
