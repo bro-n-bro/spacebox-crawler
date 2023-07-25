@@ -24,6 +24,7 @@ var (
 	base64KeyReason      = base64.StdEncoding.EncodeToString([]byte(slashingtypes.AttributeKeyReason))
 	base64KeyJailed      = base64.StdEncoding.EncodeToString([]byte(slashingtypes.AttributeKeyJailed))
 	base64KeyBurnedCoins = base64.StdEncoding.EncodeToString([]byte(slashingtypes.AttributeKeyBurnedCoins))
+	base64KeyAmount      = base64.StdEncoding.EncodeToString([]byte(sdk.AttributeKeyAmount))
 )
 
 func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
@@ -125,23 +126,35 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 }
 
 func getCoin(eventsMap types.BlockerEvents, mapper tb.ToBroker) (model.Coin, error) {
-	var res model.Coin
 	bankEvents, ok := eventsMap[banktypes.EventTypeCoinBurn]
 	if !ok || len(bankEvents) == 0 || len(bankEvents[0].Attributes) < 2 {
 		// burned tokens not found in any events
-		return res, errCantFindBurnedCoin
+		return model.Coin{}, errCantFindBurnedCoin
 	}
+
+	var res model.Coin
 	for _, bankAttr := range bankEvents[0].Attributes {
-		if bankAttr.Key == sdk.AttributeKeyAmount {
-			coins, err := utils.ParseCoinsFromString(bankAttr.Value)
+		if bankAttr.Key != sdk.AttributeKeyAmount && bankAttr.Key != base64KeyAmount {
+			continue
+		}
+
+		if bankAttr.Key == base64KeyAmount {
+			var err error
+			bankAttr.Value, err = utils.DecodeToString(bankAttr.Value)
 			if err != nil {
-				err = fmt.Errorf("failed to convert %q to coin: %w", bankAttr.Value, err)
 				return model.Coin{}, err
 			}
-			if len(coins) > 0 {
-				res = mapper.MapCoin(coins[0])
-				break
-			}
+		}
+
+		coins, err := utils.ParseCoinsFromString(bankAttr.Value)
+		if err != nil {
+			err = fmt.Errorf("failed to convert %q to coin: %w", bankAttr.Value, err)
+			return model.Coin{}, err
+		}
+
+		if len(coins) > 0 {
+			res = mapper.MapCoin(coins[0])
+			break
 		}
 	}
 

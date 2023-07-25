@@ -1,6 +1,9 @@
 package liquidity
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"gopkg.in/yaml.v3"
+)
 
 const (
 	// MinReserveCoinNum is the minimum number of reserve coins in each liquidity pool.
@@ -13,3 +16,9 @@ const (
 var (
 	MinOfferCoinAmount = sdk.NewInt(100)
 )
+
+// String returns a human readable string representation of the parameters.
+func (p Params) String() string {
+	out, _ := yaml.Marshal(p)
+	return string(out)
+}

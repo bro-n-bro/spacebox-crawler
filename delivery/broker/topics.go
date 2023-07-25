@@ -25,6 +25,7 @@ var (
 	GrantMessage                       Topic = newTopic("grant_message")
 	GrantAllowanceMessage              Topic = newTopic("grant_allowance_message")
 	HandleValidatorSignature           Topic = newTopic("handle_validator_signature")
+	LiquidityPool                      Topic = newTopic("liquidity_pool")
 	Message                            Topic = newTopic("message")
 	MintParams                         Topic = newTopic("mint_params")
 	MultiSendMessage                   Topic = newTopic("multisend_message")
@@ -87,7 +88,7 @@ var (
 
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
 
-	liquidityTopics = Topics{Swap}
+	liquidityTopics = Topics{Swap, LiquidityPool}
 )
 
 type (

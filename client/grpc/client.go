@@ -20,6 +20,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
 )
 
 type Client struct {
@@ -34,6 +36,7 @@ type Client struct {
 	AuthzQueryClient        authztypes.QueryClient
 	FeegrantQueryClient     feegranttypes.QueryClient
 	IbcTransferQueryClient  ibctransfertypes.QueryClient
+	LiquidityQueryClient    liquiditytypes.QueryClient
 	conn                    *grpc.ClientConn
 	cfg                     Config
 }

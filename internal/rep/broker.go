@@ -86,5 +86,6 @@ type Broker interface {
 	PublishDenomTrace(context.Context, model.DenomTrace) error
 
 	// liquidity
-	PublishSwap(ctx context.Context, swap model.Swap) error
+	PublishSwap(context.Context, model.Swap) error
+	PublishLiquidityPool(context.Context, model.LiquidityPool) error
 }
