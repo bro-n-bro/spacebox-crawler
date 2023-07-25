@@ -35,13 +35,14 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		if err != nil {
 			return err
 		}
-
 	case *liquidity.MsgDepositWithinBatch:
 		poolID = msg.PoolId
 	case *liquidity.MsgWithdrawWithinBatch:
 		poolID = msg.PoolId
 	case *liquidity.MsgSwapWithinBatch:
 		poolID = msg.PoolId
+	default:
+		return nil
 	}
 
 	return m.updateLiquidityPool(ctx, poolID)
