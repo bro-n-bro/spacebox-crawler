@@ -91,6 +91,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.AuthzQueryClient = authztypes.NewQueryClient(grpcConn)
 	c.FeegrantQueryClient = feegranttypes.NewQueryClient(grpcConn)
 	c.IbcTransferQueryClient = ibctransfertypes.NewQueryClient(grpcConn)
+	c.LiquidityQueryClient = liquiditytypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 
