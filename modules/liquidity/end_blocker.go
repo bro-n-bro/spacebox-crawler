@@ -20,6 +20,7 @@ var (
 	base64KeyMsgIndex                  = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueMsgIndex))
 	base64KeySwapRequester             = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueSwapRequester))
 	base64KeyOfferCoinDenom            = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueOfferCoinDenom))
+	base64KeyOfferCoinAmount           = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueOfferCoinAmount))
 	base64KeyExchangedOfferCoinAmount  = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueExchangedOfferCoinAmount))
 	base64KeyDemandCoinDenom           = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueDemandCoinDenom))
 	base64KeyOrderPrice                = base64.StdEncoding.EncodeToString([]byte(liquidity.AttributeValueOrderPrice))
@@ -65,7 +66,7 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 				base64KeyOrderPrice, base64KeySwapPrice, base64KeyTransactedCoinAmount,
 				base64KeyRemainingOfferCoinAmount, base64KeyExchangedDemandCoinAmount,
 				base64KeyOfferCoinFeeAmount, base64KeyExchangedCoinFeeAmount, base64KeyOrderExpiryHeight,
-				base64KeySuccess:
+				base64KeySuccess, base64KeyOfferCoinAmount:
 
 				attr.Value, err = utils.DecodeToString(attr.Value)
 				if err != nil {
@@ -91,7 +92,7 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			// case liquidity.AttributeValueSwapTypeId:
 			case liquidity.AttributeValueOfferCoinDenom, base64KeyOfferCoinDenom:
 				offerCoinDenom = attr.Value
-			case liquidity.AttributeValueOfferCoinAmount:
+			case liquidity.AttributeValueOfferCoinAmount, base64KeyOfferCoinAmount:
 				offerCoinAmount, err = strconv.ParseInt(attr.Value, 10, 64)
 			case liquidity.AttributeValueDemandCoinDenom, base64KeyDemandCoinDenom:
 				demandCoinDenom = attr.Value
