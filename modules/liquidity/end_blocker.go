@@ -51,11 +51,10 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 		var (
 			msgIndex, batchIndex, poolID                   uint32
 			swapRequester, offerCoinDenom, demandCoinDenom string
-			exchangedCoinFeeAmount, orderPrice, swapPrice  float64
 			success                                        bool
-
-			offerCoinAmount, exchangedDemandCoinAmount, transactedCoinAmount, offerCoinFeeAmount,
-			orderExpiryHeight, remainingOfferCoinAmount int64
+			orderExpiryHeight                              int64
+			exchangedCoinFeeAmount, orderPrice, swapPrice, offerCoinAmount, exchangedDemandCoinAmount,
+			transactedCoinAmount, offerCoinFeeAmount, remainingOfferCoinAmount float64
 		)
 
 		for _, attr := range event.Attributes {
@@ -93,7 +92,7 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			case liquidity.AttributeValueOfferCoinDenom, base64KeyOfferCoinDenom:
 				offerCoinDenom = attr.Value
 			case liquidity.AttributeValueOfferCoinAmount, base64KeyOfferCoinAmount:
-				offerCoinAmount, err = strconv.ParseInt(attr.Value, 10, 64)
+				offerCoinAmount, err = strconv.ParseFloat(attr.Value, 64)
 			case liquidity.AttributeValueDemandCoinDenom, base64KeyDemandCoinDenom:
 				demandCoinDenom = attr.Value
 			case liquidity.AttributeValueOrderPrice, base64KeyOrderPrice:
@@ -101,13 +100,13 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			case liquidity.AttributeValueSwapPrice, base64KeySwapPrice:
 				swapPrice, err = strconv.ParseFloat(attr.Value, 64)
 			case liquidity.AttributeValueTransactedCoinAmount, base64KeyTransactedCoinAmount:
-				transactedCoinAmount, err = strconv.ParseInt(attr.Value, 10, 64)
+				transactedCoinAmount, err = strconv.ParseFloat(attr.Value, 64)
 			case liquidity.AttributeValueRemainingOfferCoinAmount, base64KeyRemainingOfferCoinAmount:
-				remainingOfferCoinAmount, err = strconv.ParseInt(attr.Value, 10, 64)
+				remainingOfferCoinAmount, err = strconv.ParseFloat(attr.Value, 64)
 			case liquidity.AttributeValueExchangedDemandCoinAmount, base64KeyExchangedDemandCoinAmount:
-				exchangedDemandCoinAmount, err = strconv.ParseInt(attr.Value, 10, 64)
+				exchangedDemandCoinAmount, err = strconv.ParseFloat(attr.Value, 64)
 			case liquidity.AttributeValueOfferCoinFeeAmount, base64KeyOfferCoinFeeAmount:
-				offerCoinFeeAmount, err = strconv.ParseInt(attr.Value, 10, 64)
+				offerCoinFeeAmount, err = strconv.ParseFloat(attr.Value, 64)
 			case liquidity.AttributeValueExchangedCoinFeeAmount, base64KeyExchangedCoinFeeAmount:
 				exchangedCoinFeeAmount, err = strconv.ParseFloat(attr.Value, 64)
 			// case liquidity.AttributeValueReservedOfferCoinFeeAmount:
@@ -118,7 +117,7 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 			}
 
 			if err != nil {
-				return errors.Wrap(err, "failed to parse event attributes")
+				return errors.Wrap(err, "liquidity: failed to parse event attributes")
 			}
 		}
 

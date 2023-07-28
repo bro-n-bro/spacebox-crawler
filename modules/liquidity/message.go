@@ -14,8 +14,7 @@ import (
 )
 
 var (
-	errWrongDenomsLength   = errors.New("wrong denoms length")
-	errWrongBalancesLength = errors.New("wrong balances length")
+	errWrongDenomsLength = errors.New("wrong denoms length")
 )
 
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
@@ -88,12 +87,13 @@ func (m *Module) parseReverseCoins(
 		return
 	}
 
-	if len(resp.Balances) != 2 {
-		err = errWrongBalancesLength
-		return
+	var coins model.Coins
+	if len(resp.Balances) != 2 { // not found balances for this address
+		coins = model.Coins{{Denom: denoms[0]}, {Denom: denoms[1]}}
+	} else {
+		coins = m.tbM.MapCoins(types.NewCoinsFromCdk(resp.Balances))
 	}
 
-	coins := m.tbM.MapCoins(types.NewCoinsFromCdk(resp.Balances))
 	coinA = coins[0]
 	coinB = coins[1]
 
