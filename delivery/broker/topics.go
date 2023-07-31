@@ -25,6 +25,7 @@ var (
 	GrantMessage                       Topic = newTopic("grant_message")
 	GrantAllowanceMessage              Topic = newTopic("grant_allowance_message")
 	HandleValidatorSignature           Topic = newTopic("handle_validator_signature")
+	LiquidityPool                      Topic = newTopic("liquidity_pool")
 	Message                            Topic = newTopic("message")
 	MintParams                         Topic = newTopic("mint_params")
 	MultiSendMessage                   Topic = newTopic("multisend_message")
@@ -45,6 +46,7 @@ var (
 	StakingPool                        Topic = newTopic("staking_pool")
 	SubmitProposalMessage              Topic = newTopic("submit_proposal_message")
 	Supply                             Topic = newTopic("supply")
+	Swap                               Topic = newTopic("swap")
 	Transaction                        Topic = newTopic("transaction")
 	TransferMessage                    Topic = newTopic("transfer_message")
 	UnbondingDelegation                Topic = newTopic("unbonding_delegation")
@@ -85,6 +87,8 @@ var (
 	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature}
 
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
+
+	liquidityTopics = Topics{Swap, LiquidityPool}
 )
 
 type (
