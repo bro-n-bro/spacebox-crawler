@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/bro-n-bro/spacebox v0.1.2
+	github.com/bro-n-bro/spacebox v0.1.3
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/cometbft/cometbft v0.37.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
@@ -20,7 +20,6 @@ require (
 	github.com/cosmos/ibc-go/v7 v7.1.0
 	github.com/cosmos/interchain-security/v3 v3.0.0-rc2
 	github.com/globocom/mongo-go-prometheus v0.1.1
-	github.com/gogo/protobuf v1.3.3
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/joho/godotenv v1.4.0
@@ -93,6 +92,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
+	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang/glog v1.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect

@@ -2,14 +2,21 @@ package distribution
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
+)
+
+var (
+	base64KeyValidator = base64.StdEncoding.EncodeToString([]byte(distrtypes.AttributeKeyValidator))
+	base64KeyAmount    = base64.StdEncoding.EncodeToString([]byte(sdk.AttributeKeyAmount))
 )
 
 func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.BlockerEvents, height int64) error {
@@ -53,6 +60,7 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 	var (
 		coin      model.Coin
 		validator string
+		err       error
 	)
 
 	for _, event := range events {
@@ -61,29 +69,17 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 			continue
 		}
 
-		for _, attr := range event.Attributes {
-			switch attr.Key {
-			case distrtypes.AttributeKeyValidator:
-				validator = attr.Value
-			case sdk.AttributeKeyAmount:
-				coins, err := utils.ParseCoinsFromString(attr.Value)
-				if err != nil {
-					m.log.Error().
-						Err(err).
-						Str("func", "parseProposerRewardEvent").
-						Int64("height", height).
-						Msg("failed to convert string to coins by proposalRewardEvent")
-
-					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
-				}
-
-				if len(coins) > 0 {
-					coin = m.tbM.MapCoin(coins[0])
-				}
-			}
+		validator, coin, err = m.parseAttributes(event)
+		if err != nil {
+			m.log.Error().
+				Err(err).
+				Str("func", "parseProposerRewardEvent").
+				Int64("height", height).
+				Msg("failed to parse attributes")
+			return err
 		}
 
-		if err := m.broker.PublishProposerReward(ctx, model.ProposerReward{
+		if err = m.broker.PublishProposerReward(ctx, model.ProposerReward{
 			Height:    height,
 			Validator: validator,
 			Reward:    coin,
@@ -110,6 +106,7 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 	var (
 		validator string
 		coin      model.Coin
+		err       error
 	)
 
 	for _, event := range events {
@@ -121,29 +118,17 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 			continue
 		}
 
-		for _, attr := range event.Attributes {
-			switch attr.Key {
-			case sdk.AttributeKeyAmount:
-				coins, err := utils.ParseCoinsFromString(attr.Value)
-				if err != nil {
-					m.log.Error().
-						Err(err).
-						Str("func", "parseProposerRewardEvent").
-						Int64("height", height).
-						Msg("failed to convert string to coins by commissionEvent")
-
-					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
-				}
-
-				if len(coins) > 0 {
-					coin = m.tbM.MapCoin(coins[0])
-				}
-			case distrtypes.AttributeKeyValidator:
-				validator = attr.Value
-			}
+		validator, coin, err = m.parseAttributes(event)
+		if err != nil {
+			m.log.Error().
+				Err(err).
+				Str("func", "parseCommissionEvent").
+				Int64("height", height).
+				Msg("failed to parse attributes")
+			return err
 		}
 
-		if err := m.broker.PublishDistributionCommission(ctx, model.DistributionCommission{
+		if err = m.broker.PublishDistributionCommission(ctx, model.DistributionCommission{
 			Height:    height,
 			Validator: validator,
 			Amount:    coin,
@@ -170,6 +155,7 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 	var (
 		validator string
 		coin      model.Coin
+		err       error
 	)
 
 	for _, event := range events {
@@ -178,29 +164,17 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 			continue
 		}
 
-		for _, attr := range event.Attributes {
-			switch attr.Key {
-			case sdk.AttributeKeyAmount:
-				coins, err := utils.ParseCoinsFromString(attr.Value)
-				if err != nil {
-					m.log.Error().
-						Err(err).
-						Str("func", "parseRewardsEvent").
-						Int64("height", height).
-						Msg("failed to convert string to coins by rewardsEvent")
-
-					return fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
-				}
-
-				if len(coins) > 0 {
-					coin = m.tbM.MapCoin(coins[0])
-				}
-			case distrtypes.AttributeKeyValidator:
-				validator = attr.Value
-			}
+		validator, coin, err = m.parseAttributes(event)
+		if err != nil {
+			m.log.Error().
+				Err(err).
+				Str("func", "parseCommissionEvent").
+				Int64("height", height).
+				Msg("failed to parse attributes")
+			return err
 		}
 
-		if err := m.broker.PublishDistributionReward(ctx, model.DistributionReward{
+		if err = m.broker.PublishDistributionReward(ctx, model.DistributionReward{
 			Height:    height,
 			Validator: validator,
 			Amount:    coin,
@@ -215,4 +189,39 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 	}
 
 	return nil
+}
+
+func (m *Module) parseAttributes(event abci.Event) (string, model.Coin, error) {
+	var (
+		coin      model.Coin
+		validator string
+	)
+
+	for _, attr := range event.Attributes {
+		// try to decode value if needed
+		switch attr.Key {
+		case base64KeyValidator, base64KeyAmount:
+			var err error
+			attr.Value, err = utils.DecodeToString(attr.Value)
+			if err != nil {
+				return "", model.Coin{}, err
+			}
+		}
+
+		switch attr.Key {
+		case distrtypes.AttributeKeyValidator, base64KeyValidator:
+			validator = attr.Value
+		case sdk.AttributeKeyAmount, base64KeyAmount:
+			coins, err := utils.ParseCoinsFromString(attr.Value)
+			if err != nil {
+				return "", model.Coin{}, fmt.Errorf("failed to convert %q to coin: %w", attr.Value, err)
+			}
+
+			if len(coins) > 0 {
+				coin = m.tbM.MapCoin(coins[0])
+			}
+		}
+	}
+
+	return validator, coin, nil
 }
