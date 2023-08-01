@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -47,6 +48,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	if recoveryMode {
 		defer func() {
 			if r := recover(); r != nil {
+				w.setErrorStatusWithLogging(ctx, height, fmt.Sprint(r))
 				w.log.Error().Msgf("panic occurred! height: %d. %v", height, r)
 			}
 		}()
