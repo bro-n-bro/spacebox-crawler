@@ -65,7 +65,10 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 
 	for _, event := range events {
 		if len(event.Attributes) < 2 {
-			m.log.Warn().Str("func", "parseProposerRewardEvent").Msg("not enough attributes in event")
+			m.log.Warn().
+				Int64("height", height).
+				Str("func", "parseProposerRewardEvent").
+				Msg("not enough attributes in event")
 			continue
 		}
 
@@ -160,7 +163,10 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 
 	for _, event := range events {
 		if len(event.Attributes) < 2 {
-			m.log.Warn().Str("func", "parseRewardsEvent").Msg("not enough attributes in event")
+			m.log.Warn().
+				Int64("height", height).
+				Str("func", "parseRewardsEvent").
+				Msg("not enough attributes in event")
 			continue
 		}
 

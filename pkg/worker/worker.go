@@ -108,7 +108,7 @@ func (w *Worker) Start(_ context.Context) error {
 	// spawn workers
 	for i := 0; i < workersCount; i++ {
 		w.wg.Add(1)
-		go w.processHeight(ctx, i) // run processing block function
+		go w.process(ctx, i, w.cfg.RecoveryMode) // run processing block function
 	}
 
 	// subscribe to process new blocks by websocket
