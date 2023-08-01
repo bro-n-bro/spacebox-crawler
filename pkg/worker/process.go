@@ -21,7 +21,7 @@ const (
 	keyModule = "module"
 )
 
-func (w *Worker) processHeight(ctx context.Context, workerIndex int) { // nolint:gocognit
+func (w *Worker) process(ctx context.Context, workerIndex int, recoverMode bool) {
 	var parsedCount int
 	defer w.wg.Done()
 	defer func() {
@@ -39,173 +39,183 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int) { // nolint
 		// for debug
 		parsedCount++
 
-		if err := w.checkOrCreateBlockInStorage(ctx, height); err != nil {
-			switch {
-			case errors.Is(err, ErrBlockProcessed):
-				w.log.Debug().Int64(keyHeight, height).Msg("block already processed. skip height")
-			case errors.Is(err, ErrBlockProcessing):
-				w.log.Debug().Int64(keyHeight, height).Msg("block is already processing now. skip height")
-			case errors.Is(err, ErrBlockError):
-				w.log.Debug().Int64(keyHeight, height).Msg("block processed with error. " +
-					"if you want to process this height again see PROCESS_ERROR_BLOCKS ENV")
-			}
+		w.processHeight(ctx, workerIndex, height, recoverMode)
+	}
+}
 
-			continue
+func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int64, recoveryMode bool) { // nolint:gocognit
+	if recoveryMode {
+		defer func() {
+			if r := recover(); r != nil {
+				w.log.Error().Msgf("panic occurred! height: %d. %v", height, r)
+			}
+		}()
+	}
+
+	if err := w.checkOrCreateBlockInStorage(ctx, height); err != nil {
+		switch {
+		case errors.Is(err, ErrBlockProcessed):
+			w.log.Debug().Int64(keyHeight, height).Msg("block already processed. skip height")
+		case errors.Is(err, ErrBlockProcessing):
+			w.log.Debug().Int64(keyHeight, height).Msg("block is already processing now. skip height")
+		case errors.Is(err, ErrBlockError):
+			w.log.Debug().Int64(keyHeight, height).Msg("block processed with error. " +
+				"if you want to process this height again see PROCESS_ERROR_BLOCKS ENV")
 		}
 
-		if height == 0 {
-			w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
+		return
+	}
 
-			_genesisDur := time.Now()
+	if height == 0 {
+		w.log.Info().Int("worker_number", workerIndex).Msg("Parse genesis")
 
-			genesis, err := w.rpcClient.Genesis(ctx)
-			if err != nil {
-				w.setErrorStatusWithLogging(ctx, height, err.Error())
-				w.log.Error().Err(err).Msgf("get genesis error: %v", err)
-				continue
-			}
+		_genesisDur := time.Now()
 
-			w.log.Debug().
-				Int("worker_number", workerIndex).
-				Msgf("Get genesis dur: %v", time.Since(_genesisDur))
-
-			if err = w.processGenesis(ctx, genesis); err != nil {
-				w.log.Error().Err(err).Msgf("processHeight genesis error %v:", err)
-				w.setErrorStatusWithLogging(ctx, height, err.Error())
-				continue
-			}
-
-			if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
-				w.log.Error().
-					Err(err).
-					Int64(keyHeight, height).
-					Msgf("cant set processed status in storage %v:", err)
-			}
-
-			continue
-		}
-
-		w.log.Info().Int("worker_number", workerIndex).Msgf("Parse block № %d", height)
-
-		g, ctx2 := errgroup.WithContext(ctx)
-
-		var (
-			block                            *cometbftcoreypes.ResultBlock
-			vals                             *cometbftcoreypes.ResultValidators
-			beginBlockEvents, endBlockEvents types.BlockerEvents
-		)
-
-		g.Go(func() error {
-			var err error
-
-			_blockDur := time.Now()
-			if block, err = w.grpcClient.Block(ctx2, height); err != nil {
-				return err
-			}
-			w.log.Debug().
-				Int("worker_number", workerIndex).
-				Int64("block_height", height).
-				Dur("get_block_dur", time.Since(_blockDur)).
-				Msg("Get block info")
-			return nil
-		})
-
-		g.Go(func() error {
-			var err error
-			_validatorsDur := time.Now()
-			if vals, err = w.grpcClient.Validators(ctx2, height); err != nil {
-				return err
-			}
-			w.log.Debug().
-				Int("worker_number", workerIndex).
-				Int64("block_height", height).
-				Dur("get_validators_dur", time.Since(_validatorsDur)).
-				Msg("Get validators info")
-
-			return nil
-		})
-
-		g.Go(func() error {
-			var err error
-			_blockEventsDur := time.Now()
-			beginBlockEvents, endBlockEvents, err = w.rpcClient.GetBlockEvents(ctx2, height)
-			if err != nil {
-				return err
-			}
-			w.log.Debug().
-				Int("worker_number", workerIndex).
-				Int64("block_height", height).
-				Dur("get_block_events_dur", time.Since(_blockEventsDur)).
-				Msg("Get validators info")
-
-			return nil
-		})
-
-		if err := g.Wait(); err != nil {
-			w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
-			w.setErrorStatusWithLogging(ctx, height, err.Error())
-
-			continue
-		}
-
-		_txsDur := time.Now()
-
-		txsRes, err := w.grpcClient.Txs(ctx, block.Block.Data.Txs)
+		genesis, err := w.rpcClient.Genesis(ctx)
 		if err != nil {
-			w.log.Error().Err(err).Msgf("get txs error: %v", err)
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
-
-			continue
+			w.log.Error().Err(err).Msgf("get genesis error: %v", err)
+			return
 		}
 
 		w.log.Debug().
 			Int("worker_number", workerIndex).
-			Int64("block_height", height).
-			Dur("txs_dur", time.Since(_txsDur)).
-			Msg("Get txs info")
+			Msgf("Get genesis dur: %v", time.Since(_genesisDur))
 
-		txs := types.NewTxsFromTmTxs(txsRes, w.cdc)
-		g, ctx2 = errgroup.WithContext(ctx)
-
-		g.Go(func() error {
-			return w.withMetrics("validators", func() error {
-				return w.processValidators(ctx2, vals)
-			})
-		})
-		g.Go(func() error {
-			return w.withMetrics("block", func() error {
-				return w.processBlock(ctx2, types.NewBlockFromTmBlock(block, txs.TotalGas()))
-			})
-		})
-		g.Go(func() error {
-			return w.withMetrics("txs", func() error {
-				return w.processTxs(ctx2, txs)
-			})
-		})
-		g.Go(func() error {
-			return w.withMetrics("messages", func() error {
-				return w.processMessages(ctx2, txs)
-			})
-		})
-		g.Go(func() error {
-			return w.withMetrics("beginblocker", func() error {
-				return w.processBeginBlockerEvents(ctx2, beginBlockEvents, height)
-			})
-		})
-		g.Go(func() error {
-			return w.withMetrics("endblocker", func() error {
-				return w.processEndBlockEvents(ctx2, endBlockEvents, height)
-			})
-		})
-
-		if err := g.Wait(); err != nil {
+		if err = w.processGenesis(ctx, genesis); err != nil {
+			w.log.Error().Err(err).Msgf("processHeight genesis error %v:", err)
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
-			continue
+			return
 		}
 
 		if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
-			w.log.Error().Err(err).Int64(keyHeight, height).Msgf("cant set processed status in storage %v:", err)
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, height).
+				Msgf("cant set processed status in storage %v:", err)
 		}
+
+		return
+	}
+
+	w.log.Info().Int("worker_number", workerIndex).Msgf("Parse block № %d", height)
+
+	g, ctx2 := errgroup.WithContext(ctx)
+
+	var (
+		block                            *cometbftcoreypes.ResultBlock
+		vals                             *cometbftcoreypes.ResultValidators
+		beginBlockEvents, endBlockEvents types.BlockerEvents
+	)
+
+	g.Go(func() error {
+		var err error
+
+		_blockDur := time.Now()
+		if block, err = w.grpcClient.Block(ctx2, height); err != nil {
+			return err
+		}
+		w.log.Debug().
+			Int("worker_number", workerIndex).
+			Int64("block_height", height).
+			Dur("get_block_dur", time.Since(_blockDur)).
+			Msg("Get block info")
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+		_validatorsDur := time.Now()
+		if vals, err = w.grpcClient.Validators(ctx2, height); err != nil {
+			return err
+		}
+		w.log.Debug().
+			Int("worker_number", workerIndex).
+			Int64("block_height", height).
+			Dur("get_validators_dur", time.Since(_validatorsDur)).
+			Msg("Get validators info")
+
+		return nil
+	})
+
+	g.Go(func() error {
+		var err error
+		_blockEventsDur := time.Now()
+		beginBlockEvents, endBlockEvents, err = w.rpcClient.GetBlockEvents(ctx2, height)
+		if err != nil {
+			return err
+		}
+		w.log.Debug().
+			Int("worker_number", workerIndex).
+			Int64("block_height", height).
+			Dur("get_block_events_dur", time.Since(_blockEventsDur)).
+			Msg("Get validators info")
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
+		w.setErrorStatusWithLogging(ctx, height, err.Error())
+		return
+	}
+
+	_txsDur := time.Now()
+
+	txsRes, err := w.grpcClient.Txs(ctx, block.Block.Data.Txs)
+	if err != nil {
+		w.log.Error().Err(err).Msgf("get txs error: %v", err)
+		w.setErrorStatusWithLogging(ctx, height, err.Error())
+		return
+	}
+
+	w.log.Debug().
+		Int("worker_number", workerIndex).
+		Int64("block_height", height).
+		Dur("txs_dur", time.Since(_txsDur)).
+		Msg("Get txs info")
+
+	txs := types.NewTxsFromTmTxs(txsRes, w.cdc)
+	g, ctx2 = errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		return w.withMetrics("validators", func() error {
+			return w.processValidators(ctx2, vals)
+		})
+	})
+	g.Go(func() error {
+		return w.withMetrics("block", func() error {
+			return w.processBlock(ctx2, types.NewBlockFromTmBlock(block, txs.TotalGas()))
+		})
+	})
+	g.Go(func() error {
+		return w.withMetrics("txs", func() error {
+			return w.processTxs(ctx2, txs)
+		})
+	})
+	g.Go(func() error {
+		return w.withMetrics("messages", func() error {
+			return w.processMessages(ctx2, txs)
+		})
+	})
+	g.Go(func() error {
+		return w.withMetrics("beginblocker", func() error {
+			return w.processBeginBlockerEvents(ctx2, beginBlockEvents, height)
+		})
+	})
+	g.Go(func() error {
+		return w.withMetrics("endblocker", func() error {
+			return w.processEndBlockEvents(ctx2, endBlockEvents, height)
+		})
+	})
+
+	if err := g.Wait(); err != nil {
+		w.setErrorStatusWithLogging(ctx, height, err.Error())
+		return
+	}
+
+	if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
+		w.log.Error().Err(err).Int64(keyHeight, height).Msgf("cant set processed status in storage %v:", err)
 	}
 }
 
