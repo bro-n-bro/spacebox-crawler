@@ -8,6 +8,7 @@ type Config struct {
 	ProcessErrorBlocks         bool          `env:"PROCESS_ERROR_BLOCKS" envDefault:"true"`
 	MetricsEnabled             bool          `env:"WORKER_METRICS_ENABLED" envDefault:"false"`
 	RecoveryMode               bool          `env:"RECOVERY_MODE"`
+	ProcessGenesis             bool          `env:"PROCESS_GENESIS"`
 	WorkersCount               int           `env:"WORKERS_COUNT" envDefault:"1"`
 	StartHeight                int64         `env:"START_HEIGHT" envDefault:"-1"`
 	StopHeight                 int64         `env:"STOP_HEIGHT"`

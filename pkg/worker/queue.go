@@ -17,6 +17,11 @@ func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHei
 	ctx, w.stopEnqueueHeight = context.WithCancel(ctx)
 	defer w.stopEnqueueHeight()
 
+	// send zero height to process genesis
+	if startHeight != 0 && w.cfg.ProcessGenesis {
+		w.heightCh <- 0
+	}
+
 	for height := startHeight; height >= 0 && height <= stopHeight; height++ {
 		// safe from closed channel
 		select {
