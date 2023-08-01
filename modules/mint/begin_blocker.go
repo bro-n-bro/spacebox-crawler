@@ -35,7 +35,10 @@ func (m *Module) HandleBeginBlocker(ctx context.Context, eventsMap types.Blocker
 
 	for _, event := range events {
 		if len(event.Attributes) < 4 {
-			m.log.Warn().Str("handler", "HandleBeginBlocker").Msg("not enough attributes in event")
+			m.log.Warn().
+				Int64("height", height).
+				Str("handler", "HandleBeginBlocker").
+				Msg("not enough attributes in event")
 			continue
 		}
 
