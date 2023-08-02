@@ -43,7 +43,7 @@ func (m *Module) HandleEndBlocker(ctx context.Context, eventsMap types.BlockerEv
 
 	var err error
 	for _, event := range events {
-		if len(event.Attributes) < 16 {
+		if len(event.Attributes) < 13 {
 			m.log.Warn().
 				Int64("height", height).
 				Str("handler", "HandleEndBlocker").
