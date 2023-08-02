@@ -79,7 +79,7 @@ var (
 		Delegation, DelegationMessage, CreateValidatorMessage, EditValidatorMessage, CancelUnbondingDelegationMessage,
 	}
 
-	coreTopics = Topics{Block, Transaction, Message}
+	coreTopics = Topics{Block, Transaction, Message, ValidatorPrecommit}
 
 	authzTopics = Topics{AuthzGrant, GrantMessage, RevokeMessage, ExecMessage}
 
