@@ -90,7 +90,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 			return
 		}
 
-		if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
+		if err = w.storage.SetProcessedStatus(ctx, height); err != nil {
 			w.log.Error().
 				Err(err).
 				Int64(keyHeight, height).
