@@ -22,14 +22,21 @@ type (
 		Bytes() []byte
 	}
 
+	ValidatorPrecommit struct {
+		Timestamp        time.Time
+		ValidatorAddress string
+		BlockIDFlag      uint64
+	}
+
 	Block struct {
-		Timestamp       time.Time
-		Hash            string
-		ProposerAddress string
-		Evidence        cometbfttypes.EvidenceData
-		TxNum           int
-		TotalGas        uint64
-		Height          int64
+		Timestamp           time.Time
+		Hash                string
+		ProposerAddress     string
+		ValidatorPrecommits []ValidatorPrecommit
+		Evidence            cometbfttypes.EvidenceData
+		TxNum               int
+		TotalGas            uint64
+		Height              int64
 	}
 
 	// Txs - slice of transactions
@@ -66,7 +73,7 @@ func NewBlock(height int64, hash, proposerAddress string, txNum int, totalGas ui
 
 // NewBlockFromTmBlock builds a new Block instance from a given ResultBlock object
 func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *Block {
-	return NewBlock(
+	res := NewBlock(
 		blk.Block.Height,
 		blk.Block.Hash().String(),
 		sdk.ConsAddress(blk.Block.ProposerAddress).String(),
@@ -75,6 +82,27 @@ func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *B
 		blk.Block.Time,
 		blk.Block.Evidence,
 	)
+
+	if blk.Block.LastCommit != nil {
+		res.ValidatorPrecommits = NewValidatorPrecommitsFromTmSignatures(blk.Block.LastCommit.Signatures)
+	}
+
+	return res
+}
+
+func NewValidatorPrecommitsFromTmSignatures(sigs []cometbfttypes.CommitSig) []ValidatorPrecommit {
+	res := make([]ValidatorPrecommit, 0, len(sigs))
+	for _, sig := range sigs {
+		if addr, err := ConvertAddressToBech32String(sig.ValidatorAddress); err == nil {
+			res = append(res, ValidatorPrecommit{
+				ValidatorAddress: addr,
+				BlockIDFlag:      uint64(sig.BlockIDFlag),
+				Timestamp:        sig.Timestamp,
+			})
+		}
+	}
+
+	return res
 }
 
 func NewTxsFromTmTxs(txs []*sdktx.GetTxResponse, cdc codec.Codec) Txs {
