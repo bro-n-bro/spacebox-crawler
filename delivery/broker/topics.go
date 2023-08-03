@@ -42,6 +42,7 @@ var (
 	ReceivePacketMessage               Topic = newTopic("receive_packet_message")
 	SendMessage                        Topic = newTopic("send_message")
 	SetWithdrawAddressMessage          Topic = newTopic("set_withdraw_address_message")
+	SlashingParams                     Topic = newTopic("slashing_params")
 	StakingParams                      Topic = newTopic("staking_params")
 	StakingPool                        Topic = newTopic("staking_pool")
 	SubmitProposalMessage              Topic = newTopic("submit_proposal_message")
@@ -84,7 +85,7 @@ var (
 
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 
-	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature}
+	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature, SlashingParams}
 
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
 
