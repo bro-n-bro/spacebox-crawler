@@ -93,13 +93,11 @@ func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *B
 func NewValidatorPrecommitsFromTmSignatures(sigs []cometbfttypes.CommitSig) []ValidatorPrecommit {
 	res := make([]ValidatorPrecommit, 0, len(sigs))
 	for _, sig := range sigs {
-		if addr, err := ConvertAddressToBech32String(sig.ValidatorAddress); err == nil {
-			res = append(res, ValidatorPrecommit{
-				ValidatorAddress: addr,
-				BlockIDFlag:      uint64(sig.BlockIDFlag),
-				Timestamp:        sig.Timestamp,
-			})
-		}
+		res = append(res, ValidatorPrecommit{
+			ValidatorAddress: sdk.ConsAddress(sig.ValidatorAddress).String(),
+			BlockIDFlag:      uint64(sig.BlockIDFlag),
+			Timestamp:        sig.Timestamp,
+		})
 	}
 
 	return res
