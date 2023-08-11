@@ -58,6 +58,7 @@ var (
 	ValidatorStatus                    Topic = newTopic("validator_status")
 	ValidatorDescription               Topic = newTopic("validator_description")
 	ValidatorCommission                Topic = newTopic("validator_commission")
+	ValidatorPrecommit                 Topic = newTopic("validator_precommit")
 	VoteWeightedMessage                Topic = newTopic("vote_weighted_message")
 	WithdrawValidatorCommissionMessage Topic = newTopic("withdraw_validator_commission_message")
 	authTopics                               = Topics{Account}
@@ -79,7 +80,7 @@ var (
 		Delegation, DelegationMessage, CreateValidatorMessage, EditValidatorMessage, CancelUnbondingDelegationMessage,
 	}
 
-	coreTopics = Topics{Block, Transaction, Message}
+	coreTopics = Topics{Block, Transaction, Message, ValidatorPrecommit}
 
 	authzTopics = Topics{AuthzGrant, GrantMessage, RevokeMessage, ExecMessage}
 
