@@ -64,7 +64,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			res = append(res, feegrantModule.New(b, cli, tbMapper, cdc))
 		case "slashing":
 			log.Info().Msg("slashing module registered")
-			res = append(res, slashingModule.New(b, tbMapper))
+			res = append(res, slashingModule.New(b, cli, tbMapper))
 		case "ibc":
 			log.Info().Msg("ibc module registered")
 			res = append(res, ibcModule.New(b, tbMapper, cli))
