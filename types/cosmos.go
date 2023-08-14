@@ -108,6 +108,10 @@ func NewValidatorPrecommitsFromTmSignatures(
 
 	res := make([]ValidatorPrecommit, 0, len(sigs))
 	for _, sig := range sigs {
+		if sig.Signature == nil {
+			continue
+		}
+
 		var votingPower int64
 		addr := sdk.ConsAddress(sig.ValidatorAddress).String()
 		if val, ok := valByAddress[addr]; ok {
