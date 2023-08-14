@@ -30,6 +30,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 		if err := m.broker.PublishValidatorPrecommit(ctx, model.ValidatorPrecommit{
 			Height:           block.Height,
 			ValidatorAddress: precommit.ValidatorAddress,
+			VotingPower:      precommit.VotingPower,
 			BlockIDFlag:      precommit.BlockIDFlag,
 			Timestamp:        precommit.Timestamp,
 		}); err != nil {

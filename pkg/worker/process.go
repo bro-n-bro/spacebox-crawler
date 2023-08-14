@@ -187,7 +187,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	})
 	g.Go(func() error {
 		return w.withMetrics("block", func() error {
-			return w.processBlock(ctx2, types.NewBlockFromTmBlock(block, txs.TotalGas()))
+			return w.processBlock(ctx2, types.NewBlockFromTmBlock(block, vals, txs.TotalGas()))
 		})
 	})
 	g.Go(func() error {

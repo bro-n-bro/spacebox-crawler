@@ -15,7 +15,7 @@ func (m *Module) updateBalance(ctx context.Context, addresses []string, height i
 
 	for _, address := range addresses {
 		balRes, err := m.client.BankQueryClient.AllBalances(
-			context.Background(),
+			ctx,
 			&banktypes.QueryAllBalancesRequest{Address: address},
 			header,
 		)

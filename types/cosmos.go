@@ -26,6 +26,7 @@ type (
 		Timestamp        time.Time
 		ValidatorAddress string
 		BlockIDFlag      uint64
+		VotingPower      int64
 	}
 
 	Block struct {
@@ -72,7 +73,7 @@ func NewBlock(height int64, hash, proposerAddress string, txNum int, totalGas ui
 }
 
 // NewBlockFromTmBlock builds a new Block instance from a given ResultBlock object
-func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *Block {
+func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, vals *cometbftcoretypes.ResultValidators, totalGas uint64) *Block {
 	res := NewBlock(
 		blk.Block.Height,
 		blk.Block.Hash().String(),
@@ -84,19 +85,31 @@ func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *B
 	)
 
 	if blk.Block.LastCommit != nil {
-		res.ValidatorPrecommits = NewValidatorPrecommitsFromTmSignatures(blk.Block.LastCommit.Signatures)
+		res.ValidatorPrecommits = NewValidatorPrecommitsFromTmSignatures(blk.Block.LastCommit.Signatures, vals)
 	}
 
 	return res
 }
 
-func NewValidatorPrecommitsFromTmSignatures(sigs []cometbfttypes.CommitSig) []ValidatorPrecommit {
+func NewValidatorPrecommitsFromTmSignatures(sigs []cometbfttypes.CommitSig, vals *cometbftcoretypes.ResultValidators) []ValidatorPrecommit {
+	valByAddress := make(map[string]*cometbfttypes.Validator, len(vals.Validators))
+	for _, val := range vals.Validators {
+		valByAddress[string(val.Address)] = val
+	}
+
 	res := make([]ValidatorPrecommit, 0, len(sigs))
 	for _, sig := range sigs {
+		var votingPower int64
+		addr := sdk.ConsAddress(sig.ValidatorAddress).String()
+		if val, ok := valByAddress[addr]; ok {
+			votingPower = val.VotingPower
+		}
+
 		res = append(res, ValidatorPrecommit{
-			ValidatorAddress: sdk.ConsAddress(sig.ValidatorAddress).String(),
+			ValidatorAddress: addr,
 			BlockIDFlag:      uint64(sig.BlockIDFlag),
 			Timestamp:        sig.Timestamp,
+			VotingPower:      votingPower,
 		})
 	}
 
