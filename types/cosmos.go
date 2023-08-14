@@ -108,7 +108,7 @@ func NewValidatorPrecommitsFromTmSignatures(
 
 	res := make([]ValidatorPrecommit, 0, len(sigs))
 	for _, sig := range sigs {
-		if sig.Signature == nil {
+		if len(sig.Signature) == 0 {
 			continue
 		}
 
