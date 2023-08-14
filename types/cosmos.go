@@ -73,7 +73,12 @@ func NewBlock(height int64, hash, proposerAddress string, txNum int, totalGas ui
 }
 
 // NewBlockFromTmBlock builds a new Block instance from a given ResultBlock object
-func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, vals *cometbftcoretypes.ResultValidators, totalGas uint64) *Block {
+func NewBlockFromTmBlock(
+	blk *cometbftcoretypes.ResultBlock,
+	vals *cometbftcoretypes.ResultValidators,
+	totalGas uint64,
+) *Block {
+
 	res := NewBlock(
 		blk.Block.Height,
 		blk.Block.Hash().String(),
@@ -91,7 +96,11 @@ func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, vals *cometbftcoret
 	return res
 }
 
-func NewValidatorPrecommitsFromTmSignatures(sigs []cometbfttypes.CommitSig, vals *cometbftcoretypes.ResultValidators) []ValidatorPrecommit {
+func NewValidatorPrecommitsFromTmSignatures(
+	sigs []cometbfttypes.CommitSig,
+	vals *cometbftcoretypes.ResultValidators,
+) []ValidatorPrecommit {
+
 	valByAddress := make(map[string]*cometbfttypes.Validator, len(vals.Validators))
 	for _, val := range vals.Validators {
 		valByAddress[string(val.Address)] = val
