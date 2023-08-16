@@ -23,7 +23,7 @@ import (
 )
 
 func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbMapper tb.ToBroker,
-	cdc codec.Codec, modules []string, addressesParser coreModule.MessageAddressesParser, parseAvatarURL bool,
+	cdc codec.Codec, modules []string, addressesParser coreModule.MessageAddressesParser,
 	tallyCache govModule.TallyCache[uint64, int64]) []types.Module {
 
 	res := make([]types.Module, 0)
@@ -49,7 +49,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			res = append(res, mintModule.New(b, cli, tbMapper))
 		case "staking":
 			log.Info().Msg("staking module registered")
-			res = append(res, stakingModule.New(b, cli, tbMapper, cdc, modules, parseAvatarURL))
+			res = append(res, stakingModule.New(b, cli, tbMapper, cdc, modules))
 		case "distribution":
 			log.Info().Msg("distribution module registered")
 			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))

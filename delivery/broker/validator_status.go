@@ -10,7 +10,7 @@ import (
 )
 
 func (b *Broker) PublishValidatorStatus(ctx context.Context, status model.ValidatorStatus) error {
-	if !checkCache(status.ValidatorAddress, status.Height, b.cache.valStatus) {
+	if !checkCache(status.ConsensusAddress, status.Height, b.cache.valStatus) {
 		return nil
 	}
 

@@ -38,7 +38,7 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 		return nil
 	}
 
-	var address, power, reason, jailed string
+	var operatorAddress, power, reason, jailed string
 	for _, e := range events {
 		if len(e.Attributes) < 4 {
 			m.log.Warn().
@@ -62,7 +62,7 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 
 			switch attr.Key {
 			case slashingtypes.AttributeKeyAddress, base64KeyAddress: // required
-				address = attr.Value
+				operatorAddress = attr.Value
 			case slashingtypes.AttributeKeyPower, base64KeyPower: // required
 				power = attr.Value
 			case slashingtypes.AttributeKeyReason, base64KeyReason: // required
@@ -111,12 +111,12 @@ func (m *Module) handleSlashEvent(ctx context.Context, eventsMap types.BlockerEv
 		}
 
 		if err := m.broker.PublishHandleValidatorSignature(ctx, model.HandleValidatorSignature{
-			Address: address,
-			Power:   power,
-			Reason:  reason,
-			Jailed:  jailed,
-			Burned:  burned,
-			Height:  height,
+			OperatorAddress: operatorAddress,
+			Power:           power,
+			Reason:          reason,
+			Jailed:          jailed,
+			Burned:          burned,
+			Height:          height,
 		}); err != nil {
 			return err
 		}

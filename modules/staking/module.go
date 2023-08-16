@@ -2,7 +2,6 @@ package staking
 
 import (
 	"os"
-	"sync"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
@@ -31,13 +30,11 @@ type (
 		broker         broker
 		tbM            tb.ToBroker
 		cdc            codec.Codec
-		avatarURLCache sync.Map
 		enabledModules []string // xxx fixme
-		parseAvatarURL bool
 	}
 )
 
-func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string, parseAvatarURL bool) *Module {
+func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", moduleName).Logger()
 
@@ -48,8 +45,6 @@ func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, mod
 		tbM:            tbM,
 		cdc:            cdc,
 		enabledModules: modules,
-		avatarURLCache: sync.Map{},
-		parseAvatarURL: parseAvatarURL,
 	}
 }
 
