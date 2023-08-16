@@ -59,6 +59,7 @@ var (
 	ValidatorDescription               Topic = newTopic("validator_description")
 	ValidatorCommission                Topic = newTopic("validator_commission")
 	ValidatorPrecommit                 Topic = newTopic("validator_precommit")
+	ValidatorVotingPower               Topic = newTopic("validator_voting_power")
 	VoteWeightedMessage                Topic = newTopic("vote_weighted_message")
 	WithdrawValidatorCommissionMessage Topic = newTopic("withdraw_validator_commission_message")
 	authTopics                               = Topics{Account}

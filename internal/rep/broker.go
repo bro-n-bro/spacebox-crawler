@@ -15,6 +15,7 @@ type Broker interface {
 	PublishMessage(ctx context.Context, message model.Message) error
 	PublishTransaction(ctx context.Context, tx model.Transaction) error
 	PublishValidatorPrecommit(ctx context.Context, vp model.ValidatorPrecommit) error
+	PublishValidatorVotingPower(ctx context.Context, vp model.ValidatorVotingPower) error
 
 	// bank
 	PublishSupply(context.Context, model.Supply) error
