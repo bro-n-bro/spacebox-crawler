@@ -93,11 +93,6 @@ func (m *Module) handleMsgCreateValidator(
 		return err
 	}
 
-	var avatarURL string
-	if m.parseAvatarURL {
-		avatarURL = m.getAvatarURL(msg.ValidatorAddress, msg.Description.Identity, height)
-	}
-
 	if err = m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
@@ -105,7 +100,6 @@ func (m *Module) handleMsgCreateValidator(
 		Website:         msg.Description.Website,
 		SecurityContact: msg.Description.SecurityContact,
 		Details:         msg.Description.Details,
-		AvatarURL:       avatarURL,
 		Height:          height,
 	}); err != nil {
 		return err
@@ -217,11 +211,11 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 	}
 	// TODO: test it
 	if err = m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
-		Height:              tx.Height,
-		DelegatorAddress:    msg.DelegatorAddress,
-		ValidatorAddress:    msg.ValidatorAddress,
-		Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
-		CompletionTimestamp: completionTime,
+		Height:           tx.Height,
+		DelegatorAddress: msg.DelegatorAddress,
+		OperatorAddress:  msg.ValidatorAddress,
+		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		CompletionTime:   completionTime,
 	}); err != nil {
 		return err
 	}
@@ -229,11 +223,11 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 	// TODO: test it
 	if err = m.broker.PublishUnbondingDelegationMessage(ctx, model.UnbondingDelegationMessage{
 		UnbondingDelegation: model.UnbondingDelegation{
-			Height:              tx.Height,
-			DelegatorAddress:    msg.DelegatorAddress,
-			ValidatorAddress:    msg.ValidatorAddress,
-			Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
-			CompletionTimestamp: completionTime,
+			Height:           tx.Height,
+			DelegatorAddress: msg.DelegatorAddress,
+			OperatorAddress:  msg.ValidatorAddress,
+			Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			CompletionTime:   completionTime,
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),
@@ -320,11 +314,6 @@ func (m *Module) handleEditValidator(
 		return err
 	}
 
-	var avatarURL string
-	if m.parseAvatarURL {
-		avatarURL = m.getAvatarURL(msg.ValidatorAddress, msg.Description.Identity, height)
-	}
-
 	if err := m.broker.PublishValidatorDescription(ctx, model.ValidatorDescription{
 		OperatorAddress: msg.ValidatorAddress,
 		Moniker:         msg.Description.Moniker,
@@ -332,7 +321,6 @@ func (m *Module) handleEditValidator(
 		Website:         msg.Description.Website,
 		SecurityContact: msg.Description.SecurityContact,
 		Details:         msg.Description.Details,
-		AvatarURL:       avatarURL,
 		Height:          height,
 	}); err != nil {
 		return err

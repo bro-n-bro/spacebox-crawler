@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/bro-n-bro/spacebox-crawler/pkg/keybase"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -17,11 +16,6 @@ import (
 const (
 	defaultLimit = 150
 )
-
-type avatarURLCache struct {
-	Identity  string
-	AvatarURL string
-}
 
 // HandleValidators handles validators for each block height.
 func (m *Module) HandleValidators(ctx context.Context, tmValidators *cometbftcoretypes.ResultValidators) error {
@@ -34,7 +28,7 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *cometbftcor
 		return err
 	}
 
-	if err = m.publishValidatorDescriptions(ctx, vals, tmValidators.BlockHeight, m.parseAvatarURL); err != nil {
+	if err = m.publishValidatorDescriptions(ctx, vals, tmValidators.BlockHeight); err != nil {
 		return err
 	}
 
@@ -46,7 +40,7 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *cometbftcor
 
 		if err = m.broker.PublishValidatorStatus(ctx, model.ValidatorStatus{
 			Height:           tmValidators.BlockHeight,
-			ValidatorAddress: consAddr.String(),
+			ConsensusAddress: consAddr.String(),
 			Status:           int64(val.GetStatus()),
 			Jailed:           val.IsJailed(),
 		}); err != nil {
@@ -109,24 +103,10 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 }
 
 // asyncPublishValidatorDescriptions process validator descriptions and publish them to the broker.
-func (m *Module) publishValidatorDescriptions(
-	ctx context.Context,
-	vals stakingtypes.Validators,
-	height int64,
-	parseAvatarURL bool,
-) error {
-
+func (m *Module) publishValidatorDescriptions(ctx context.Context, vals stakingtypes.Validators, height int64) error {
 	for _, val := range vals {
-		if parseAvatarURL {
-			go func(val stakingtypes.Validator) {
-				ctx = context.Background()
-				avatarURL := m.getAvatarURL(val.OperatorAddress, val.Description.Identity, height)
-				_ = m.publishValidatorDescription(ctx, val, avatarURL, height)
-			}(val)
-		} else {
-			if err := m.publishValidatorDescription(ctx, val, "", height); err != nil {
-				return err
-			}
+		if err := m.publishValidatorDescription(ctx, val, height); err != nil {
+			return err
 		}
 	}
 
@@ -139,7 +119,6 @@ func (m *Module) publishValidatorDescriptions(
 func (m *Module) publishValidatorDescription(
 	ctx context.Context,
 	val stakingtypes.Validator,
-	avatarURL string,
 	height int64,
 ) error {
 
@@ -150,7 +129,6 @@ func (m *Module) publishValidatorDescription(
 		Website:         val.Description.Website,
 		SecurityContact: val.Description.SecurityContact,
 		Details:         val.Description.Details,
-		AvatarURL:       avatarURL,
 		Height:          height,
 	}); err != nil {
 		m.log.Error().Err(err).
@@ -162,42 +140,4 @@ func (m *Module) publishValidatorDescription(
 	}
 
 	return nil
-}
-
-func (m *Module) getAvatarURL(operatorAddress, identity string, height int64) string {
-	var (
-		avatarURL string
-		cacheItem avatarURLCache
-		err       error
-		ctx       = context.Background()
-	)
-
-	cacheVal, ok := m.avatarURLCache.Load(operatorAddress)
-	if ok {
-		cacheItem, ok = cacheVal.(avatarURLCache)
-	}
-
-	// not exists or value is not equal to the current one
-	if !ok || cacheItem.Identity != identity {
-		// get avatar url from the keybase API
-		avatarURL, err = keybase.GetAvatarURL(ctx, identity)
-		if err != nil {
-			m.log.Error().
-				Err(err).
-				Str("operator_address", operatorAddress).
-				Str("identity", identity).
-				Int64("height", height).
-				Msg("failed to get avatar url")
-		} else {
-			// update the cache
-			m.avatarURLCache.Store(operatorAddress, avatarURLCache{
-				Identity:  identity,
-				AvatarURL: avatarURL,
-			})
-		}
-	} else { // can get from cache
-		avatarURL = cacheItem.AvatarURL
-	}
-
-	return avatarURL
 }

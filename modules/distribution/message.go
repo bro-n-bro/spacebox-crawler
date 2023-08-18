@@ -46,7 +46,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Coins:            m.tbM.MapCoins(coin),
 			Height:           tx.Height,
 			DelegatorAddress: msg.DelegatorAddress,
-			ValidatorAddress: msg.ValidatorAddress,
+			OperatorAddress:  msg.ValidatorAddress,
 			TxHash:           tx.TxHash,
 			MsgIndex:         int64(index),
 		})
@@ -86,7 +86,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			TxHash:             tx.TxHash,
 			MsgIndex:           int64(index),
 			WithdrawCommission: m.tbM.MapCoins(coins),
-			ValidatorAddress:   msg.ValidatorAddress,
+			OperatorAddress:    msg.ValidatorAddress,
 		})
 	}
 
