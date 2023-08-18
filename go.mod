@@ -11,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/bro-n-bro/spacebox v0.1.12-0.20230818135110-7070fd09ce6f
+	github.com/bro-n-bro/spacebox v0.1.12
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/cometbft/cometbft v0.37.1
 	github.com/confluentinc/confluent-kafka-go v1.9.2
