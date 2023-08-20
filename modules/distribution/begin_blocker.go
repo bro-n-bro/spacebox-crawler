@@ -58,9 +58,9 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 	}
 
 	var (
-		coin      model.Coin
-		validator string
-		err       error
+		coin            model.Coin
+		operatorAddress string
+		err             error
 	)
 
 	for _, event := range events {
@@ -72,7 +72,7 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 			continue
 		}
 
-		validator, coin, err = m.parseAttributes(event)
+		operatorAddress, coin, err = m.parseAttributes(event)
 		if err != nil {
 			m.log.Error().
 				Err(err).
@@ -83,9 +83,9 @@ func (m *Module) parseProposerRewardEvent(ctx context.Context, eventsMap types.B
 		}
 
 		if err = m.broker.PublishProposerReward(ctx, model.ProposerReward{
-			Height:    height,
-			Validator: validator,
-			Reward:    coin,
+			Height:          height,
+			OperatorAddress: operatorAddress,
+			Reward:          coin,
 		}); err != nil {
 			m.log.Error().
 				Err(err).
@@ -107,9 +107,9 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 	}
 
 	var (
-		validator string
-		coin      model.Coin
-		err       error
+		operatorAddress string
+		coin            model.Coin
+		err             error
 	)
 
 	for _, event := range events {
@@ -121,7 +121,7 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 			continue
 		}
 
-		validator, coin, err = m.parseAttributes(event)
+		operatorAddress, coin, err = m.parseAttributes(event)
 		if err != nil {
 			m.log.Error().
 				Err(err).
@@ -132,9 +132,9 @@ func (m *Module) parseCommissionEvent(ctx context.Context, eventsMap types.Block
 		}
 
 		if err = m.broker.PublishDistributionCommission(ctx, model.DistributionCommission{
-			Height:    height,
-			Validator: validator,
-			Amount:    coin,
+			Height:          height,
+			OperatorAddress: operatorAddress,
+			Amount:          coin,
 		}); err != nil {
 			m.log.Error().
 				Err(err).
@@ -156,9 +156,9 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 	}
 
 	var (
-		validator string
-		coin      model.Coin
-		err       error
+		operatorAddress string
+		coin            model.Coin
+		err             error
 	)
 
 	for _, event := range events {
@@ -170,7 +170,7 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 			continue
 		}
 
-		validator, coin, err = m.parseAttributes(event)
+		operatorAddress, coin, err = m.parseAttributes(event)
 		if err != nil {
 			m.log.Error().
 				Err(err).
@@ -181,9 +181,9 @@ func (m *Module) parseRewardsEvent(ctx context.Context, eventsMap types.BlockerE
 		}
 
 		if err = m.broker.PublishDistributionReward(ctx, model.DistributionReward{
-			Height:    height,
-			Validator: validator,
-			Amount:    coin,
+			Height:          height,
+			OperatorAddress: operatorAddress,
+			Amount:          coin,
 		}); err != nil {
 			m.log.Error().
 				Err(err).

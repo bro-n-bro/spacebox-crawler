@@ -59,7 +59,7 @@ func (m *Module) HandleGenesis(
 	}
 
 	// Publish the description
-	if err := m.publishValidatorDescriptions(ctx, genState.Validators, doc.InitialHeight, m.parseAvatarURL); err != nil {
+	if err := m.publishValidatorDescriptions(ctx, genState.Validators, doc.InitialHeight); err != nil {
 		return fmt.Errorf("error while storing staking genesis validator descriptions: %w", err)
 	}
 
@@ -206,11 +206,11 @@ func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *cometbftt
 				coin = types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))
 				// TODO: test it
 				if err := m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
-					Height:              doc.InitialHeight,
-					DelegatorAddress:    ud.DelegatorAddress,
-					ValidatorAddress:    validator.OperatorAddress,
-					Coin:                m.tbM.MapCoin(coin),
-					CompletionTimestamp: entry.CompletionTime,
+					Height:           doc.InitialHeight,
+					DelegatorAddress: ud.DelegatorAddress,
+					OperatorAddress:  validator.OperatorAddress,
+					Coin:             m.tbM.MapCoin(coin),
+					CompletionTime:   entry.CompletionTime,
 				}); err != nil {
 					return err
 				}
