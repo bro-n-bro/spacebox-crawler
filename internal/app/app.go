@@ -162,10 +162,6 @@ func (a *App) Start(ctx context.Context) error {
 
 	MakeSdkConfig(a.cfg, sdk.GetConfig())
 
-	// if err = test(cdc); err != nil {
-	// 	return err
-	// }
-
 	a.cmps = append(
 		a.cmps,
 		cmp{s, "storage"},
