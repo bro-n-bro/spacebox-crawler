@@ -99,7 +99,6 @@ Events:
 
 			if found && attr.Key == sdk.AttributeKeyAmount {
 				var err error
-
 				coins, err = utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
 					m.log.Error().
