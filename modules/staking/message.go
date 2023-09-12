@@ -216,7 +216,16 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 		ValidatorAddr: msg.ValidatorAddress,
 	})
 	if err != nil {
-		return err
+		s, ok := status.FromError(err)
+		if !ok {
+			return err
+		}
+
+		if s.Code() != codes.NotFound {
+			return err
+		}
+
+		goto PublishMessage
 	}
 
 	for _, entry := range respPb.Unbond.Entries {
@@ -235,6 +244,7 @@ func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index in
 		}
 	}
 
+PublishMessage:
 	if err = m.broker.PublishUnbondingDelegationMessage(ctx, model.UnbondingDelegationMessage{
 		UnbondingDelegation: model.UnbondingDelegation{
 			Height:           tx.Height,
