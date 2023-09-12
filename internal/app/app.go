@@ -155,12 +155,16 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	tallyCache.SetCompareFn(lessInt64)
 
-	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, tallyCache)
+	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom, tallyCache)
 	ts := ts.NewToStorage()
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 	server := server.New(a.cfg.Server, s, *a.log)
 
 	MakeSdkConfig(a.cfg, sdk.GetConfig())
+
+	// if err = test(cdc); err != nil {
+	// 	return err
+	// }
 
 	a.cmps = append(
 		a.cmps,

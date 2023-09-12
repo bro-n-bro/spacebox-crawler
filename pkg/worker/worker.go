@@ -168,3 +168,7 @@ func (w *Worker) Stop(_ context.Context) error {
 
 	return nil
 }
+
+func (w *Worker) GetProcessMessagesFn() func(ctx context.Context, txs []*types.Tx) error {
+	return w.processMessages
+}

@@ -4,6 +4,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
@@ -16,9 +17,9 @@ const (
 )
 
 var (
-	_ types.Module         = &Module{}
-	_ types.MessageHandler = &Module{}
-	_ types.BlockHandler   = &Module{}
+	_ types.Module                   = &Module{}
+	_ types.RecursiveMessagesHandler = &Module{}
+	_ types.BlockHandler             = &Module{}
 )
 
 type (
@@ -32,11 +33,12 @@ type (
 		client     *grpcClient.Client
 		broker     broker
 		tbM        tb.ToBroker
+		cdc        codec.Codec
 		denomCache *denomCache
 	}
 )
 
-func New(b broker, tbM tb.ToBroker, client *grpcClient.Client) *Module {
+func New(b broker, tbM tb.ToBroker, client *grpcClient.Client, cdc codec.Codec) *Module {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("module", moduleName).Logger()
 
@@ -45,6 +47,7 @@ func New(b broker, tbM tb.ToBroker, client *grpcClient.Client) *Module {
 		broker:     b,
 		tbM:        tbM,
 		client:     client,
+		cdc:        cdc,
 		denomCache: &denomCache{denomHashes: make(map[string]struct{})},
 	}
 }

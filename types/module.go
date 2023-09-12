@@ -6,6 +6,7 @@ import (
 
 	cometbftcoretypes "github.com/cometbft/cometbft/rpc/core/types"
 	cometbfttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,6 +32,11 @@ type (
 		Module
 		// HandleMessage handles a single message of transaction.
 		HandleMessage(ctx context.Context, index int, msg sdk.Msg, tx *Tx) error
+	}
+
+	RecursiveMessagesHandler interface {
+		Module
+		HandleMessageRecursive(ctx context.Context, index int, msg sdk.Msg, tx *Tx) ([]*types.Any, error)
 	}
 
 	ValidatorsHandler interface {

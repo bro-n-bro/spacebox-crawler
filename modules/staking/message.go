@@ -195,32 +195,46 @@ func (m *Module) handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, ind
 func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index int,
 	msg *stakingtypes.MsgUndelegate) error {
 
-	event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond)
+	var completionTime time.Time
+
+	// try to find the completion time event. It does not exist in IBC transactions
+	if event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond); err == nil {
+		var completionTimeStr string
+		if completionTimeStr, err = tx.FindAttributeByKey(event,
+			stakingtypes.AttributeKeyCompletionTime); err != nil {
+			return err
+		}
+
+		completionTime, err = time.Parse(time.RFC3339, completionTimeStr)
+		if err != nil {
+			return err
+		}
+	}
+
+	respPb, err := m.client.StakingQueryClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: msg.DelegatorAddress,
+		ValidatorAddr: msg.ValidatorAddress,
+	})
 	if err != nil {
 		return err
 	}
 
-	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
-	if err != nil {
-		return err
+	for _, entry := range respPb.Unbond.Entries {
+		if entry.CreationHeight == tx.Height {
+			completionTime = entry.CompletionTime
+		}
+
+		if err = m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
+			Height:           entry.CreationHeight,
+			DelegatorAddress: respPb.Unbond.DelegatorAddress,
+			OperatorAddress:  respPb.Unbond.ValidatorAddress,
+			Coin:             m.tbM.MapCoin(types.NewCoin(m.defaultDenom, float64(entry.Balance.BigInt().Int64()))), //nolint:lll
+			CompletionTime:   entry.CompletionTime,
+		}); err != nil {
+			return err
+		}
 	}
 
-	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
-	if err != nil {
-		return err
-	}
-	// TODO: test it
-	if err = m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
-		Height:           tx.Height,
-		DelegatorAddress: msg.DelegatorAddress,
-		OperatorAddress:  msg.ValidatorAddress,
-		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
-		CompletionTime:   completionTime,
-	}); err != nil {
-		return err
-	}
-
-	// TODO: test it
 	if err = m.broker.PublishUnbondingDelegationMessage(ctx, model.UnbondingDelegationMessage{
 		UnbondingDelegation: model.UnbondingDelegation{
 			Height:           tx.Height,
