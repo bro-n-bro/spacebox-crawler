@@ -13,10 +13,6 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-var (
-	errNotFoundEventInTx = fmt.Errorf("not found event in tx")
-)
-
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	if len(tx.Logs) == 0 {
 		return nil
@@ -121,7 +117,8 @@ Events:
 			Str("event", distrtypes.EventTypeWithdrawRewards).
 			Msg("not found event in tx")
 
-		return coins, errNotFoundEventInTx
+		return coins, fmt.Errorf("%w: %s inside tx with hash %s", types.ErrNoEventFound,
+			distrtypes.EventTypeWithdrawRewards, tx.TxHash)
 	}
 
 	return coins, nil

@@ -2,10 +2,10 @@ package staking
 
 import (
 	"context"
-	"time"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -143,24 +143,72 @@ func (m *Module) handleMsgCreateValidator(
 func (m *Module) handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, index int,
 	msg *stakingtypes.MsgBeginRedelegate) error {
 
-	event, err := tx.FindEventByType(index, stakingtypes.EventTypeRedelegate)
-	if err != nil {
-		return err
+	// try to find the completion time in event. It does not exist in IBC transactions
+	completionTime := findCompletionTimeInEventOrZero(tx, index, stakingtypes.EventTypeRedelegate)
+
+	var (
+		redelegationsResp []stakingtypes.RedelegationResponse
+		nextKey           []byte
+	)
+
+	for {
+		respPb, err := m.client.StakingQueryClient.Redelegations(ctx, &stakingtypes.QueryRedelegationsRequest{
+			DelegatorAddr: msg.DelegatorAddress,
+			Pagination: &query.PageRequest{
+				Key:        nextKey,
+				Limit:      100,
+				CountTotal: true,
+			},
+		})
+		if err != nil {
+			s, ok := status.FromError(err)
+			if !ok {
+				return err
+			}
+
+			if s.Code() != codes.NotFound {
+				return err
+			}
+
+			goto Publish
+		}
+
+		// first iteration
+		if len(nextKey) == 0 {
+			redelegationsResp = make([]stakingtypes.RedelegationResponse, 0, respPb.Pagination.Total)
+		}
+
+		nextKey = respPb.Pagination.NextKey
+		redelegationsResp = append(redelegationsResp, respPb.RedelegationResponses...)
+
+		if len(respPb.Pagination.NextKey) == 0 {
+			break
+		}
 	}
 
-	completionTimeStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime)
-	if err != nil {
-		return err
+	for _, resp := range redelegationsResp {
+		for _, entry := range resp.Entries {
+			if entry.RedelegationEntry.CreationHeight == tx.Height {
+				completionTime = entry.RedelegationEntry.CompletionTime
+				continue // we will publish it in the publish section
+			}
+
+			if err := m.broker.PublishRedelegation(ctx, model.Redelegation{
+				Height:              entry.RedelegationEntry.CreationHeight,
+				DelegatorAddress:    resp.Redelegation.DelegatorAddress,
+				SrcValidatorAddress: resp.Redelegation.ValidatorSrcAddress,
+				DstValidatorAddress: resp.Redelegation.ValidatorDstAddress,
+				Coin:                m.tbM.MapCoin(types.NewCoin(m.defaultDenom, float64(entry.Balance.BigInt().Int64()))), // nolint: lll
+				CompletionTime:      entry.RedelegationEntry.CompletionTime,
+			}); err != nil {
+				return err
+			}
+		}
 	}
 
-	completionTime, err := time.Parse(time.RFC3339, completionTimeStr)
-	if err != nil {
-		return err
-	}
-
+Publish:
 	// TODO: save to mongo?
-	// TODO: test it
-	if err = m.broker.PublishRedelegation(ctx, model.Redelegation{
+	if err := m.broker.PublishRedelegation(ctx, model.Redelegation{
 		Height:              tx.Height,
 		DelegatorAddress:    msg.DelegatorAddress,
 		SrcValidatorAddress: msg.ValidatorSrcAddress,
@@ -171,8 +219,7 @@ func (m *Module) handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, ind
 		return err
 	}
 
-	// TODO: test it
-	if err = m.broker.PublishRedelegationMessage(ctx, model.RedelegationMessage{
+	if err := m.broker.PublishRedelegationMessage(ctx, model.RedelegationMessage{
 		Redelegation: model.Redelegation{
 			Height:              tx.Height,
 			DelegatorAddress:    msg.DelegatorAddress,
@@ -195,21 +242,8 @@ func (m *Module) handleMsgBeginRedelegate(ctx context.Context, tx *types.Tx, ind
 func (m *Module) handleMsgUndelegate(ctx context.Context, tx *types.Tx, index int,
 	msg *stakingtypes.MsgUndelegate) error {
 
-	var completionTime time.Time
-
-	// try to find the completion time event. It does not exist in IBC transactions
-	if event, err := tx.FindEventByType(index, stakingtypes.EventTypeUnbond); err == nil {
-		var completionTimeStr string
-		if completionTimeStr, err = tx.FindAttributeByKey(event,
-			stakingtypes.AttributeKeyCompletionTime); err != nil {
-			return err
-		}
-
-		completionTime, err = time.Parse(time.RFC3339, completionTimeStr)
-		if err != nil {
-			return err
-		}
-	}
+	// try to find the completion time in event. It does not exist in IBC transactions
+	completionTime := findCompletionTimeInEventOrZero(tx, index, stakingtypes.EventTypeUnbond)
 
 	respPb, err := m.client.StakingQueryClient.UnbondingDelegation(ctx, &stakingtypes.QueryUnbondingDelegationRequest{
 		DelegatorAddr: msg.DelegatorAddress,
@@ -265,7 +299,6 @@ PublishMessage:
 
 // handleMsgDelegate handles a MsgDelegate and publish the delegation to broker.
 func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *stakingtypes.MsgDelegate, index int) error {
-	// TODO: test it
 	if err := m.broker.PublishDelegationMessage(ctx, model.DelegationMessage{
 		Delegation: model.Delegation{
 			OperatorAddress:  msg.ValidatorAddress,
@@ -279,15 +312,13 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 		return err
 	}
 
-	header := grpcClient.GetHeightRequestHeader(tx.Height)
-
 	respPb, err := m.client.StakingQueryClient.Delegation(
 		ctx,
 		&stakingtypes.QueryDelegationRequest{
 			DelegatorAddr: msg.DelegatorAddress,
 			ValidatorAddr: msg.ValidatorAddress,
 		},
-		header,
+		grpcClient.GetHeightRequestHeader(tx.Height),
 	)
 	if err != nil {
 		s, ok := status.FromError(err)
@@ -301,7 +332,6 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 		coin = m.tbM.MapCoin(types.NewCoinFromCdk(respPb.DelegationResponse.Balance))
 	}
 
-	// TODO: test it
 	if err = m.broker.PublishDelegation(ctx, model.Delegation{
 		OperatorAddress:  msg.ValidatorAddress,
 		DelegatorAddress: msg.DelegatorAddress,
