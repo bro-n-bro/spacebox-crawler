@@ -2,6 +2,7 @@ package ibc
 
 import (
 	"context"
+	"strings"
 
 	codec "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -76,6 +77,13 @@ func (m *Module) HandleMessageRecursive(
 
 			cosmosTx := icatypes.CosmosTx{}
 			if err := m.cdc.Unmarshal(hostData.Data, &cosmosTx); err != nil {
+				// skip unsupported messages
+				if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
+					m.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
+
+					return nil, nil
+				}
+
 				return nil, err
 			}
 
