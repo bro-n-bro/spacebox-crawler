@@ -113,6 +113,10 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 // handleMsgDeposit handles a MsgDeposit message.
 // Publishes proposalDeposit and proposalDepositMessage data to the broker.
 func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, msg *govtypesv1beta1.MsgDeposit) error {
+	if err := m.getAndPublishProposal(ctx, msg.ProposalId, ""); err != nil {
+		return err
+	}
+
 	if err := m.broker.PublishProposalDepositMessage(ctx, model.ProposalDepositMessage{
 		ProposalDeposit: model.ProposalDeposit{
 			ProposalID:       msg.ProposalId,
@@ -148,7 +152,6 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		return fmt.Errorf("error while getting proposal deposit: %w", err)
 	}
 
-	// TODO: test it
 	if err = m.broker.PublishProposalDeposit(ctx, model.ProposalDeposit{
 		ProposalID:       msg.ProposalId,
 		DepositorAddress: msg.Depositor,
