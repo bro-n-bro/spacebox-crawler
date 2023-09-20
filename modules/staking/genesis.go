@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	cometbfttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,6 +11,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -156,8 +156,6 @@ func (m *Module) publishDelegations(
 	genState stakingtypes.GenesisState,
 ) error {
 
-	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
-
 	for _, validator := range genState.Validators {
 		tokens := validator.Tokens
 		delShares := validator.DelegatorShares
@@ -165,19 +163,13 @@ func (m *Module) publishDelegations(
 		typesDelegations := findDelegations(genState.Delegations, validator.OperatorAddress)
 
 		for _, del := range typesDelegations {
-			if strings.HasPrefix(del.DelegatorAddress, prefix) {
-				// TODO: test it
-				if err := m.broker.PublishAccount(ctx, model.Account{
-					Address: del.DelegatorAddress,
-					Height:  doc.InitialHeight,
-				}); err != nil {
-					return err
-				}
+			if err := utils.GetAndPublishAccount(ctx, del.DelegatorAddress, doc.InitialHeight, m.accCache,
+				m.broker, m.client.AuthQueryClient); err != nil {
+				return err
 			}
 
 			delegationAmount := sdk.NewDecFromBigInt(tokens.BigInt()).Mul(del.Shares).Quo(delShares).TruncateInt()
 			// TODO: save to mongo?
-			// TODO: test it
 			if err := m.broker.PublishDelegation(ctx, model.Delegation{
 				OperatorAddress:  validator.OperatorAddress,
 				DelegatorAddress: del.DelegatorAddress,
