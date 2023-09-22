@@ -3,12 +3,11 @@ package staking
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	cometbftcoretypes "github.com/cometbft/cometbft/rpc/core/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
@@ -67,8 +66,6 @@ func (m *Module) HandleValidators(ctx context.Context, tmValidators *cometbftcor
 
 // PublishValidatorsData produces a message about validator, account and validator info to the broker.
 func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.StakingValidator) error {
-	prefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
-
 	for _, val := range sVals {
 		if err := m.broker.PublishValidator(ctx, model.Validator{
 			ConsensusAddress: val.GetConsAddr(),
@@ -79,13 +76,9 @@ func (m *Module) PublishValidatorsData(ctx context.Context, sVals []types.Stakin
 			return err
 		}
 
-		if strings.HasPrefix(val.GetSelfDelegateAddress(), prefix) {
-			if err := m.broker.PublishAccount(ctx, model.Account{
-				Address: val.GetSelfDelegateAddress(),
-				Height:  val.GetHeight(),
-			}); err != nil {
-				return err
-			}
+		if err := utils.GetAndPublishAccount(ctx, val.GetSelfDelegateAddress(), val.GetHeight(), m.accCache,
+			m.broker, m.client.AuthQueryClient); err != nil {
+			return err
 		}
 
 		if err := m.broker.PublishValidatorInfo(ctx, model.ValidatorInfo{

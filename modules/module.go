@@ -22,9 +22,13 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
+type Cache[K, V comparable] interface {
+	UpdateCacheValue(K, V) bool
+}
+
 func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbMapper tb.ToBroker,
 	cdc codec.Codec, modules []string, addressesParser coreModule.MessageAddressesParser,
-	tallyCache govModule.TallyCache[uint64, int64]) []types.Module {
+	tallyCache Cache[uint64, int64], accountCache Cache[string, int64]) []types.Module {
 
 	res := make([]types.Module, 0)
 
@@ -33,7 +37,11 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 		switch m {
 		case "auth":
 			log.Info().Msg("auth module registered")
-			res = append(res, authModule.New(b, cli, tbMapper, cdc, addressesParser))
+			auth := authModule.New(b, cli, tbMapper, cdc, addressesParser)
+			if accountCache != nil {
+				auth.SetAccountCache(accountCache)
+			}
+			res = append(res, auth)
 		case "bank":
 			log.Info().Msg("bank module registered")
 			res = append(res, bankModule.New(b, cli, tbMapper, cdc, addressesParser))
@@ -48,8 +56,12 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			log.Info().Msg("mint module registered")
 			res = append(res, mintModule.New(b, cli, tbMapper))
 		case "staking":
+			staking := stakingModule.New(b, cli, tbMapper, cdc, modules)
+			if accountCache != nil {
+				staking.SetAccountCache(accountCache)
+			}
 			log.Info().Msg("staking module registered")
-			res = append(res, stakingModule.New(b, cli, tbMapper, cdc, modules))
+			res = append(res, staking)
 		case "distribution":
 			log.Info().Msg("distribution module registered")
 			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))

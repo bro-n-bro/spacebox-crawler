@@ -22,14 +22,21 @@ var (
 	_ types.MessageHandler = &Module{}
 )
 
-type Module struct {
-	log    *zerolog.Logger
-	client *grpcClient.Client
-	broker broker
-	tbM    tb.ToBroker
-	cdc    codec.Codec
-	parser core.MessageAddressesParser
-}
+type (
+	AccountCache[K, V comparable] interface {
+		UpdateCacheValue(K, V) bool
+	}
+
+	Module struct {
+		log      *zerolog.Logger
+		client   *grpcClient.Client
+		broker   broker
+		tbM      tb.ToBroker
+		cdc      codec.Codec
+		parser   core.MessageAddressesParser
+		accCache AccountCache[string, int64]
+	}
+)
 
 func New(b broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec,
 	parser core.MessageAddressesParser) *Module {
@@ -48,3 +55,7 @@ func New(b broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec,
 }
 
 func (m *Module) Name() string { return moduleName }
+
+func (m *Module) SetAccountCache(cache AccountCache[string, int64]) {
+	m.accCache = cache
+}

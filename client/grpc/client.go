@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"github.com/cosmos/cosmos-sdk/types/tx"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authztypes "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -29,6 +30,7 @@ type Client struct {
 	TmsService              tmservice.ServiceClient
 	TxService               tx.ServiceClient
 	BankQueryClient         banktypes.QueryClient
+	AuthQueryClient         authtypes.QueryClient
 	GovQueryClient          govtypes.QueryClient
 	MintQueryClient         minttypes.QueryClient
 	StakingQueryClient      stakingtypes.QueryClient
@@ -92,6 +94,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.FeegrantQueryClient = feegranttypes.NewQueryClient(grpcConn)
 	c.IbcTransferQueryClient = ibctransfertypes.NewQueryClient(grpcConn)
 	c.LiquidityQueryClient = liquiditytypes.NewQueryClient(grpcConn)
+	c.AuthQueryClient = authtypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 

@@ -28,7 +28,6 @@ type (
 	}
 
 	lruCache struct {
-		account        cacheI[string, int64]
 		validator      cacheI[string, int64]
 		valCommission  cacheI[string, int64]
 		valDescription cacheI[string, int64]
@@ -198,12 +197,6 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 	}
 
 	return topics
-}
-
-func WithAccountCache(accCache cacheI[string, int64]) func(b *Broker) {
-	return func(b *Broker) {
-		b.cache.account = accCache
-	}
 }
 
 func WithValidatorCache(valCache cacheI[string, int64]) func(b *Broker) {
