@@ -105,6 +105,26 @@ func (w *Worker) Start(_ context.Context) error {
 		}
 	}
 
+	if w.cfg.MetricsEnabled {
+		promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: "spacebox_crawler",
+			Name:      "start_height",
+			Help:      "Start height for processing",
+		}).Set(float64(w.cfg.StartHeight))
+
+		promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: "spacebox_crawler",
+			Name:      "stop_height",
+			Help:      "Stop height for processing",
+		}).Set(float64(stopHeight))
+
+		promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: "spacebox_crawler",
+			Name:      "total_workers",
+			Help:      "Count of workers",
+		}).Set(float64(workersCount))
+	}
+
 	// spawn workers
 	for i := 0; i < workersCount; i++ {
 		w.wg.Add(1)

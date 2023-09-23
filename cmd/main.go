@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 	"github.com/joho/godotenv"
@@ -43,9 +44,9 @@ func main() {
 
 	// create a logger instance
 	// TODO: log in file
-	logger := zerolog.New(os.Stderr).
+	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.DateTime}).
 		Level(logLevel).
-		Output(zerolog.ConsoleWriter{Out: os.Stderr}).
+		Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.DateTime}).
 		With().
 		Timestamp().
 		Logger()
