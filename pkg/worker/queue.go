@@ -51,7 +51,7 @@ func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan cometbftco
 				continue
 			}
 			height := newBlock.Block.Header.Height
-			w.log.Info().Int64("height", height).Msgf("enqueueing new block with height: %v", height)
+			w.log.Info().Int64("height", height).Msg("enqueueing new block")
 			w.heightCh <- height
 		}
 	}

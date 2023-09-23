@@ -24,7 +24,7 @@ race: dep ## Run data race detector
 	@go test -race ./... -count=1
 
 install-linter: ## Install golangci-lint
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
 
 lint: install-linter ## Lint the files
 	./scripts/golint.sh

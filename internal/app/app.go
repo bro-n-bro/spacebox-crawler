@@ -97,13 +97,6 @@ func (a *App) Start(ctx context.Context) error {
 	rpcCli := rpcClient.New(a.cfg.RPCConfig)
 
 	// TODO: use redis
-	accCache, err := cache.New[string, int64](defaultCacheSize)
-	if err != nil {
-		return err
-	}
-	// exists height > new height
-	accCache.SetCompareFn(greaterInt64)
-
 	valCache, err := cache.New[string, int64](defaultCacheSize)
 	if err != nil {
 		return err
@@ -135,7 +128,6 @@ func (a *App) Start(ctx context.Context) error {
 	valStatusCache.SetCompareFn(lessInt64)
 
 	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
-		broker.WithAccountCache(accCache),
 		broker.WithValidatorCache(valCache),
 		broker.WithValidatorCommissionCache(valCommissionCache),
 		broker.WithValidatorDescriptionCache(valDescriptionCache),
@@ -155,7 +147,15 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	tallyCache.SetCompareFn(lessInt64)
 
-	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom, tallyCache)
+	// collect data only from earlier height
+	accCache, err := cache.New[string, int64](defaultCacheSize)
+	if err != nil {
+		return err
+	}
+	// exists height > new height
+	accCache.SetCompareFn(greaterInt64)
+
+	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom, tallyCache, accCache)
 	ts := ts.NewToStorage()
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 	server := server.New(a.cfg.Server, s, *a.log)
