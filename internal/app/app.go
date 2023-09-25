@@ -97,35 +97,54 @@ func (a *App) Start(ctx context.Context) error {
 	rpcCli := rpcClient.New(a.cfg.RPCConfig)
 
 	// TODO: use redis
-	valCache, err := cache.New[string, int64](defaultCacheSize)
+	valCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
 		return err
 	}
-	valCache.SetCompareFn(lessInt64)
 
-	valCommissionCache, err := cache.New[string, int64](defaultCacheSize)
+	valCommissionCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
 		return err
 	}
-	valCommissionCache.SetCompareFn(lessInt64)
 
-	valDescriptionCache, err := cache.New[string, int64](defaultCacheSize)
+	valDescriptionCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64)) //nolint:lll
 	if err != nil {
 		return err
 	}
-	valDescriptionCache.SetCompareFn(lessInt64)
 
-	valInfoCache, err := cache.New[string, int64](defaultCacheSize)
+	valInfoCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
 		return err
 	}
-	valInfoCache.SetCompareFn(lessInt64)
 
-	valStatusCache, err := cache.New[string, int64](defaultCacheSize)
+	valStatusCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
 		return err
 	}
-	valStatusCache.SetCompareFn(lessInt64)
+
+	// collect data only from bigger height
+	tallyCache, err := cache.New[uint64, int64](defaultCacheSize, cache.WithCompareFunc[uint64, int64](lessInt64))
+	if err != nil {
+		return err
+	}
+
+	// collect data only from earlier height
+	accCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](greaterInt64))
+	if err != nil {
+		return err
+	}
+
+	if a.cfg.MetricsEnabled {
+		cache.RegisterMetrics("spacebox_crawler")
+
+		valCache.Patch(cache.WithMetrics[string, int64]("validators"))
+		valCommissionCache.Patch(cache.WithMetrics[string, int64]("validators_commission"))
+		valDescriptionCache.Patch(cache.WithMetrics[string, int64]("validators_description"))
+		valInfoCache.Patch(cache.WithMetrics[string, int64]("validators_info"))
+		valStatusCache.Patch(cache.WithMetrics[string, int64]("validators_status"))
+		tallyCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
+		accCache.Patch(cache.WithMetrics[string, int64]("account"))
+	}
 
 	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
 		broker.WithValidatorCache(valCache),
@@ -139,21 +158,6 @@ func (a *App) Start(ctx context.Context) error {
 	cdc, amino := MakeEncodingConfig()
 	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
 	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
-
-	// collect data only from bigger height
-	tallyCache, err := cache.New[uint64, int64](defaultCacheSize)
-	if err != nil {
-		return err
-	}
-	tallyCache.SetCompareFn(lessInt64)
-
-	// collect data only from earlier height
-	accCache, err := cache.New[string, int64](defaultCacheSize)
-	if err != nil {
-		return err
-	}
-	// exists height > new height
-	accCache.SetCompareFn(greaterInt64)
 
 	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, tallyCache, accCache)
 	ts := ts.NewToStorage()
