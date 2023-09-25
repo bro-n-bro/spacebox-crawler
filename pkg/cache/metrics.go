@@ -9,7 +9,7 @@ import (
 
 var (
 	instanceHitMissMetric *prometheus.CounterVec
-	cacheLenghtMetric     *prometheus.GaugeVec
+	cacheLengthMetric     *prometheus.GaugeVec
 	hitMissMetric         *prometheus.CounterVec
 
 	once sync.Once
@@ -23,7 +23,7 @@ func RegisterMetrics(namespace string) {
 			Help:      "Hit miss cache metric by instance",
 		}, []string{"instance", "action"})
 
-		cacheLenghtMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		cacheLengthMetric = promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Name:      "cache_length",
 			Help:      "Items in cache by instance",

@@ -6,7 +6,7 @@ func WithMetrics[K, V comparable](instanceName string) Option[K, V] {
 	return func(c *Cache[K, V]) {
 		c.specialMetric = instanceHitMissMetric
 		c.globalMetric = hitMissMetric
-		c.lengthMetric = cacheLenghtMetric
+		c.lengthMetric = cacheLengthMetric
 		c.instance = instanceName
 	}
 }
