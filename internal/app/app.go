@@ -159,7 +159,7 @@ func (a *App) Start(ctx context.Context) error {
 	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
 	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
 
-	modules := modules.BuildModules(b, a.log, grpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom,
+	modules := modules.BuildModules(b, a.log, grpcCli, rpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom,
 		tallyCache, accCache)
 
 	ts := ts.NewToStorage()

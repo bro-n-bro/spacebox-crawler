@@ -3,6 +3,7 @@ package distribution
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,10 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
+var (
+	errNotFoundTxResult = errors.New("not found tx result by index")
+)
+
 func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
 	if len(tx.Logs) == 0 {
 		return nil
@@ -20,7 +25,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 	switch msg := cosmosMsg.(type) {
 	case *distrtypes.MsgWithdrawDelegatorReward:
-		coin, err := m.findCoinFromEventByValidator(tx, index, msg.ValidatorAddress)
+		coin, err := m.findCoinFromEventByValidator(ctx, tx, index, msg.ValidatorAddress)
 		if err != nil {
 			return err
 		}
@@ -76,7 +81,13 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	return nil
 }
 
-func (m *Module) findCoinFromEventByValidator(tx *types.Tx, index int, validatorAddress string) (types.Coins, error) {
+func (m *Module) findCoinFromEventByValidator(
+	ctx context.Context,
+	tx *types.Tx,
+	index int,
+	validatorAddress string,
+) (types.Coins, error) {
+
 	found := false
 	coins := types.Coins{}
 
@@ -97,11 +108,6 @@ Events:
 				var err error
 				coins, err = utils.ParseCoinsFromString(attr.Value)
 				if err != nil {
-					m.log.Error().
-						Err(err).
-						Str("tx_hash", tx.TxHash).
-						Msg("failed to convert string to coin by MsgWithdrawDelegatorReward")
-
 					return coins, fmt.Errorf("%w failed to convert %s string to coin", err, attr.Value)
 				}
 
@@ -111,17 +117,70 @@ Events:
 	}
 
 	if !found {
-		m.log.Error().
-			Str("tx_hash", tx.TxHash).
-			Int64("height", tx.Height).
-			Str("event", distrtypes.EventTypeWithdrawRewards).
-			Msg("not found event in tx")
+		var err error
+		coins, err = m.findWithdrawRewardInTxEvents(ctx, validatorAddress, index, tx)
+		if err != nil {
+			m.log.Error().
+				Str("tx_hash", tx.TxHash).
+				Int64("height", tx.Height).
+				Str("event", distrtypes.EventTypeWithdrawRewards).
+				Msg("not found event in tx")
 
-		return coins, fmt.Errorf("%w: %s inside tx with hash %s", types.ErrNoEventFound,
-			distrtypes.EventTypeWithdrawRewards, tx.TxHash)
+			return coins, fmt.Errorf("%w: %s inside tx with hash %s", types.ErrNoEventFound,
+				distrtypes.EventTypeWithdrawRewards, tx.TxHash)
+		}
 	}
 
 	return coins, nil
+}
+
+func (m *Module) findWithdrawRewardInTxEvents(
+	ctx context.Context,
+	address string,
+	msgIndex int,
+	tx *types.Tx,
+) (types.Coins, error) {
+
+	txResults, err := m.rpcCli.GetTxResults(ctx, tx.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(txResults)-1 < msgIndex {
+		return nil, fmt.Errorf("%w: %d", errNotFoundTxResult, msgIndex)
+	}
+
+	for _, event := range txResults[msgIndex].Events {
+		if event.Type != distrtypes.EventTypeWithdrawRewards {
+			continue
+		}
+
+		for _, attr := range event.Attributes {
+			if (attr.Key == distrtypes.AttributeKeyValidator || attr.Key == base64KeyValidator) &&
+				compareValueInBase64(address, attr.Value) {
+
+				for _, attr2 := range event.Attributes {
+					if attr2.Key == sdk.AttributeKeyAmount || attr2.Key == base64KeyAmount {
+						coins, err := utils.ParseCoinsFromString(attr.Value)
+						if err != nil {
+							//nolint:lll
+							m.log.Error().
+								Err(err).
+								Str("tx_hash", tx.TxHash).
+								Msg("failed to convert string to coin by MsgWithdrawDelegatorReward")
+
+							//nolint:lll
+							return coins, fmt.Errorf("%w failed to convert %s string to coin", err, attr.Value)
+						}
+
+						return coins, nil
+					}
+				}
+			}
+		}
+	}
+
+	return nil, types.ErrNoEventFound
 }
 
 func compareValueInBase64(source, target string) bool {

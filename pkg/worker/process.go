@@ -185,7 +185,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 
 	g.Go(func() error {
 		return w.withMetrics("validators", func() error {
-			return w.processValidators(ctx2, vals)
+			return w.processValidators(ctx2, height, vals)
 		})
 	})
 	g.Go(func() error {
@@ -250,10 +250,15 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 	return nil
 }
 
-func (w *Worker) processValidators(ctx context.Context, vals *cometbftcoreypes.ResultValidators) error {
+func (w *Worker) processValidators(ctx context.Context, height int64, vals *cometbftcoreypes.ResultValidators) error {
 	for _, m := range validatorsHandlers {
 		if err := m.HandleValidators(ctx, vals); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleValidators error: %v", err)
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, height).
+				Str(keyModule, m.Name()).
+				Msgf("HandleValidators error: %v", err)
+
 			return err
 		}
 	}
