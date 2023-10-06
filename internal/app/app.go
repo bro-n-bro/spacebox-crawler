@@ -38,6 +38,10 @@ import (
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
 	interchaintypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
+	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
+	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
+	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 
@@ -53,6 +57,7 @@ import (
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
+	_ "github.com/bro-n-bro/spacebox-crawler/types/bostrom"
 	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
 )
 
@@ -282,7 +287,14 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	interchaintypes.RegisterInterfaces(ir)
 	liquiditytypes.RegisterInterfaces(ir)
 
+	// bostrom
+	graphtypes.RegisterInterfaces(ir)
+	dmntypes.RegisterInterfaces(ir)
+	gridtypes.RegisterInterfaces(ir)
+	resourcestypes.RegisterInterfaces(ir)
+
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
+	// graph.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	liquiditytypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
