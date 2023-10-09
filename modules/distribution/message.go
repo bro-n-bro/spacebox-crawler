@@ -27,7 +27,10 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	case *distrtypes.MsgWithdrawDelegatorReward:
 		coin, err := m.findCoinFromEventByValidator(ctx, tx, index, msg.ValidatorAddress)
 		if err != nil {
-			return err
+			if !errors.Is(err, types.ErrNoEventFound) {
+				return err
+			}
+			// pass zero coins
 		}
 
 		return m.broker.PublishDelegationRewardMessage(ctx, model.DelegationRewardMessage{
