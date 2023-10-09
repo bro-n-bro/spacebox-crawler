@@ -236,7 +236,7 @@ Publish:
 	}
 
 	// Update the current delegations
-	if err = m.updateDelegations(ctx, tx.Height, msg.DelegatorAddress, msg.ValidatorSrcAddress); err != nil {
+	if err := m.updateDelegations(ctx, tx.Height, msg.DelegatorAddress, msg.ValidatorSrcAddress); err != nil {
 		return errors.Wrap(err, "update delegations")
 	}
 

@@ -123,7 +123,7 @@ Events:
 		var err error
 		coins, err = m.findWithdrawRewardInTxEvents(ctx, validatorAddress, index, tx)
 		if err != nil {
-			m.log.Error().
+			m.log.Warn().
 				Str("tx_hash", tx.TxHash).
 				Int64("height", tx.Height).
 				Str("event", distrtypes.EventTypeWithdrawRewards).
