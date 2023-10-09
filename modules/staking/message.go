@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -235,7 +236,12 @@ Publish:
 	}
 
 	// Update the current delegations
-	return m.updateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress)
+	if err = m.updateDelegations(ctx, tx.Height, msg.DelegatorAddress, msg.ValidatorSrcAddress); err != nil {
+		return errors.Wrap(err, "update delegations")
+	}
+
+	// check the delegations for the current validator
+	return m.updateOrDisableDelegation(ctx, msg.DelegatorAddress, msg.ValidatorDstAddress, tx.Height)
 }
 
 // handleMsgUndelegate handles MsgUndelegate and publishes data to broker.
@@ -294,7 +300,7 @@ PublishMessage:
 	}
 
 	// Update the current delegations
-	return m.updateDelegationsAndReplaceExisting(ctx, tx.Height, msg.DelegatorAddress)
+	return m.updateDelegations(ctx, tx.Height, msg.DelegatorAddress, msg.ValidatorAddress)
 }
 
 // handleMsgDelegate handles a MsgDelegate and publish the delegation to broker.
@@ -312,33 +318,8 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 		return err
 	}
 
-	respPb, err := m.client.StakingQueryClient.Delegation(
-		ctx,
-		&stakingtypes.QueryDelegationRequest{
-			DelegatorAddr: msg.DelegatorAddress,
-			ValidatorAddr: msg.ValidatorAddress,
-		},
-		grpcClient.GetHeightRequestHeader(tx.Height),
-	)
-	if err != nil {
-		s, ok := status.FromError(err)
-		if !ok || s.Code() != codes.NotFound {
-			return err
-		}
-	}
-
-	var coin model.Coin
-	if err == nil {
-		coin = m.tbM.MapCoin(types.NewCoinFromCdk(respPb.DelegationResponse.Balance))
-	}
-
-	if err = m.broker.PublishDelegation(ctx, model.Delegation{
-		OperatorAddress:  msg.ValidatorAddress,
-		DelegatorAddress: msg.DelegatorAddress,
-		Height:           tx.Height,
-		Coin:             coin,
-	}); err != nil {
-		return err
+	if err := m.updateOrDisableDelegation(ctx, msg.DelegatorAddress, msg.ValidatorAddress, tx.Height); err != nil {
+		return errors.Wrap(err, "update or disable delegation")
 	}
 
 	return nil
@@ -383,18 +364,12 @@ func (m *Module) handleEditValidator(
 	return nil
 }
 
-// UpdateDelegationsAndReplaceExisting updates the delegations of the given delegator by querying them at the
+// updateDelegations updates the delegations of the given delegator by querying them at the
 // required height, and then publishes them to the broker by replacing all existing ones.
-func (m *Module) updateDelegationsAndReplaceExisting(
-	ctx context.Context,
-	height int64,
-	delegator string) error {
-	// TODO:
-	// Remove existing delegations
-	// if err := broker.DeleteDelegatorDelegations(delegator); err != nil {
-	//	return err
-	// }
-
+//
+// also checks the delegation with the current validator address,
+// and publishes disabled delegation to the broker if it doesn't exist.
+func (m *Module) updateDelegations(ctx context.Context, height int64, delegator, validator string) error {
 	// Get the delegations
 	respPb, err := m.client.StakingQueryClient.DelegatorDelegations(
 		ctx,
@@ -406,8 +381,13 @@ func (m *Module) updateDelegationsAndReplaceExisting(
 		return err
 	}
 
+	var delegationWithCurValidatorExists bool
+
 	for _, delegation := range respPb.DelegationResponses {
-		// TODO: test IT
+		if delegation.Delegation.ValidatorAddress == validator {
+			delegationWithCurValidatorExists = true
+		}
+
 		if err = m.broker.PublishDelegation(ctx, model.Delegation{
 			OperatorAddress:  delegation.Delegation.ValidatorAddress,
 			DelegatorAddress: delegation.Delegation.DelegatorAddress,
@@ -418,7 +398,49 @@ func (m *Module) updateDelegationsAndReplaceExisting(
 		}
 	}
 
-	return err
+	if !delegationWithCurValidatorExists {
+		if err = m.updateOrDisableDelegation(ctx, delegator, validator, height); err != nil {
+			return errors.Wrap(err, "disable delegation")
+		}
+	}
+
+	return nil
+}
+
+// updateOrDisableDelegation checks the delegation with the given validator address
+// if it exists, publishes updated delegation to the broker, otherwise publishes disabled delegation.
+func (m *Module) updateOrDisableDelegation(ctx context.Context, delegatorAddr, operatorAddr string, height int64) error {
+	respPb, err := m.client.StakingQueryClient.Delegation(ctx,
+		&stakingtypes.QueryDelegationRequest{
+			DelegatorAddr: delegatorAddr,
+			ValidatorAddr: operatorAddr,
+		},
+		grpcClient.GetHeightRequestHeader(height),
+	)
+	if err != nil {
+		s, ok := status.FromError(err)
+		if !ok || s.Code() != codes.NotFound {
+			return err
+		}
+
+		return m.broker.PublishDisabledDelegation(ctx, model.Delegation{
+			OperatorAddress:  operatorAddr,
+			DelegatorAddress: delegatorAddr,
+			Coin:             model.Coin{}, // zero coin
+			Height:           height,
+		})
+	}
+
+	if err = m.broker.PublishDelegation(ctx, model.Delegation{
+		OperatorAddress:  operatorAddr,
+		DelegatorAddress: delegatorAddr,
+		Height:           height,
+		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(respPb.DelegationResponse.Balance)),
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // handleMsgCancelUnbondingDelegation handles MsgCancelUnbondingDelegation
