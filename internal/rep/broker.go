@@ -40,6 +40,7 @@ type Broker interface {
 	PublishUnbondingDelegationMessage(context.Context, model.UnbondingDelegationMessage) error
 	PublishStakingParams(ctx context.Context, sp model.StakingParams) error
 	PublishDelegation(ctx context.Context, d model.Delegation) error
+	PublishDisabledDelegation(ctx context.Context, d model.Delegation) error
 	PublishDelegationMessage(ctx context.Context, dm model.DelegationMessage) error
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
 	PublishRedelegation(context.Context, model.Redelegation) error
