@@ -5,7 +5,6 @@ import (
 )
 
 func init() {
-
 	registerTypes([]protoType{
 		{(*gridtypes.Params)(nil), "cyber.grid.v1beta1.Params"},
 		{(*gridtypes.Route)(nil), "cyber.grid.v1beta1.Route"},

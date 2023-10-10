@@ -9,6 +9,7 @@ var (
 	Block                              Topic = newTopic("block")
 	CancelUnbondingDelegationMessage   Topic = newTopic("cancel_unbonding_delegation_message")
 	CommunityPool                      Topic = newTopic("community_pool")
+	CyberlinkMessage                   Topic = newTopic("cyberlink_message")
 	CreateValidatorMessage             Topic = newTopic("create_validator_message")
 	DistributionCommission             Topic = newTopic("distribution_commission")
 	DistributionReward                 Topic = newTopic("distribution_reward")
@@ -62,7 +63,8 @@ var (
 	ValidatorVotingPower               Topic = newTopic("validator_voting_power")
 	VoteWeightedMessage                Topic = newTopic("vote_weighted_message")
 	WithdrawValidatorCommissionMessage Topic = newTopic("withdraw_validator_commission_message")
-	authTopics                               = Topics{Account}
+
+	authTopics = Topics{Account}
 
 	bankTopics = Topics{Supply, AccountBalance, SendMessage, MultiSendMessage}
 
@@ -92,6 +94,8 @@ var (
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
 
 	liquidityTopics = Topics{Swap, LiquidityPool}
+
+	graphTopics = Topics{CyberlinkMessage}
 )
 
 type (

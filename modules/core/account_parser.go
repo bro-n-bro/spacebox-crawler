@@ -13,6 +13,7 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	graph "github.com/cybercongress/go-cyber/x/graph/types"
 )
 
 // CosmosMessageAddressesParser represents a MessageAddressesParser that parses a
@@ -28,6 +29,8 @@ var CosmosMessageAddressesParser = JoinMessageParsers(
 	StakingMessagesParser,
 	FeeGrantMessagesParser,
 	AuthzMessagesParser,
+	GraphMessagesParser,
+
 	DefaultMessagesParser,
 )
 
@@ -244,6 +247,21 @@ func AuthzMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
 		return []string{msg.Grantee, msg.Granter}
 	case *authztypes.MsgExec:
 		return []string{msg.Grantee}
+	}
+
+	return nil
+}
+
+// GraphMessagesParser returns the list of all the accounts involved in the given
+// message if it's related to the x/graph module
+func GraphMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
+	switch msg := cosmosMsg.(type) {
+	case *graph.MsgCyberlink:
+		resp := make([]string, 0, len(msg.Links)*2)
+		for _, link := range msg.Links {
+			resp = append(resp, link.From, link.To)
+		}
+		return resp
 	}
 
 	return nil

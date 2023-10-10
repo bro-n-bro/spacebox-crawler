@@ -5,7 +5,6 @@ import (
 )
 
 func init() {
-
 	registerTypes([]protoType{
 		{(*resourcestypes.Params)(nil), "cyber.resources.v1beta1.Params"},
 

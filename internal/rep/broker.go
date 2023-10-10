@@ -91,4 +91,7 @@ type Broker interface {
 	// liquidity
 	PublishSwap(context.Context, model.Swap) error
 	PublishLiquidityPool(context.Context, model.LiquidityPool) error
+
+	// graph
+	PublishCyberlinkMessage(context.Context, model.CyberlinkMessage) error
 }
