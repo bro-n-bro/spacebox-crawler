@@ -255,7 +255,7 @@ func AuthzMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
 // GraphMessagesParser returns the list of all the accounts involved in the given
 // message if it's related to the x/graph module
 func GraphMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) []string {
-	switch msg := cosmosMsg.(type) {
+	switch msg := cosmosMsg.(type) { //nolint:gocritic
 	case *graph.MsgCyberlink:
 		resp := make([]string, 0, len(msg.Links)*2)
 		for _, link := range msg.Links {

@@ -16,9 +16,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 		return nil
 	}
 
-	switch msg := cosmosMsg.(type) {
+	switch msg := cosmosMsg.(type) { //nolint:gocritic
 	case *graph.MsgCyberlink:
-
 		for _, link := range msg.Links {
 			if err := m.broker.PublishCyberlinkMessage(ctx, model.CyberlinkMessage{
 				ParticleFrom: link.From,
