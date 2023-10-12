@@ -190,6 +190,8 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, ibcTopics.ToStringSlice()...)
 		case "liquidity":
 			topics = append(topics, liquidityTopics.ToStringSlice()...)
+		case "graph":
+			topics = append(topics, graphTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Msgf("unknown module in config: %v", m)
 			continue
