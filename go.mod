@@ -3,6 +3,8 @@ module github.com/bro-n-bro/spacebox-crawler
 go 1.21
 
 replace (
+	github.com/bro-n-bro/spacebox v1.1.3 => /Users/dzpm/projects/bronbro/spacebox
+
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.47.3
 
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.

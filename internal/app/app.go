@@ -294,7 +294,6 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	resourcestypes.RegisterInterfaces(ir)
 
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
-	// graph.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	liquiditytypes.RegisterLegacyAminoCodec(amino.LegacyAmino)

@@ -2,7 +2,6 @@ package graph
 
 import (
 	"context"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	graph "github.com/cybercongress/go-cyber/x/graph/types"
@@ -23,7 +22,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 				ParticleFrom: link.From,
 				ParticleTo:   link.To,
 				Neuron:       msg.Neuron,
-				Timestamp:    time.Now(), // TODO: get timestamp from ...
+				Timestamp:    tx.Timestamp,
 				TxHash:       tx.TxHash,
 				Height:       tx.Height,
 				MsgIndex:     int64(index),
