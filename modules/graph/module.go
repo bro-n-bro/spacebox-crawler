@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	keyModule  = "module"
 	moduleName = "graph"
 )
 
@@ -19,16 +20,19 @@ var (
 	_ types.MessageHandler = &Module{}
 )
 
-type Module struct {
-	log    *zerolog.Logger
-	broker broker
-	tbM    tb.ToBroker
-	cdc    codec.Codec
-}
+type (
+	Module struct {
+		log    *zerolog.Logger
+		broker broker
+		tbM    tb.ToBroker
+		cdc    codec.Codec
+	}
+)
 
 func New(b broker, tbM tb.ToBroker, cdc codec.Codec) *Module {
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", moduleName).Logger()
+	l := zerolog.New(os.Stderr).
+		Output(zerolog.ConsoleWriter{Out: os.Stderr}).
+		With().Timestamp().Str(keyModule, moduleName).Logger()
 
 	return &Module{
 		log:    &l,

@@ -7,5 +7,7 @@ import (
 )
 
 type broker interface {
-	PublishCyberlinkMessage(context.Context, model.CyberlinkMessage) error
+	PublishCyberLink(context.Context, model.CyberLink) error
+	PublishCyberLinkMessage(context.Context, model.CyberLinkMessage) error
+	PublishParticles(context.Context, model.Particles) error
 }

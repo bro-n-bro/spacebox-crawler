@@ -7,23 +7,23 @@ import (
 )
 
 type Broker interface {
-	// auth
+	// auth module
 	PublishAccount(context.Context, model.Account) error
 
-	// core
+	// core module
 	PublishBlock(context.Context, model.Block) error
 	PublishMessage(ctx context.Context, message model.Message) error
 	PublishTransaction(ctx context.Context, tx model.Transaction) error
 	PublishValidatorPrecommit(ctx context.Context, vp model.ValidatorPrecommit) error
 	PublishValidatorVotingPower(ctx context.Context, vp model.ValidatorVotingPower) error
 
-	// bank
+	// bank module
 	PublishSupply(context.Context, model.Supply) error
 	PublishSendMessage(context.Context, model.SendMessage) error
 	PublishMultiSendMessage(ctx context.Context, msm model.MultiSendMessage) error
 	PublishAccountBalance(ctx context.Context, ab model.AccountBalance) error
 
-	// distribution
+	// distribution module
 	PublishDelegationReward(context.Context, model.DelegationReward) error
 	PublishDelegationRewardMessage(context.Context, model.DelegationRewardMessage) error
 	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
@@ -34,7 +34,7 @@ type Broker interface {
 	PublishDistributionReward(ctx context.Context, reward model.DistributionReward) error
 	PublishWithdrawValidatorCommissionMessage(_ context.Context, wvcm model.WithdrawValidatorCommissionMessage) error
 
-	// staking
+	// staking module
 	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
 	PublishUnbondingDelegation(context.Context, model.UnbondingDelegation) error
 	PublishUnbondingDelegationMessage(context.Context, model.UnbondingDelegationMessage) error
@@ -83,16 +83,17 @@ type Broker interface {
 	PublishUnjailMessage(context.Context, model.UnjailMessage) error
 	PublishHandleValidatorSignature(ctx context.Context, msg model.HandleValidatorSignature) error
 
-	// ibc
+	// ibc module
 	PublishTransferMessage(context.Context, model.TransferMessage) error
 	PublishAcknowledgementMessage(context.Context, model.AcknowledgementMessage) error
 	PublishReceivePacketMessage(context.Context, model.RecvPacketMessage) error
 	PublishDenomTrace(context.Context, model.DenomTrace) error
 
-	// liquidity
+	// liquidity module
 	PublishSwap(context.Context, model.Swap) error
 	PublishLiquidityPool(context.Context, model.LiquidityPool) error
 
-	// graph
-	PublishCyberlinkMessage(context.Context, model.CyberlinkMessage) error
+	// graph module
+	PublishCyberLink(context.Context, model.CyberLink) error
+	PublishCyberLinkMessage(context.Context, model.CyberLinkMessage) error
 }

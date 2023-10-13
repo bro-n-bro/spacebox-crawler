@@ -7,6 +7,7 @@ type (
 		t    proto.Message
 		name string
 	}
+
 	protoFile struct {
 		filename   string
 		descriptor []byte
