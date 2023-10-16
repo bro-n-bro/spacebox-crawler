@@ -5,16 +5,18 @@ import (
 	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
 const (
 	MsgErrJSONMarshalFail   = "json marshal fail: %w"
-	MsgErrCreateProducer    = "cant create producer connection to broker: %w "
-	MsgErrCreateAdminClient = "cant create admin client connection to broker: %w"
-	MsgErrCreateTopics      = "cant create topics in broker: %w"
-	MsgErrCreatePartitions  = "cant create partitions in broker: %w"
+	MsgErrCreateProducer    = "can't create producer connection to broker: %w "
+	MsgErrCreateAdminClient = "can't create admin client connection to broker: %w"
+	MsgErrCreateTopics      = "can't create topics in broker: %w"
+	MsgErrProduceTopic      = "can't produce topic: %w"
+	MsgErrCreatePartitions  = "can't create partitions in broker: %w"
 )
 
 type (
@@ -135,6 +137,20 @@ func (b *Broker) Stop(ctx context.Context) error {
 	return nil
 }
 
+// marshalAndProduce marshals the message to JSON and produces it to the kafka.
+func (b *Broker) marshalAndProduce(topic Topic, msg interface{}) error {
+	if data, err := jsoniter.Marshal(msg); err == nil {
+		if err = b.produce(topic, data); err != nil {
+			return errors.Wrap(err, MsgErrProduceTopic)
+		}
+	} else {
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
+	}
+
+	return nil
+}
+
+// produce produces the message to the kafka.
 func (b *Broker) produce(topic Topic, data []byte) error {
 	if !b.cfg.Enabled {
 		return nil
@@ -161,6 +177,7 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	return nil
 }
 
+// getCurrentTopics returns the list of topics based on enabled modules.
 func (b *Broker) getCurrentTopics(modules []string) []string {
 	topics := make([]string, 0)
 
@@ -192,6 +209,14 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, liquidityTopics.ToStringSlice()...)
 		case "graph":
 			topics = append(topics, graphTopics.ToStringSlice()...)
+		case "bandwidth":
+			topics = append(topics, bandwidthTopics.ToStringSlice()...)
+		case "dmn":
+			topics = append(topics, dmnTopics.ToStringSlice()...)
+		case "grid":
+			topics = append(topics, gridTopics.ToStringSlice()...)
+		case "rank":
+			topics = append(topics, rankTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Msgf("unknown module in config: %v", m)
 			continue

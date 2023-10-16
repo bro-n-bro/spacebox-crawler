@@ -22,7 +22,7 @@ type (
 		Bytes() []byte
 	}
 
-	ValidatorPrecommit struct {
+	ValidatorPreCommit struct {
 		Timestamp        time.Time
 		ValidatorAddress string
 		BlockIDFlag      uint64
@@ -33,7 +33,7 @@ type (
 		Timestamp           time.Time
 		Hash                string
 		ProposerAddress     string
-		ValidatorPrecommits []ValidatorPrecommit
+		ValidatorPreCommits []ValidatorPreCommit
 		Evidence            cometbfttypes.EvidenceData
 		TxNum               int
 		TotalGas            uint64
@@ -85,20 +85,20 @@ func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *B
 	)
 
 	if blk.Block.LastCommit != nil {
-		res.ValidatorPrecommits = NewValidatorPrecommitsFromTmSignatures(blk.Block.LastCommit.Signatures)
+		res.ValidatorPreCommits = NewValidatorPreCommitsFromTmSignatures(blk.Block.LastCommit.Signatures)
 	}
 
 	return res
 }
 
-func NewValidatorPrecommitsFromTmSignatures(sigs []cometbfttypes.CommitSig) []ValidatorPrecommit {
-	res := make([]ValidatorPrecommit, 0, len(sigs))
+func NewValidatorPreCommitsFromTmSignatures(sigs []cometbfttypes.CommitSig) []ValidatorPreCommit {
+	res := make([]ValidatorPreCommit, 0, len(sigs))
 	for _, sig := range sigs {
 		if len(sig.Signature) == 0 {
 			continue
 		}
 
-		res = append(res, ValidatorPrecommit{
+		res = append(res, ValidatorPreCommit{
 			ValidatorAddress: sdk.ConsAddress(sig.ValidatorAddress).String(),
 			BlockIDFlag:      uint64(sig.BlockIDFlag),
 			Timestamp:        sig.Timestamp,

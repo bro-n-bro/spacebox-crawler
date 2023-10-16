@@ -14,7 +14,7 @@ type Broker interface {
 	PublishBlock(context.Context, model.Block) error
 	PublishMessage(ctx context.Context, message model.Message) error
 	PublishTransaction(ctx context.Context, tx model.Transaction) error
-	PublishValidatorPrecommit(ctx context.Context, vp model.ValidatorPrecommit) error
+	PublishValidatorPreCommit(ctx context.Context, vp model.ValidatorPreCommit) error
 	PublishValidatorVotingPower(ctx context.Context, vp model.ValidatorVotingPower) error
 
 	// bank module
@@ -80,7 +80,7 @@ type Broker interface {
 
 	// slashing module
 	PublishSlashingParams(context.Context, model.SlashingParams) error
-	PublishUnjailMessage(context.Context, model.UnjailMessage) error
+	PublishUnJailMessage(context.Context, model.UnjailMessage) error
 	PublishHandleValidatorSignature(ctx context.Context, msg model.HandleValidatorSignature) error
 
 	// ibc module
@@ -96,4 +96,17 @@ type Broker interface {
 	// graph module
 	PublishCyberLink(context.Context, model.CyberLink) error
 	PublishCyberLinkMessage(context.Context, model.CyberLinkMessage) error
+	PublishParticle(context.Context, model.Particle) error
+
+	// bandwidth module
+	PublishBandwidthParams(context.Context, model.BandwidthParams) error
+
+	// dmn module
+	PublishDMNParams(context.Context, model.DMNParams) error
+
+	// grid module
+	PublishGridParams(context.Context, model.GridParams) error
+
+	// rank module
+	PublishRankParams(context.Context, model.RankParams) error
 }

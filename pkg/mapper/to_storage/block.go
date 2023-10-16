@@ -6,7 +6,7 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 )
 
-func (ts ToStorage) NewBlock(height int64) *model.Block {
+func (ts *ToStorage) NewBlock(height int64) *model.Block {
 	return &model.Block{
 		Height:  height,
 		Created: time.Now(),

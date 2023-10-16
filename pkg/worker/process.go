@@ -94,13 +94,13 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 			w.log.Error().
 				Err(err).
 				Int64(keyHeight, height).
-				Msgf("cant set processed status in storage %v:", err)
+				Msgf("can't set processed status in storage %v:", err)
 		}
 
 		return
 	}
 
-	w.log.Info().Int("worker_number", workerIndex).Msgf("Parse block № %d", height)
+	w.log.Info().Int("worker_number", workerIndex).Msgf("parse block № %d", height)
 
 	g, ctx2 := errgroup.WithContext(ctx)
 
@@ -121,7 +121,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 			Int("worker_number", workerIndex).
 			Int64("block_height", height).
 			Dur("get_block_dur", time.Since(_blockDur)).
-			Msg("Get block info")
+			Msg("get block info")
 		return nil
 	})
 
@@ -157,7 +157,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	})
 
 	if err := g.Wait(); err != nil {
-		w.log.Error().Int64(keyHeight, height).Err(err).Msgf("processHeight block got error: %v", err)
+		w.log.Error().Int64(keyHeight, height).Err(err).Msgf("processHeight block got error")
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
 		return
 	}
@@ -166,7 +166,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 
 	txsRes, err := w.grpcClient.Txs(ctx, block.Block.Data.Txs)
 	if err != nil {
-		w.log.Error().Err(err).Msgf("get txs error: %v", err)
+		w.log.Error().Err(err).Msgf("get txs error")
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
 		return
 	}
@@ -217,7 +217,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	}
 
 	if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
-		w.log.Error().Err(err).Int64(keyHeight, height).Msgf("cant set processed status in storage %v:", err)
+		w.log.Error().Err(err).Int64(keyHeight, height).Msgf("can't set processed status in storage %v:", err)
 	}
 }
 
@@ -244,6 +244,7 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -325,6 +326,7 @@ func (w *Worker) processBeginBlockerEvents(ctx context.Context, events types.Blo
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -335,5 +337,6 @@ func (w *Worker) processEndBlockEvents(ctx context.Context, events types.Blocker
 			return err
 		}
 	}
+
 	return nil
 }

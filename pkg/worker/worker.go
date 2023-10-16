@@ -43,6 +43,7 @@ type (
 		modules []types.Module
 		cfg     Config
 	}
+
 	metrics struct {
 		durMetric *prometheus.HistogramVec
 	}

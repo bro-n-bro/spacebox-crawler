@@ -169,13 +169,12 @@ func (a *App) Start(ctx context.Context) error {
 	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
 	server := server.New(a.cfg.Server, s, *a.log)
 
-	MakeSdkConfig(a.cfg, sdk.GetConfig())
+	MakeSDKConfig(a.cfg, sdk.GetConfig())
 
-	a.cmps = append(
-		a.cmps,
+	a.cmps = append(a.cmps,
 		cmp{s, "storage"},
-		cmp{grpcCli, "grpcClient"},
-		cmp{rpcCli, "rpcClient"},
+		cmp{grpcCli, "grpc_client"},
+		cmp{rpcCli, "rpc_client"},
 		cmp{b, "broker"},
 		cmp{w, "worker"},
 		cmp{server, "server"},
@@ -185,7 +184,7 @@ func (a *App) Start(ctx context.Context) error {
 
 	go func() {
 		for _, c := range a.cmps {
-			a.log.Info().Msgf("%v is starting", c.Name)
+			a.log.Info().Msgf("%s is starting", c.Name)
 
 			if err := c.Service.Start(ctx); err != nil {
 				a.log.Error().Err(err).Msgf(FmtCannotStart, c.Name)
@@ -196,6 +195,7 @@ func (a *App) Start(ctx context.Context) error {
 
 			a.log.Info().Msgf("%v started", c.Name)
 		}
+
 		okCh <- struct{}{}
 	}()
 
@@ -205,7 +205,7 @@ func (a *App) Start(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-okCh:
-		a.log.Info().Msg("Application started!")
+		a.log.Info().Msg("application started")
 		return nil
 	}
 }
@@ -237,7 +237,7 @@ func (a *App) Stop(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-okCh:
-		a.log.Info().Msg("Application stopped!")
+		a.log.Info().Msg("application stopped")
 		return nil
 	}
 }
@@ -301,9 +301,9 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	return codec.NewProtoCodec(ir), amino
 }
 
-// MakeSdkConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
+// MakeSDKConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
 // inside the configuration
-func MakeSdkConfig(cfg Config, sdkConfig *sdk.Config) {
+func MakeSDKConfig(cfg Config, sdkConfig *sdk.Config) {
 	prefix := cfg.ChainPrefix
 	sdkConfig.SetBech32PrefixForAccount(
 		prefix,

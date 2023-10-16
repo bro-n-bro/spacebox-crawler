@@ -7,6 +7,7 @@ var (
 	AccountBalance                     Topic = newTopic("account_balance")
 	AnnualProvision                    Topic = newTopic("annual_provision")
 	Block                              Topic = newTopic("block")
+	BandwidthParams                    Topic = newTopic("bandwidth_params")
 	CancelUnbondingDelegationMessage   Topic = newTopic("cancel_unbonding_delegation_message")
 	CommunityPool                      Topic = newTopic("community_pool")
 	CyberLinkMessage                   Topic = newTopic("cyberlink_message")
@@ -20,17 +21,20 @@ var (
 	Delegation                         Topic = newTopic("delegation")
 	DelegationMessage                  Topic = newTopic("delegation_message")
 	DenomTrace                         Topic = newTopic("denom_trace")
+	DMNParams                          Topic = newTopic("dmn_params")
 	EditValidatorMessage               Topic = newTopic("edit_validator_message")
 	ExecMessage                        Topic = newTopic("exec_message")
 	FeeAllowance                       Topic = newTopic("fee_allowance")
 	GovParams                          Topic = newTopic("gov_params")
 	GrantMessage                       Topic = newTopic("grant_message")
 	GrantAllowanceMessage              Topic = newTopic("grant_allowance_message")
+	GridParams                         Topic = newTopic("grid_params")
 	HandleValidatorSignature           Topic = newTopic("handle_validator_signature")
 	LiquidityPool                      Topic = newTopic("liquidity_pool")
 	Message                            Topic = newTopic("message")
 	MintParams                         Topic = newTopic("mint_params")
 	MultiSendMessage                   Topic = newTopic("multisend_message")
+	Particle                           Topic = newTopic("particle")
 	Proposal                           Topic = newTopic("proposal")
 	ProposalVoteMessage                Topic = newTopic("proposal_vote_message")
 	ProposalTallyResult                Topic = newTopic("proposal_tally_result")
@@ -38,6 +42,7 @@ var (
 	ProposalDepositMessage             Topic = newTopic("proposal_deposit_message")
 	ProposerReward                     Topic = newTopic("proposer_reward")
 	RevokeAllowanceMessage             Topic = newTopic("revoke_allowance_message")
+	RankParams                         Topic = newTopic("rank_params")
 	Redelegation                       Topic = newTopic("redelegation")
 	RedelegationMessage                Topic = newTopic("redelegation_message")
 	RevokeMessage                      Topic = newTopic("revoke_message")
@@ -54,13 +59,13 @@ var (
 	TransferMessage                    Topic = newTopic("transfer_message")
 	UnbondingDelegation                Topic = newTopic("unbonding_delegation")
 	UnbondingDelegationMessage         Topic = newTopic("unbonding_delegation_message")
-	UnjailMessage                      Topic = newTopic("unjail_message")
+	UnJailMessage                      Topic = newTopic("unjail_message")
 	Validator                          Topic = newTopic("validator")
 	ValidatorInfo                      Topic = newTopic("validator_info")
 	ValidatorStatus                    Topic = newTopic("validator_status")
 	ValidatorDescription               Topic = newTopic("validator_description")
 	ValidatorCommission                Topic = newTopic("validator_commission")
-	ValidatorPrecommit                 Topic = newTopic("validator_precommit")
+	ValidatorPreCommit                 Topic = newTopic("validator_precommit")
 	ValidatorVotingPower               Topic = newTopic("validator_voting_power")
 	VoteWeightedMessage                Topic = newTopic("vote_weighted_message")
 	WithdrawValidatorCommissionMessage Topic = newTopic("withdraw_validator_commission_message")
@@ -84,19 +89,27 @@ var (
 		Delegation, DelegationMessage, CreateValidatorMessage, EditValidatorMessage, CancelUnbondingDelegationMessage,
 	}
 
-	coreTopics = Topics{Block, Transaction, Message, ValidatorPrecommit}
+	coreTopics = Topics{Block, Transaction, Message, ValidatorPreCommit}
 
 	authzTopics = Topics{AuthzGrant, GrantMessage, RevokeMessage, ExecMessage}
 
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 
-	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature, SlashingParams}
+	slashingTopics = Topics{UnJailMessage, HandleValidatorSignature, SlashingParams}
 
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
 
 	liquidityTopics = Topics{Swap, LiquidityPool}
 
-	graphTopics = Topics{CyberLink, CyberLinkMessage}
+	graphTopics = Topics{CyberLink, CyberLinkMessage, Particle}
+
+	bandwidthTopics = Topics{BandwidthParams}
+
+	dmnTopics = Topics{DMNParams}
+
+	gridTopics = Topics{GridParams}
+
+	rankTopics = Topics{RankParams}
 )
 
 type (

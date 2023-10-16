@@ -16,11 +16,13 @@ var (
 	}
 )
 
-// RLHTTPClient Rate Limited HTTP Client
-type RLHTTPClient struct {
-	client      *http.Client
-	Ratelimiter *rate.Limiter
-}
+type (
+	// RLHTTPClient Rate Limited HTTP Client
+	RLHTTPClient struct {
+		client      *http.Client
+		Ratelimiter *rate.Limiter
+	}
+)
 
 // Do dispatches the HTTP request to the network
 func (c *RLHTTPClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {

@@ -17,6 +17,11 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	bandwidthtypes "github.com/cybercongress/go-cyber/x/bandwidth/types"
+	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
+	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
+	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
+	ranktypes "github.com/cybercongress/go-cyber/x/rank/types"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -39,6 +44,11 @@ type Client struct {
 	FeegrantQueryClient     feegranttypes.QueryClient
 	IbcTransferQueryClient  ibctransfertypes.QueryClient
 	LiquidityQueryClient    liquiditytypes.QueryClient
+	GraphQueryClient        graphtypes.QueryClient
+	BandwidthQueryClient    bandwidthtypes.QueryClient
+	DMNQueryClient          dmntypes.QueryClient
+	GridQueryClient         gridtypes.QueryClient
+	RankQueryClient         ranktypes.QueryClient
 	conn                    *grpc.ClientConn
 	cfg                     Config
 }
@@ -95,6 +105,11 @@ func (c *Client) Start(ctx context.Context) error {
 	c.IbcTransferQueryClient = ibctransfertypes.NewQueryClient(grpcConn)
 	c.LiquidityQueryClient = liquiditytypes.NewQueryClient(grpcConn)
 	c.AuthQueryClient = authtypes.NewQueryClient(grpcConn)
+	c.GraphQueryClient = graphtypes.NewQueryClient(grpcConn)
+	c.BandwidthQueryClient = bandwidthtypes.NewQueryClient(grpcConn)
+	c.DMNQueryClient = dmntypes.NewQueryClient(grpcConn)
+	c.GridQueryClient = gridtypes.NewQueryClient(grpcConn)
+	c.RankQueryClient = ranktypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 

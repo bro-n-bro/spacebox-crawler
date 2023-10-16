@@ -8,6 +8,6 @@ import (
 
 type broker interface {
 	PublishSlashingParams(ctx context.Context, params model.SlashingParams) error
-	PublishUnjailMessage(ctx context.Context, msg model.UnjailMessage) error
+	PublishUnJailMessage(ctx context.Context, msg model.UnjailMessage) error
 	PublishHandleValidatorSignature(ctx context.Context, msg model.HandleValidatorSignature) error
 }

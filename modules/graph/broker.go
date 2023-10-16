@@ -9,5 +9,5 @@ import (
 type broker interface {
 	PublishCyberLink(context.Context, model.CyberLink) error
 	PublishCyberLinkMessage(context.Context, model.CyberLinkMessage) error
-	PublishParticles(context.Context, model.Particles) error
+	PublishParticle(context.Context, model.Particle) error
 }

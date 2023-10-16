@@ -37,7 +37,7 @@ func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHei
 func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan cometbftcoreypes.ResultEvent) {
 	ctx, w.stopWsListener = context.WithCancel(ctx)
 	defer w.stopWsListener()
-	w.log.Info().Msg("listening for new block events...")
+	w.log.Info().Msg("listening for new block events")
 
 	for {
 		select {
@@ -74,7 +74,7 @@ func (w *Worker) enqueueErrorBlocks(ctx context.Context, wg *sync.WaitGroup) {
 		case <-ticker.C:
 			heights, err := w.storage.GetErrorBlockHeights(ctx)
 			if err != nil {
-				w.log.Error().Err(err).Str("func", "GetErrorBlockHeights").Msg("cant enqueueErrorBlocks")
+				w.log.Error().Err(err).Str("func", "GetErrorBlockHeights").Msg("can't enqueueErrorBlocks")
 				return
 			}
 

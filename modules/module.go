@@ -8,87 +8,104 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	authModule "github.com/bro-n-bro/spacebox-crawler/modules/auth"
 	authzModule "github.com/bro-n-bro/spacebox-crawler/modules/authz"
+	bandwidthModule "github.com/bro-n-bro/spacebox-crawler/modules/bandwidth"
 	bankModule "github.com/bro-n-bro/spacebox-crawler/modules/bank"
 	coreModule "github.com/bro-n-bro/spacebox-crawler/modules/core"
 	distributionModule "github.com/bro-n-bro/spacebox-crawler/modules/distribution"
-	feegrantModule "github.com/bro-n-bro/spacebox-crawler/modules/feegrant"
+	dmnModule "github.com/bro-n-bro/spacebox-crawler/modules/dmn"
+	feeGrantModule "github.com/bro-n-bro/spacebox-crawler/modules/feegrant"
 	govModule "github.com/bro-n-bro/spacebox-crawler/modules/gov"
+	graphModule "github.com/bro-n-bro/spacebox-crawler/modules/graph"
+	gridModule "github.com/bro-n-bro/spacebox-crawler/modules/grid"
 	ibcModule "github.com/bro-n-bro/spacebox-crawler/modules/ibc"
 	liquidityModule "github.com/bro-n-bro/spacebox-crawler/modules/liquidity"
 	mintModule "github.com/bro-n-bro/spacebox-crawler/modules/mint"
+	rankModule "github.com/bro-n-bro/spacebox-crawler/modules/rank"
 	slashingModule "github.com/bro-n-bro/spacebox-crawler/modules/slashing"
 	stakingModule "github.com/bro-n-bro/spacebox-crawler/modules/staking"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
-type Cache[K, V comparable] interface {
-	UpdateCacheValue(K, V) bool
-}
+type (
+	Cache[K, V comparable] interface{ UpdateCacheValue(K, V) bool }
 
-func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbMapper tb.ToBroker,
-	cdc codec.Codec, modules []string, addressesParser coreModule.MessageAddressesParser,
-	tallyCache Cache[uint64, int64], accountCache Cache[string, int64]) []types.Module {
+	tallyCache   Cache[uint64, int64]
+	accountCache Cache[string, int64]
+)
 
-	res := make([]types.Module, 0)
+func BuildModules(
+	brk rep.Broker,
+	log *zerolog.Logger,
+	cli *grpcClient.Client,
+	tbm tb.ToBroker,
+	cdc codec.Codec,
+	mds []string,
+	aParse coreModule.MsgAddrParser,
+	tCache tallyCache,
+	aCache accountCache,
+) []types.Module {
 
-	for _, m := range modules {
-		// TODO: make better
-		switch m {
-		case "auth":
-			log.Info().Msg("auth module registered")
-			auth := authModule.New(b, cli, tbMapper, cdc, addressesParser)
-			if accountCache != nil {
-				auth.SetAccountCache(accountCache)
-			}
-			res = append(res, auth)
-		case "bank":
-			log.Info().Msg("bank module registered")
-			res = append(res, bankModule.New(b, cli, tbMapper, cdc, addressesParser))
-		case "gov":
-			gov := govModule.New(b, cli, tbMapper, cdc)
-			if tallyCache != nil {
-				gov.SetTallyCache(tallyCache)
-			}
-			log.Info().Msg("gov module registered")
-			res = append(res, gov)
-		case "mint":
-			log.Info().Msg("mint module registered")
-			res = append(res, mintModule.New(b, cli, tbMapper))
-		case "staking":
-			staking := stakingModule.New(b, cli, tbMapper, cdc, modules)
-			if accountCache != nil {
-				staking.SetAccountCache(accountCache)
-			}
-			log.Info().Msg("staking module registered")
-			res = append(res, staking)
-		case "distribution":
-			log.Info().Msg("distribution module registered")
-			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))
-		case "core":
-			log.Info().Msg("core module registered")
-			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
-		case "authz":
-			log.Info().Msg("authz module registered")
-			res = append(res, authzModule.New(b, cli, tbMapper, cdc))
-		case "feegrant":
-			log.Info().Msg("feegrant module registered")
-			res = append(res, feegrantModule.New(b, cli, tbMapper, cdc))
-		case "slashing":
-			log.Info().Msg("slashing module registered")
-			res = append(res, slashingModule.New(b, cli, tbMapper))
-		case "ibc":
-			log.Info().Msg("ibc module registered")
-			res = append(res, ibcModule.New(b, tbMapper, cli))
-		case "liquidity":
-			log.Info().Msg("liquidity module registered")
-			res = append(res, liquidityModule.New(b, cli, tbMapper))
+	mods := NewModuleLoader().WithLogger(log)
+
+	for _, mod := range mds {
+		switch mod {
+		case authModule.ModuleName:
+			auth := authModule.New(brk, cli, tbm, cdc, aParse).WithAccountCache(aCache)
+			mods.Add(auth)
+		case bankModule.ModuleName:
+			bank := bankModule.New(brk, cli, tbm, cdc, aParse)
+			mods.Add(bank)
+		case govModule.ModuleName:
+			gov := govModule.New(brk, cli, tbm, cdc).WithTallyCache(tCache)
+			mods.Add(gov)
+		case mintModule.ModuleName:
+			mint := mintModule.New(brk, cli, tbm)
+			mods.Add(mint)
+		case stakingModule.ModuleName:
+			staking := stakingModule.New(brk, cli, tbm, cdc, mds).WithAccountCache(aCache)
+			mods.Add(staking)
+		case distributionModule.ModuleName:
+			distribution := distributionModule.New(brk, cli, tbm, cdc)
+			mods.Add(distribution)
+		case coreModule.ModuleName:
+			core := coreModule.New(brk, tbm, cdc, aParse)
+			mods.Add(core)
+		case authzModule.ModuleName:
+			authz := authzModule.New(brk, cli, tbm, cdc)
+			mods.Add(authz)
+		case feeGrantModule.ModuleName:
+			feeGrant := feeGrantModule.New(brk, cli, tbm, cdc)
+			mods.Add(feeGrant)
+		case slashingModule.ModuleName:
+			slashing := slashingModule.New(brk, cli, tbm)
+			mods.Add(slashing)
+		case ibcModule.ModuleName:
+			ibc := ibcModule.New(brk, tbm, cli)
+			mods.Add(ibc)
+		case liquidityModule.ModuleName:
+			liquidity := liquidityModule.New(brk, cli, tbm)
+			mods.Add(liquidity)
+		case graphModule.ModuleName:
+			graph := graphModule.New(brk, tbm, cdc, cli)
+			mods.Add(graph) // TODO: add to env vars
+		case bandwidthModule.ModuleName:
+			bandwidth := bandwidthModule.New(brk, cli, tbm)
+			mods.Add(bandwidth) // TODO: add to env vars
+		case dmnModule.ModuleName:
+			dmn := dmnModule.New(brk, cli, tbm)
+			mods.Add(dmn) // TODO: add to env vars
+		case gridModule.ModuleName:
+			grid := gridModule.New(brk, cli, tbm)
+			mods.Add(grid) // TODO: add to env vars
+		case rankModule.ModuleName:
+			rank := rankModule.New(brk, cli, tbm)
+			mods.Add(rank) // TODO: add to env vars
 		default:
-			// TODO: log
-			log.Warn().Msgf("unknown module: %v", m)
+			log.Warn().Msgf("unknown module: %v", mod)
 			continue
 		}
 	}
 
-	return res
+	return mods.Build()
 }

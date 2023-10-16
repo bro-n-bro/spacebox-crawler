@@ -1,7 +1,8 @@
 package tostorage
 
-type ToStorage struct {
-}
+type (
+	ToStorage struct{}
+)
 
 func NewToStorage() *ToStorage {
 	return &ToStorage{}

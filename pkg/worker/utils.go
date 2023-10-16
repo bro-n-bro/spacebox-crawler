@@ -17,7 +17,7 @@ var (
 
 func (w *Worker) setErrorStatusWithLogging(ctx context.Context, height int64, msg string) {
 	if err := w.storage.SetErrorStatus(ctx, height, msg); err != nil {
-		w.log.Error().Err(err).Int64("height", height).Msgf("cant set error status in storage %v:", err)
+		w.log.Error().Err(err).Int64("height", height).Msgf("can't set error status in storage %v:", err)
 	}
 }
 
@@ -26,9 +26,10 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 	if err != nil && errors.Is(err, types.ErrBlockNotFound) {
 		// create new block
 		if err = w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
-			w.log.Error().Err(err).Int64("height", height).Msgf("cant create new block in storage %v:", err)
+			w.log.Error().Err(err).Int64("height", height).Msgf("can't create new block in storage %v:", err)
 			return err
 		}
+
 		return nil
 	} else if err != nil {
 		// got some error from storage
