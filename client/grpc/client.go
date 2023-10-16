@@ -30,28 +30,30 @@ import (
 	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
 )
 
-type Client struct {
-	SlashingQueryClient     slashingtypes.QueryClient
-	TmsService              tmservice.ServiceClient
-	TxService               tx.ServiceClient
-	BankQueryClient         banktypes.QueryClient
-	AuthQueryClient         authtypes.QueryClient
-	GovQueryClient          govtypes.QueryClient
-	MintQueryClient         minttypes.QueryClient
-	StakingQueryClient      stakingtypes.QueryClient
-	DistributionQueryClient distributiontypes.QueryClient
-	AuthzQueryClient        authztypes.QueryClient
-	FeegrantQueryClient     feegranttypes.QueryClient
-	IbcTransferQueryClient  ibctransfertypes.QueryClient
-	LiquidityQueryClient    liquiditytypes.QueryClient
-	GraphQueryClient        graphtypes.QueryClient
-	BandwidthQueryClient    bandwidthtypes.QueryClient
-	DMNQueryClient          dmntypes.QueryClient
-	GridQueryClient         gridtypes.QueryClient
-	RankQueryClient         ranktypes.QueryClient
-	conn                    *grpc.ClientConn
-	cfg                     Config
-}
+type (
+	Client struct {
+		SlashingQueryClient     slashingtypes.QueryClient
+		TmsService              tmservice.ServiceClient
+		TxService               tx.ServiceClient
+		BankQueryClient         banktypes.QueryClient
+		AuthQueryClient         authtypes.QueryClient
+		GovQueryClient          govtypes.QueryClient
+		MintQueryClient         minttypes.QueryClient
+		StakingQueryClient      stakingtypes.QueryClient
+		DistributionQueryClient distributiontypes.QueryClient
+		AuthzQueryClient        authztypes.QueryClient
+		FeegrantQueryClient     feegranttypes.QueryClient
+		IbcTransferQueryClient  ibctransfertypes.QueryClient
+		LiquidityQueryClient    liquiditytypes.QueryClient
+		GraphQueryClient        graphtypes.QueryClient
+		BandwidthQueryClient    bandwidthtypes.QueryClient
+		DMNQueryClient          dmntypes.QueryClient
+		GridQueryClient         gridtypes.QueryClient
+		RankQueryClient         ranktypes.QueryClient
+		conn                    *grpc.ClientConn
+		cfg                     Config
+	}
+)
 
 func New(cfg Config) *Client {
 	return &Client{cfg: cfg}
@@ -116,6 +118,4 @@ func (c *Client) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Stop(_ context.Context) error {
-	return c.conn.Close()
-}
+func (c *Client) Stop(_ context.Context) error { return c.conn.Close() }
