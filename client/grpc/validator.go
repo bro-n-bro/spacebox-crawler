@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultLimit = 150
+	defaultLimit = 100
 )
 
 func (c *Client) Validators(ctx context.Context, height int64) (*cometbftcoretypes.ResultValidators, error) {
@@ -19,15 +19,13 @@ func (c *Client) Validators(ctx context.Context, height int64) (*cometbftcoretyp
 		BlockHeight: height,
 	}
 
-	var (
-		nextKey []byte
-	)
+	var offset uint64
 
 	for {
 		respPb, err := c.TmsService.GetValidatorSetByHeight(ctx, &tmservice.GetValidatorSetByHeightRequest{
 			Height: height,
 			Pagination: &query.PageRequest{
-				Key:        nextKey,
+				Offset:     offset,
 				Limit:      defaultLimit,
 				CountTotal: true,
 			},
@@ -36,10 +34,7 @@ func (c *Client) Validators(ctx context.Context, height int64) (*cometbftcoretyp
 			return nil, err
 		}
 
-		nextKey = respPb.Pagination.NextKey
-
-		vals.Total = int(respPb.Pagination.Total)
-		if len(nextKey) == 0 { // first iteration
+		if offset == 0 { // first iteration
 			vals.Validators = make([]*cometbfttypes.Validator, 0, vals.Total)
 		}
 
@@ -47,12 +42,16 @@ func (c *Client) Validators(ctx context.Context, height int64) (*cometbftcoretyp
 			vals.Validators = append(vals.Validators, convertValidator(val))
 		}
 
-		vals.Count += len(respPb.Validators)
+		vals.Total = int(respPb.Pagination.Total)
 
-		if len(respPb.Pagination.NextKey) == 0 {
+		if len(respPb.Validators) < defaultLimit {
 			break
 		}
+
+		offset += defaultLimit
 	}
+
+	vals.Count = len(vals.Validators)
 
 	return vals, nil
 }
