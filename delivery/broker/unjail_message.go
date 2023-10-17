@@ -6,6 +6,6 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (b *Broker) PublishUnJailMessage(_ context.Context, msg model.UnjailMessage) error {
-	return b.marshalAndProduce(UnJailMessage, msg)
+func (b *Broker) PublishUnjailMessage(_ context.Context, msg model.UnjailMessage) error {
+	return b.marshalAndProduce(UnjailMessage, msg)
 }

@@ -24,7 +24,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 }
 
 func (m *Module) handleMsgUnjail(ctx context.Context, tx *types.Tx, index int, msg *slashtypes.MsgUnjail) error {
-	return m.broker.PublishUnJailMessage(ctx, model.UnjailMessage{
+	return m.broker.PublishUnjailMessage(ctx, model.UnjailMessage{
 		Height:          tx.Height,
 		Hash:            tx.TxHash,
 		Index:           int64(index),

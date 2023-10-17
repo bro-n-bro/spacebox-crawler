@@ -147,17 +147,18 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 		if err != nil {
 			return err
 		}
+
 		w.log.Debug().
 			Int("worker_number", workerIndex).
 			Int64("block_height", height).
 			Dur("get_block_events_dur", time.Since(_blockEventsDur)).
-			Msg("Get validators info")
+			Msg("get validators info")
 
 		return nil
 	})
 
 	if err := g.Wait(); err != nil {
-		w.log.Error().Int64(keyHeight, height).Err(err).Msgf("processHeight block got error")
+		w.log.Error().Int64(keyHeight, height).Err(err).Msg("processHeight block got error")
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
 		return
 	}
@@ -166,7 +167,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 
 	txsRes, err := w.grpcClient.Txs(ctx, block.Block.Data.Txs)
 	if err != nil {
-		w.log.Error().Err(err).Msgf("get txs error")
+		w.log.Error().Err(err).Msg("get txs error")
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
 		return
 	}

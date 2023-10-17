@@ -139,12 +139,13 @@ func (b *Broker) Stop(ctx context.Context) error {
 
 // marshalAndProduce marshals the message to JSON and produces it to the kafka.
 func (b *Broker) marshalAndProduce(topic Topic, msg interface{}) error {
-	if data, err := jsoniter.Marshal(msg); err == nil {
-		if err = b.produce(topic, data); err != nil {
-			return errors.Wrap(err, MsgErrProduceTopic)
-		}
-	} else {
+	data, err := jsoniter.Marshal(msg)
+	if err != nil {
 		return errors.Wrap(err, MsgErrJSONMarshalFail)
+	}
+
+	if err = b.produce(topic, data); err != nil {
+		return errors.Wrap(err, MsgErrProduceTopic)
 	}
 
 	return nil

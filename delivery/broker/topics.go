@@ -59,7 +59,7 @@ var (
 	TransferMessage                    Topic = newTopic("transfer_message")
 	UnbondingDelegation                Topic = newTopic("unbonding_delegation")
 	UnbondingDelegationMessage         Topic = newTopic("unbonding_delegation_message")
-	UnJailMessage                      Topic = newTopic("unjail_message")
+	UnjailMessage                      Topic = newTopic("unjail_message")
 	Validator                          Topic = newTopic("validator")
 	ValidatorInfo                      Topic = newTopic("validator_info")
 	ValidatorStatus                    Topic = newTopic("validator_status")
@@ -95,7 +95,7 @@ var (
 
 	feegrantTopics = Topics{FeeAllowance, GrantAllowanceMessage, RevokeAllowanceMessage}
 
-	slashingTopics = Topics{UnJailMessage, HandleValidatorSignature, SlashingParams}
+	slashingTopics = Topics{UnjailMessage, HandleValidatorSignature, SlashingParams}
 
 	ibcTopics = Topics{TransferMessage, AcknowledgementMessage, ReceivePacketMessage, DenomTrace}
 

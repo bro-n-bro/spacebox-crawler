@@ -38,8 +38,7 @@ type (
 
 func New(b broker, tbM tb.ToBroker, client *grpcClient.Client) *Module {
 	return &Module{
-		log: utils.NewModuleLogger(ModuleName),
-
+		log:        utils.NewModuleLogger(ModuleName),
 		broker:     b,
 		tbM:        tbM,
 		client:     client,
