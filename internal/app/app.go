@@ -167,7 +167,10 @@ func (a *App) Start(ctx context.Context) error {
 			broker.WithValidatorStatusCache(valStatusCache),
 		)
 
-		mds = modules.BuildModules(a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache)
+		mds = modules.BuildModules(
+			a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache,
+		)
+
 		tos = ts.NewToStorage()
 		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
 		srv = server.New(a.cfg.Server, sto, *a.log)
