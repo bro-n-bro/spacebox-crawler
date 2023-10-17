@@ -89,7 +89,7 @@ func (m *Module) parseReverseCoins(
 
 	var coins model.Coins
 	if len(resp.Balances) != 2 { // not found balances for this address
-		coins = model.Coins{{Denom: denoms[0]}, {Denom: denoms[1]}}
+		coins = model.Coins{{Denom: denoms[0]}, {Denom: denoms[1]}} //nolint:typecheck
 	} else {
 		coins = m.tbM.MapCoins(types.NewCoinsFromCdk(resp.Balances))
 	}
