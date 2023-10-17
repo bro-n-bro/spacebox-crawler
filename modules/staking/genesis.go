@@ -115,7 +115,7 @@ func (m *Module) publishParams(ctx context.Context, height int64, params staking
 	// TODO: test it
 	return m.broker.PublishStakingParams(ctx, model.StakingParams{
 		Height: height,
-		Params: model.SParams{
+		Params: model.RawStakingParams{
 			UnbondingTime:     params.UnbondingTime,
 			MaxValidators:     uint64(params.MaxValidators),
 			MaxEntries:        uint64(params.MaxEntries),

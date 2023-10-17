@@ -24,7 +24,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 
 	if err = m.broker.PublishBandwidthParams(ctx, model.BandwidthParams{
 		Height: block.Height,
-		Params: model.BWParams{
+		Params: model.RawBandwidthParams{
 			RecoveryPeriod:    paramsResp.Params.RecoveryPeriod,
 			AdjustPricePeriod: paramsResp.Params.AdjustPricePeriod,
 			BasePrice:         paramsResp.Params.BasePrice.MustFloat64(),

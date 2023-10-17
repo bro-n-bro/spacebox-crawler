@@ -24,7 +24,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 
 	if err = m.broker.PublishRankParams(ctx, model.RankParams{
 		Height: block.Height,
-		Params: model.RParams{
+		Params: model.RawRankParams{
 			CalculationPeriod: paramsResp.Params.CalculationPeriod,
 			DampingFactor:     paramsResp.Params.DampingFactor.MustFloat64(),
 			Tolerance:         paramsResp.Params.Tolerance.MustFloat64(),

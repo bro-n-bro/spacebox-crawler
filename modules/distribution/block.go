@@ -57,7 +57,7 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 
 	if err := m.broker.PublishDistributionParams(ctx, model.DistributionParams{
 		Height: height,
-		Params: model.DParams{
+		Params: model.RawDistributionParams{
 			CommunityTax:        res.Params.CommunityTax.MustFloat64(),
 			BaseProposerReward:  res.Params.BaseProposerReward.MustFloat64(),  //nolint:staticcheck
 			BonusProposerReward: res.Params.BonusProposerReward.MustFloat64(), //nolint:staticcheck

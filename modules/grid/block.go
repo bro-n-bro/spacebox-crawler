@@ -24,7 +24,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 
 	if err = m.broker.PublishGridParams(ctx, model.GridParams{
 		Height: block.Height,
-		Params: model.GParams{
+		Params: model.RawGridParams{
 			MaxRoutes: int64(paramsResp.Params.MaxRoutes),
 		},
 	}); err != nil {

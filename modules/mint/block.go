@@ -40,7 +40,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// TODO: test it
 	if err = m.broker.PublishMintParams(ctx, model.MintParams{
 		Height: block.Height,
-		Params: model.MParams{
+		Params: model.RawMintParams{
 			MintDenom:           paramsResp.Params.MintDenom,
 			InflationRateChange: paramsResp.Params.InflationRateChange.MustFloat64(),
 			InflationMax:        paramsResp.Params.InflationMax.MustFloat64(),

@@ -24,7 +24,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 
 	if err = m.broker.PublishDMNParams(ctx, model.DMNParams{
 		Height: block.Height,
-		Params: model.DMParams{
+		Params: model.RawDMNParams{
 			MaxSlots: int64(paramsResp.Params.MaxSlots),
 			MaxGas:   int64(paramsResp.Params.MaxGas),
 			FeeTTL:   int64(paramsResp.Params.FeeTtl),

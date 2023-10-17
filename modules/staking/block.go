@@ -59,7 +59,7 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 	// TODO: maybe check diff from mongo in my side?
 	if err = m.broker.PublishStakingParams(ctx, model.StakingParams{
 		Height: height,
-		Params: model.SParams{
+		Params: model.RawStakingParams{
 			UnbondingTime:     res.Params.UnbondingTime,
 			MaxValidators:     uint64(res.Params.MaxValidators),
 			MaxEntries:        uint64(res.Params.MaxEntries),

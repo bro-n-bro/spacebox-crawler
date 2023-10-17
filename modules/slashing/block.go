@@ -23,7 +23,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 
 	if err = m.broker.PublishSlashingParams(ctx, model.SlashingParams{
 		Height: block.Height,
-		Params: model.SlParams{
+		Params: model.RawSlashingParams{
 			DowntimeJailDuration:    paramsResp.Params.DowntimeJailDuration,
 			SignedBlocksWindow:      paramsResp.Params.SignedBlocksWindow,
 			MinSignedPerWindow:      paramsResp.Params.MinSignedPerWindow.MustFloat64(),
