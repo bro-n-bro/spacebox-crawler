@@ -13,9 +13,16 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-// HandleMessage implements types.MessageHandler.
+// HandleMessageRecursive implements types.RecursiveMessagesHandler.
 // Handles authz types messages.
-func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg, tx *types.Tx) error {
+// For MsgExec message types returns slice of messages to be handled recursively.
+func (m *Module) HandleMessageRecursive(
+	ctx context.Context,
+	index int,
+	cosmosMsg sdk.Msg,
+	tx *types.Tx,
+) ([]*codec.Any, error) {
+
 	switch msg := cosmosMsg.(type) {
 	case *authztypes.MsgGrant:
 		if err := m.broker.PublishGrantMessage(ctx, model.GrantMessage{
@@ -27,11 +34,11 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Expiration: utils.TimeFromPtr(msg.Grant.Expiration),
 			MsgType:    typeUrlFromAnyPtr(msg.Grant.Authorization),
 		}); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := m.findAndPublishAuthzGrants(ctx, msg.Granter, msg.Grantee, tx.Height); err != nil {
-			return err
+			return nil, err
 		}
 	case *authztypes.MsgRevoke:
 		if err := m.broker.PublishRevokeMessage(ctx, model.RevokeMessage{
@@ -42,18 +49,18 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Grantee:  msg.Grantee,
 			MsgType:  msg.MsgTypeUrl,
 		}); err != nil {
-			return err
+			return nil, err
 		}
 
 		if err := m.findAndPublishAuthzGrants(ctx, msg.Granter, msg.Grantee, tx.Height); err != nil {
-			return err
+			return nil, err
 		}
 	case *authztypes.MsgExec:
 		messages := make([][]byte, 0, len(msg.Msgs))
 		for _, message := range msg.Msgs {
 			bytes, err := m.cdc.MarshalJSON(message)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			messages = append(messages, bytes)
 		}
@@ -64,11 +71,13 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 			Grantee:  msg.Grantee,
 			Msgs:     messages,
 		}); err != nil {
-			return err
+			return nil, err
 		}
+
+		return msg.Msgs, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // findAndPublishAuthzGrants finds all authz grants for the given granter and grantee and publishes data to the broker.

@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	authModule "github.com/bro-n-bro/spacebox-crawler/modules/auth"
 	authzModule "github.com/bro-n-bro/spacebox-crawler/modules/authz"
@@ -26,8 +27,8 @@ type Cache[K, V comparable] interface {
 	UpdateCacheValue(K, V) bool
 }
 
-func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbMapper tb.ToBroker,
-	cdc codec.Codec, modules []string, addressesParser coreModule.MessageAddressesParser,
+func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, rpcCli *rpc.Client, tbMapper tb.ToBroker,
+	cdc codec.Codec, modules []string, addressesParser coreModule.MessageAddressesParser, defaultDenom string,
 	tallyCache Cache[uint64, int64], accountCache Cache[string, int64]) []types.Module {
 
 	res := make([]types.Module, 0)
@@ -56,7 +57,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			log.Info().Msg("mint module registered")
 			res = append(res, mintModule.New(b, cli, tbMapper))
 		case "staking":
-			staking := stakingModule.New(b, cli, tbMapper, cdc, modules)
+			staking := stakingModule.New(b, cli, tbMapper, cdc, modules, defaultDenom)
 			if accountCache != nil {
 				staking.SetAccountCache(accountCache)
 			}
@@ -64,7 +65,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			res = append(res, staking)
 		case "distribution":
 			log.Info().Msg("distribution module registered")
-			res = append(res, distributionModule.New(b, cli, tbMapper, cdc))
+			res = append(res, distributionModule.New(b, cli, rpcCli, tbMapper, cdc))
 		case "core":
 			log.Info().Msg("core module registered")
 			res = append(res, coreModule.New(b, tbMapper, cdc, addressesParser))
@@ -79,7 +80,7 @@ func BuildModules(b rep.Broker, log *zerolog.Logger, cli *grpcClient.Client, tbM
 			res = append(res, slashingModule.New(b, cli, tbMapper))
 		case "ibc":
 			log.Info().Msg("ibc module registered")
-			res = append(res, ibcModule.New(b, tbMapper, cli))
+			res = append(res, ibcModule.New(b, tbMapper, cli, cdc))
 		case "liquidity":
 			log.Info().Msg("liquidity module registered")
 			res = append(res, liquidityModule.New(b, cli, tbMapper))

@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	cometbftcoreypes "github.com/cometbft/cometbft/rpc/core/types"
 	cometbfttypes "github.com/cometbft/cometbft/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	codec "github.com/cosmos/cosmos-sdk/codec/types"
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 
@@ -20,6 +19,10 @@ import (
 const (
 	keyHeight = "height"
 	keyModule = "module"
+)
+
+var (
+	errRecurringHandling = errors.New("cant handle recurring messages")
 )
 
 func (w *Worker) process(ctx context.Context, workerIndex int, recoverMode bool) {
@@ -182,7 +185,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 
 	g.Go(func() error {
 		return w.withMetrics("validators", func() error {
-			return w.processValidators(ctx2, vals)
+			return w.processValidators(ctx2, height, vals)
 		})
 	})
 	g.Go(func() error {
@@ -247,10 +250,15 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 	return nil
 }
 
-func (w *Worker) processValidators(ctx context.Context, vals *cometbftcoreypes.ResultValidators) error {
+func (w *Worker) processValidators(ctx context.Context, height int64, vals *cometbftcoreypes.ResultValidators) error {
 	for _, m := range validatorsHandlers {
 		if err := m.HandleValidators(ctx, vals); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleValidators error: %v", err)
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, height).
+				Str(keyModule, m.Name()).
+				Msgf("HandleValidators error: %v", err)
+
 			return err
 		}
 	}
@@ -278,38 +286,60 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 		}
 
 		for i, msg := range tx.Body.Messages {
-			var stdMsg sdk.Msg
-			if err := w.cdc.UnpackAny(msg, &stdMsg); err != nil {
-				w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
-
-				if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
-					if err = w.storage.InsertErrorMessage(
-						ctx,
-						w.tsM.NewErrorMessage(tx.Height, err.Error()),
-					); err != nil {
-						w.log.Error().
-							Err(err).
-							Int64(keyHeight, tx.Height).
-							Msgf("Fail to insert error_message: %v", err)
-
-						return err
-					}
-					// just skip unsupported message
-					continue
-				}
-
+			if err := w.processMessage(ctx, msg, tx, i); err != nil {
 				return err
 			}
+		}
+	}
 
-			for _, m := range messageHandlers {
-				if err := m.HandleMessage(ctx, i, stdMsg, tx); err != nil {
+	return nil
+}
+
+func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.Tx, msgIndex int) error {
+	stdMsg, err := w.unpackMessage(ctx, tx.Height, msg)
+	if err != nil {
+		return err
+	}
+
+	// message is not supported. skip it
+	if stdMsg == nil {
+		return nil
+	}
+
+	for _, m := range messageHandlers {
+		if err = m.HandleMessage(ctx, msgIndex, stdMsg, tx); err != nil {
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, tx.Height).
+				Str(keyModule, m.Name()).
+				Msgf("HandleMessage error: %v", err)
+
+			return err
+		}
+	}
+
+	for _, m := range recursiveMessagesHandlers {
+		toProcess, err := m.HandleMessageRecursive(ctx, msgIndex, stdMsg, tx)
+		if err != nil {
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, tx.Height).
+				Str(keyModule, m.Name()).
+				Msgf("HandleRecursiveMessage error: %v", err)
+
+			return err
+		}
+
+		if len(toProcess) > 0 {
+			for _, toProcessMessage := range toProcess {
+				if err = w.processMessage(ctx, toProcessMessage, tx, msgIndex); err != nil {
 					w.log.Error().
 						Err(err).
 						Int64(keyHeight, tx.Height).
 						Str(keyModule, m.Name()).
-						Msgf("HandleMessage error: %v", err)
+						Msgf("HandleRecursiveMessage error: %v", err)
 
-					return err
+					return errors.Join(errRecurringHandling, err)
 				}
 			}
 		}

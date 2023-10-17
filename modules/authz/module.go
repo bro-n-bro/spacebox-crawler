@@ -16,8 +16,8 @@ const (
 )
 
 var (
-	_ types.Module         = &Module{}
-	_ types.MessageHandler = &Module{}
+	_ types.Module                   = &Module{}
+	_ types.RecursiveMessagesHandler = &Module{}
 )
 
 // Module is a module for authz.

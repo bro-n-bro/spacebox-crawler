@@ -2,6 +2,7 @@ package staking
 
 import (
 	"context"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -123,4 +124,14 @@ func convertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 		height,
 		minSelfDelegation,
 	), nil
+}
+
+func findCompletionTimeInEventOrZero(tx *types.Tx, index int, eventName string) (t time.Time) {
+	if event, err := tx.FindEventByType(index, eventName); err == nil {
+		if ctStr, err := tx.FindAttributeByKey(event, stakingtypes.AttributeKeyCompletionTime); err == nil {
+			t, _ = time.Parse(time.RFC3339, ctStr)
+		}
+	}
+
+	return
 }

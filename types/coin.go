@@ -15,6 +15,13 @@ type (
 	}
 )
 
+func NewCoin(denom string, amount float64) Coin {
+	return Coin{
+		Denom:  denom,
+		Amount: amount,
+	}
+}
+
 func NewCoinFromCdk(coin sdk.Coin) Coin {
 	return Coin{
 		Denom:  coin.Denom,
