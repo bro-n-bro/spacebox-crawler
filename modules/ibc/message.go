@@ -79,8 +79,7 @@ func (m *Module) HandleMessageRecursive(
 			if err := m.cdc.Unmarshal(hostData.Data, &cosmosTx); err != nil {
 				// skip unsupported messages
 				if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
-					m.log.Warn().Err(err).Msgf("error while unpacking message: %s", err)
-
+					m.log.Warn().Err(err).Msg("error while unpacking message")
 					return nil, nil
 				}
 

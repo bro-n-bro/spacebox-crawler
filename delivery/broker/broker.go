@@ -113,7 +113,7 @@ func (b *Broker) Start(ctx context.Context) error {
 			}
 
 			if err := m.TopicPartition.Error; err != nil {
-				b.log.Error().Err(err).Msgf("Delivery error: %v", m.TopicPartition)
+				b.log.Error().Str("topic_partition", m.TopicPartition.String()).Err(err).Msg("delivery error")
 			}
 		}
 	}(p.Events())
@@ -163,10 +163,10 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	}, nil)
 
 	if kafkaError, ok := err.(kafka.Error); ok && kafkaError.Code() == kafka.ErrQueueFull {
-		b.log.Info().Str("topic", *topic).Msg("Kafka local queue full error - Going to Flush then retry...")
+		b.log.Info().Str("topic", *topic).Msg("kafka local queue full error. Going to Flush then retry")
 		flushedMessages := b.p.Flush(30 * 1000)
-		b.log.Info().Str("topic", *topic).
-			Msgf("Flushed kafka messages. Outstanding events still un-flushed: %d", flushedMessages)
+		b.log.Info().Str("topic", *topic).Int("flushed_messages", flushedMessages).
+			Msg("flushed kafka messages. Outstanding events still un-flushed")
 
 		return b.produce(topic, data)
 	}
@@ -219,7 +219,7 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 		case "rank":
 			topics = append(topics, rankTopics.ToStringSlice()...)
 		default:
-			b.log.Warn().Msgf("unknown module in config: %v", m)
+			b.log.Warn().Str("name", m).Msg("unknown module in config")
 			continue
 		}
 	}

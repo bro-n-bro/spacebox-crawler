@@ -98,8 +98,10 @@ func New(cfg Config, l zerolog.Logger) *App {
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
-	grpcCli := grpcClient.New(a.cfg.GRPCConfig)
-	rpcCli := rpcClient.New(a.cfg.RPCConfig)
+	var (
+		grpcCli = grpcClient.New(a.cfg.GRPCConfig)
+		rpcCli  = rpcClient.New(a.cfg.RPCConfig)
+	)
 
 	// TODO: use redis
 	valCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
@@ -128,13 +130,13 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// collect data only from bigger height
-	tallyCache, err := cache.New[uint64, int64](defaultCacheSize, cache.WithCompareFunc[uint64, int64](lessInt64))
+	tCache, err := cache.New[uint64, int64](defaultCacheSize, cache.WithCompareFunc[uint64, int64](lessInt64))
 	if err != nil {
 		return err
 	}
 
 	// collect data only from earlier height
-	accCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](greaterInt64))
+	aCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](greaterInt64))
 	if err != nil {
 		return err
 	}
@@ -147,46 +149,46 @@ func (a *App) Start(ctx context.Context) error {
 		valDescriptionCache.Patch(cache.WithMetrics[string, int64]("validators_description"))
 		valInfoCache.Patch(cache.WithMetrics[string, int64]("validators_info"))
 		valStatusCache.Patch(cache.WithMetrics[string, int64]("validators_status"))
-		tallyCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
-		accCache.Patch(cache.WithMetrics[string, int64]("account"))
+		tCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
+		aCache.Patch(cache.WithMetrics[string, int64]("account"))
 	}
 
-	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
-		broker.WithValidatorCache(valCache),
-		broker.WithValidatorCommissionCache(valCommissionCache),
-		broker.WithValidatorDescriptionCache(valDescriptionCache),
-		broker.WithValidatorInfoCache(valInfoCache),
-		broker.WithValidatorStatusCache(valStatusCache),
+	var (
+		cod, amn = MakeEncodingConfig()
+		sto      = storage.New(a.cfg.StorageConfig, *a.log)
+		tbr      = tb.NewToBroker(cod, amn.LegacyAmino)
+		par      = core.JoinMessageParsers(core.CosmosMessageAddressesParser)
+
+		brk = broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
+			broker.WithValidatorCache(valCache),
+			broker.WithValidatorCommissionCache(valCommissionCache),
+			broker.WithValidatorDescriptionCache(valDescriptionCache),
+			broker.WithValidatorInfoCache(valInfoCache),
+			broker.WithValidatorStatusCache(valStatusCache),
+		)
+
+		mds = modules.BuildModules(a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache)
+		tos = ts.NewToStorage()
+		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
+		srv = server.New(a.cfg.Server, sto, *a.log)
 	)
-	s := storage.New(a.cfg.StorageConfig, *a.log)
-
-	cdc, amino := MakeEncodingConfig()
-	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
-	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
-
-	modules := modules.BuildModules(b, a.log, grpcCli, rpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom,
-		tallyCache, accCache)
-
-	ts := ts.NewToStorage()
-	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
-	server := server.New(a.cfg.Server, s, *a.log)
 
 	MakeSDKConfig(a.cfg, sdk.GetConfig())
 
 	a.cmps = append(a.cmps,
-		cmp{s, "storage"},
+		cmp{sto, "storage"},
 		cmp{grpcCli, "grpc_client"},
 		cmp{rpcCli, "rpc_client"},
-		cmp{b, "broker"},
-		cmp{w, "worker"},
-		cmp{server, "server"},
+		cmp{brk, "broker"},
+		cmp{wrk, "worker"},
+		cmp{srv, "server"},
 	)
 
 	okCh, errCh := make(chan struct{}), make(chan error)
 
 	go func() {
 		for _, c := range a.cmps {
-			a.log.Info().Msgf("%s is starting", c.Name)
+			a.log.Info().Str("service", c.Name).Msg("starting")
 
 			if err := c.Service.Start(ctx); err != nil {
 				a.log.Error().Err(err).Msgf(FmtCannotStart, c.Name)
@@ -195,7 +197,7 @@ func (a *App) Start(ctx context.Context) error {
 				return
 			}
 
-			a.log.Info().Msgf("%v started", c.Name)
+			a.log.Info().Str("service", c.Name).Msg("started")
 		}
 
 		okCh <- struct{}{}
@@ -220,10 +222,11 @@ func (a *App) Stop(ctx context.Context) error {
 	go func() {
 		for i := len(a.cmps) - 1; i > 0; i-- {
 			c := a.cmps[i]
-			a.log.Info().Msgf("stopping %q...", c.Name)
+
+			a.log.Info().Str("service", c.Name).Msg("stopping")
 
 			if err := c.Service.Stop(ctx); err != nil {
-				a.log.Error().Err(err).Msgf("cannot stop %q", c.Name)
+				a.log.Error().Str("service", c.Name).Err(err).Msg("cannot stop")
 				errCh <- err
 
 				return
@@ -249,72 +252,78 @@ func (a *App) GetStopTimeout() time.Duration  { return a.cfg.StopTimeout }
 
 // MakeEncodingConfig creates an EncodingConfig to properly handle and marshal all messages
 func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
-	ir := cdc.NewInterfaceRegistry()
-
-	var basicManager = module.NewBasicManager(
-		auth.AppModuleBasic{},
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
-		staking.AppModuleBasic{},
-		mint.AppModuleBasic{},
-		distribution.AppModuleBasic{},
-		gov.NewAppModuleBasic(
-			[]govclient.ProposalHandler{
-				paramsclient.ProposalHandler,
-				upgradeclient.LegacyProposalHandler,
-				upgradeclient.LegacyCancelProposalHandler,
-			},
-		),
-		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
-		slashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
-		upgrade.AppModuleBasic{},
-		evidence.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
-		groupmodule.AppModuleBasic{},
-		vesting.AppModuleBasic{},
-		nftmodule.AppModuleBasic{},
-		consensus.AppModuleBasic{},
-		ibc.AppModuleBasic{},
-		ibclightclient.AppModuleBasic{},
-		interchainprovider.AppModuleBasic{},
+	var (
+		registry     = cdc.NewInterfaceRegistry()
+		basicManager = module.NewBasicManager(
+			auth.AppModuleBasic{},
+			genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			bank.AppModuleBasic{},
+			capability.AppModuleBasic{},
+			staking.AppModuleBasic{},
+			mint.AppModuleBasic{},
+			distribution.AppModuleBasic{},
+			params.AppModuleBasic{},
+			crisis.AppModuleBasic{},
+			slashing.AppModuleBasic{},
+			feegrantmodule.AppModuleBasic{},
+			upgrade.AppModuleBasic{},
+			evidence.AppModuleBasic{},
+			authzmodule.AppModuleBasic{},
+			groupmodule.AppModuleBasic{},
+			vesting.AppModuleBasic{},
+			nftmodule.AppModuleBasic{},
+			consensus.AppModuleBasic{},
+			ibc.AppModuleBasic{},
+			ibclightclient.AppModuleBasic{},
+			interchainprovider.AppModuleBasic{},
+			gov.NewAppModuleBasic(
+				[]govclient.ProposalHandler{
+					paramsclient.ProposalHandler,
+					upgradeclient.LegacyProposalHandler,
+					upgradeclient.LegacyCancelProposalHandler,
+				},
+			),
+		)
 	)
 
-	basicManager.RegisterInterfaces(ir)
-	std.RegisterInterfaces(ir)
-	ibctransfertypes.RegisterInterfaces(ir)
-	cryptocodec.RegisterInterfaces(ir)
-	interchaintypes.RegisterInterfaces(ir)
-	liquiditytypes.RegisterInterfaces(ir)
+	//
+	basicManager.RegisterInterfaces(registry)
+	std.RegisterInterfaces(registry)
+	ibctransfertypes.RegisterInterfaces(registry)
+	cryptocodec.RegisterInterfaces(registry)
+	interchaintypes.RegisterInterfaces(registry)
+	liquiditytypes.RegisterInterfaces(registry)
 
 	// bostrom
-	graphtypes.RegisterInterfaces(ir)
-	dmntypes.RegisterInterfaces(ir)
-	gridtypes.RegisterInterfaces(ir)
-	resourcestypes.RegisterInterfaces(ir)
+	graphtypes.RegisterInterfaces(registry)
+	dmntypes.RegisterInterfaces(registry)
+	gridtypes.RegisterInterfaces(registry)
+	resourcestypes.RegisterInterfaces(registry)
 
+	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	liquiditytypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 
-	return codec.NewProtoCodec(ir), amino
+	return codec.NewProtoCodec(registry), amino
 }
 
 // MakeSDKConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
 // inside the configuration
 func MakeSDKConfig(cfg Config, sdkConfig *sdk.Config) {
 	prefix := cfg.ChainPrefix
+
 	sdkConfig.SetBech32PrefixForAccount(
 		prefix,
 		prefix+sdk.PrefixPublic,
 	)
+
 	sdkConfig.SetBech32PrefixForValidator(
 		prefix+sdk.PrefixValidator+sdk.PrefixOperator,
 		prefix+sdk.PrefixValidator+sdk.PrefixOperator+sdk.PrefixPublic,
 	)
+
 	sdkConfig.SetBech32PrefixForConsensusNode(
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus,
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,

@@ -52,7 +52,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 		defer func() {
 			if r := recover(); r != nil {
 				w.setErrorStatusWithLogging(ctx, height, fmt.Sprint(r))
-				w.log.Error().Msgf("panic occurred! height: %d. %v", height, r)
+				w.log.Error().Int64("height", height).Msgf("panic occurred!\n%v", r)
 			}
 		}()
 	}
@@ -79,31 +79,28 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 		genesis, err := w.rpcClient.Genesis(ctx)
 		if err != nil {
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
-			w.log.Error().Err(err).Msgf("get genesis error: %v", err)
+			w.log.Error().Err(err).Msg("get genesis error")
 			return
 		}
 
-		w.log.Debug().
-			Int("worker_number", workerIndex).
-			Msgf("Get genesis dur: %v", time.Since(_genesisDur))
+		w.log.Debug().Int("worker_number", workerIndex).
+			Dur("duration", time.Since(_genesisDur)).
+			Msg("get genesis")
 
 		if err = w.processGenesis(ctx, genesis); err != nil {
-			w.log.Error().Err(err).Msgf("processHeight genesis error %v:", err)
+			w.log.Error().Err(err).Msg("processHeight genesis error")
 			w.setErrorStatusWithLogging(ctx, height, err.Error())
 			return
 		}
 
 		if err = w.storage.SetProcessedStatus(ctx, height); err != nil {
-			w.log.Error().
-				Err(err).
-				Int64(keyHeight, height).
-				Msgf("can't set processed status in storage %v:", err)
+			w.log.Error().Err(err).Int64(keyHeight, height).Msg("can't set processed status in storage")
 		}
 
 		return
 	}
 
-	w.log.Info().Int("worker_number", workerIndex).Msgf("parse block № %d", height)
+	w.log.Info().Int("worker_number", workerIndex).Int64("height", height).Msg("parse block")
 
 	g, ctx2 := errgroup.WithContext(ctx)
 
@@ -221,20 +218,20 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	}
 
 	if err := w.storage.SetProcessedStatus(ctx, height); err != nil {
-		w.log.Error().Err(err).Int64(keyHeight, height).Msgf("can't set processed status in storage %v:", err)
+		w.log.Error().Err(err).Int64(keyHeight, height).Msg("can't set processed status in storage")
 	}
 }
 
 func (w *Worker) processGenesis(ctx context.Context, genesis *cometbfttypes.GenesisDoc) error {
 	var appState map[string]json.RawMessage
 	if err := jsoniter.Unmarshal(genesis.AppState, &appState); err != nil {
-		w.log.Err(err).Msgf("error unmarshalling genesis doc: %v", err)
+		w.log.Err(err).Msg("error unmarshalling genesis doc")
 		return err
 	}
 
 	for _, m := range genesisHandlers {
 		if err := m.HandleGenesis(ctx, genesis, appState); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("handle genesis error: %v", err)
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("handle genesis error")
 		}
 	}
 
@@ -244,7 +241,7 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *cometbfttypes.Gene
 func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 	for _, m := range blockHandlers {
 		if err := m.HandleBlock(ctx, block); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleBlock error: %v", err)
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("HandleBlock error")
 			return err
 		}
 	}
@@ -255,12 +252,7 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 func (w *Worker) processValidators(ctx context.Context, height int64, vals *cometbftcoreypes.ResultValidators) error {
 	for _, m := range validatorsHandlers {
 		if err := m.HandleValidators(ctx, vals); err != nil {
-			w.log.Error().
-				Err(err).
-				Int64(keyHeight, height).
-				Str(keyModule, m.Name()).
-				Msgf("HandleValidators error: %v", err)
-
+			w.log.Error().Err(err).Int64(keyHeight, height).Str(keyModule, m.Name()).Msg("HandleValidators error")
 			return err
 		}
 	}
@@ -272,7 +264,7 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 	for _, tx := range txs {
 		for _, m := range transactionHandlers {
 			if err := m.HandleTx(ctx, tx); err != nil {
-				w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleTX error %v", err)
+				w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("HandleTX error")
 				return err
 			}
 		}
@@ -314,7 +306,7 @@ func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.T
 				Err(err).
 				Int64(keyHeight, tx.Height).
 				Str(keyModule, m.Name()).
-				Msgf("HandleMessage error: %v", err)
+				Msg("HandleMessage error")
 
 			return err
 		}
@@ -327,7 +319,7 @@ func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.T
 				Err(err).
 				Int64(keyHeight, tx.Height).
 				Str(keyModule, m.Name()).
-				Msgf("HandleRecursiveMessage error: %v", err)
+				Msg("HandleRecursiveMessage error")
 
 			return err
 		}
@@ -339,7 +331,7 @@ func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.T
 						Err(err).
 						Int64(keyHeight, tx.Height).
 						Str(keyModule, m.Name()).
-						Msgf("HandleRecursiveMessage error: %v", err)
+						Msg("HandleRecursiveMessage error")
 
 					return errors.Join(errRecurringHandling, err)
 				}
@@ -353,7 +345,7 @@ func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.T
 func (w *Worker) processBeginBlockerEvents(ctx context.Context, events types.BlockerEvents, height int64) error {
 	for _, m := range beginBlockerHandlers {
 		if err := m.HandleBeginBlocker(ctx, events, height); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleBeginBlocker error: %v", err)
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("HandleBeginBlocker error")
 			return err
 		}
 	}
@@ -364,7 +356,7 @@ func (w *Worker) processBeginBlockerEvents(ctx context.Context, events types.Blo
 func (w *Worker) processEndBlockEvents(ctx context.Context, events types.BlockerEvents, height int64) error {
 	for _, m := range endBlockerHandlers {
 		if err := m.HandleEndBlocker(ctx, events, height); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msgf("HandleEndBlocker error: %v", err)
+			w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("HandleEndBlocker error")
 			return err
 		}
 	}

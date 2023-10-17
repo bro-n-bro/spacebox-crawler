@@ -29,13 +29,13 @@ func (m *ModuleLoader) WithLogger(log *zerolog.Logger) *ModuleLoader {
 func (m *ModuleLoader) Add(mod types.Module) {
 	m.modules = append(m.modules, mod)
 	if m.logger != nil {
-		m.logger.Info().Msgf("module %s registered", mod.Name())
+		m.logger.Info().Str("name", mod.Name()).Msg("module registered")
 	}
 }
 
 func (m *ModuleLoader) Build() []types.Module {
 	if m.logger != nil {
-		m.logger.Info().Int("count", m.Len()).Msgf("all modules registered")
+		m.logger.Info().Int("count", m.Len()).Msg("all modules registered")
 	}
 
 	return m.modules

@@ -20,7 +20,7 @@ var (
 
 func (w *Worker) setErrorStatusWithLogging(ctx context.Context, height int64, msg string) {
 	if err := w.storage.SetErrorStatus(ctx, height, msg); err != nil {
-		w.log.Error().Err(err).Int64("height", height).Msgf("can't set error status in storage %v:", err)
+		w.log.Error().Err(err).Int64("height", height).Msg("can't set error status in storage")
 	}
 }
 
@@ -29,7 +29,7 @@ func (w *Worker) checkOrCreateBlockInStorage(ctx context.Context, height int64) 
 	if err != nil && errors.Is(err, types.ErrBlockNotFound) {
 		// create new block
 		if err = w.storage.CreateBlock(ctx, w.tsM.NewBlock(height)); err != nil {
-			w.log.Error().Err(err).Int64("height", height).Msgf("can't create new block in storage %v:", err)
+			w.log.Error().Err(err).Int64("height", height).Msg("can't create new block in storage")
 			return err
 		}
 
@@ -63,13 +63,13 @@ func (w *Worker) unpackMessage(ctx context.Context, height int64, msg *codec.Any
 	}
 
 	if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
-		w.log.Warn().Err(err).Msgf("error while unpacking message: %s", err)
+		w.log.Warn().Err(err).Msg("error while unpacking message")
 
 		if err = w.storage.InsertErrorMessage(ctx, w.tsM.NewErrorMessage(height, err.Error())); err != nil {
 			w.log.Error().
 				Err(err).
 				Int64(keyHeight, height).
-				Msgf("Fail to insert error_message: %v", err)
+				Msg("fail to insert error_message")
 			return nil, err
 		}
 
@@ -77,7 +77,7 @@ func (w *Worker) unpackMessage(ctx context.Context, height int64, msg *codec.Any
 		return nil, nil
 	}
 
-	w.log.Error().Err(err).Msgf("error while unpacking message: %s", err)
+	w.log.Error().Err(err).Msg("error while unpacking message")
 
 	return nil, err
 }

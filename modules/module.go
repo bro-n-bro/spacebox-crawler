@@ -36,15 +36,15 @@ type (
 )
 
 func BuildModules(
-	brk rep.Broker,
 	log *zerolog.Logger,
+	mds []string,
+	den string,
 	cli *grpcClient.Client,
 	rpc *rpc.Client,
-	tbm tb.ToBroker,
+	brk rep.Broker,
 	cdc codec.Codec,
-	mds []string,
+	tbm tb.ToBroker,
 	aParse coreModule.MsgAddrParser,
-	den string,
 	tCache tallyCache,
 	aCache accountCache,
 ) []types.Module {
@@ -91,21 +91,21 @@ func BuildModules(
 			mods.Add(liquidity)
 		case graphModule.ModuleName:
 			graph := graphModule.New(brk, tbm, cdc, cli)
-			mods.Add(graph) // TODO: add to env vars
+			mods.Add(graph)
 		case bandwidthModule.ModuleName:
 			bandwidth := bandwidthModule.New(brk, cli, tbm)
-			mods.Add(bandwidth) // TODO: add to env vars
+			mods.Add(bandwidth)
 		case dmnModule.ModuleName:
 			dmn := dmnModule.New(brk, cli, tbm)
-			mods.Add(dmn) // TODO: add to env vars
+			mods.Add(dmn)
 		case gridModule.ModuleName:
 			grid := gridModule.New(brk, cli, tbm)
-			mods.Add(grid) // TODO: add to env vars
+			mods.Add(grid)
 		case rankModule.ModuleName:
 			rank := rankModule.New(brk, cli, tbm)
-			mods.Add(rank) // TODO: add to env vars
+			mods.Add(rank)
 		default:
-			log.Warn().Msgf("unknown module: %v", mod)
+			log.Warn().Str("name", mod).Msg("unknown module")
 			continue
 		}
 	}
