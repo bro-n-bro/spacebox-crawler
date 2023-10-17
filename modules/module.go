@@ -84,7 +84,7 @@ func BuildModules(
 			slashing := slashingModule.New(brk, cli, tbm)
 			mods.Add(slashing)
 		case ibcModule.ModuleName:
-			ibc := ibcModule.New(brk, tbm, cli)
+			ibc := ibcModule.New(brk, tbm, cli, cdc)
 			mods.Add(ibc)
 		case liquidityModule.ModuleName:
 			liquidity := liquidityModule.New(brk, cli, tbm)
