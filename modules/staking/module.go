@@ -33,12 +33,13 @@ type (
 		broker         broker
 		tbM            tb.ToBroker
 		cdc            codec.Codec
+		defaultDenom   string
 		accCache       AccountCache[string, int64]
 		enabledModules []string // xxx fixme
 	}
 )
 
-func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string) *Module {
+func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, modules []string, defaultDenom string) *Module {
 	return &Module{
 		log:            utils.NewModuleLogger(ModuleName),
 		broker:         b,
@@ -46,6 +47,7 @@ func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec, mod
 		tbM:            tbM,
 		cdc:            cdc,
 		enabledModules: modules,
+		defaultDenom:   defaultDenom,
 	}
 }
 

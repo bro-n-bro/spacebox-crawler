@@ -3,13 +3,14 @@ package worker
 import "github.com/bro-n-bro/spacebox-crawler/types"
 
 var (
-	transactionHandlers  []types.TransactionHandler
-	blockHandlers        []types.BlockHandler
-	genesisHandlers      []types.GenesisHandler
-	messageHandlers      []types.MessageHandler
-	validatorsHandlers   []types.ValidatorsHandler
-	beginBlockerHandlers []types.BeginBlockerHandler
-	endBlockerHandlers   []types.EndBlockerHandler
+	transactionHandlers       []types.TransactionHandler
+	blockHandlers             []types.BlockHandler
+	genesisHandlers           []types.GenesisHandler
+	messageHandlers           []types.MessageHandler
+	validatorsHandlers        []types.ValidatorsHandler
+	beginBlockerHandlers      []types.BeginBlockerHandler
+	endBlockerHandlers        []types.EndBlockerHandler
+	recursiveMessagesHandlers []types.RecursiveMessagesHandler
 )
 
 // fillModules fills the module handlers.
@@ -35,6 +36,9 @@ func (w *Worker) fillModules() {
 		}
 		if ebI, ok := module.(types.EndBlockerHandler); ok {
 			endBlockerHandlers = append(endBlockerHandlers, ebI)
+		}
+		if rmI, ok := module.(types.RecursiveMessagesHandler); ok {
+			recursiveMessagesHandlers = append(recursiveMessagesHandlers, rmI)
 		}
 	}
 }

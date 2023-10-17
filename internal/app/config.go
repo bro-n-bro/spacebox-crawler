@@ -13,6 +13,7 @@ import (
 
 type Config struct {
 	ChainPrefix    string `env:"CHAIN_PREFIX"`
+	DefaultDenom   string `env:"DEFAULT_DENOM" envDefault:"uatom"`
 	LogLevel       string `env:"LOG_LEVEL" envDefault:"info"`
 	Server         server.Config
 	Modules        []string `env:"MODULES" required:"true"`

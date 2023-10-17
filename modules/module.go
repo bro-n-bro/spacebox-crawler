@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
 	authModule "github.com/bro-n-bro/spacebox-crawler/modules/auth"
 	authzModule "github.com/bro-n-bro/spacebox-crawler/modules/authz"
@@ -38,10 +39,12 @@ func BuildModules(
 	brk rep.Broker,
 	log *zerolog.Logger,
 	cli *grpcClient.Client,
+	rpc *rpc.Client,
 	tbm tb.ToBroker,
 	cdc codec.Codec,
 	mds []string,
 	aParse coreModule.MsgAddrParser,
+	den string,
 	tCache tallyCache,
 	aCache accountCache,
 ) []types.Module {
@@ -63,10 +66,10 @@ func BuildModules(
 			mint := mintModule.New(brk, cli, tbm)
 			mods.Add(mint)
 		case stakingModule.ModuleName:
-			staking := stakingModule.New(brk, cli, tbm, cdc, mds).WithAccountCache(aCache)
+			staking := stakingModule.New(brk, cli, tbm, cdc, mds, den).WithAccountCache(aCache)
 			mods.Add(staking)
 		case distributionModule.ModuleName:
-			distribution := distributionModule.New(brk, cli, tbm, cdc)
+			distribution := distributionModule.New(brk, cli, rpc, tbm, cdc)
 			mods.Add(distribution)
 		case coreModule.ModuleName:
 			core := coreModule.New(brk, tbm, cdc, aParse)

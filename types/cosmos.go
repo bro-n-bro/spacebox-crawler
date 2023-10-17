@@ -17,6 +17,10 @@ import (
 	"golang.org/x/crypto/ripemd160" // nolint: staticcheck
 )
 
+var (
+	ErrNoEventFound = errors.New("no event found")
+)
+
 type (
 	PubKey interface {
 		Bytes() []byte
@@ -189,7 +193,8 @@ func (tx Tx) FindEventByType(index int, eventType string) (sdk.StringEvent, erro
 		}
 	}
 
-	return sdk.StringEvent{}, errors.New(fmt.Sprintf("no %s event found inside tx with hash %s", eventType, tx.TxHash))
+	return sdk.StringEvent{}, fmt.Errorf("%w: %s inside tx with hash %s", ErrNoEventFound,
+		eventType, tx.TxHash)
 }
 
 // FindAttributeByKey searches inside the specified event of the given tx to find the attribute having the given key.

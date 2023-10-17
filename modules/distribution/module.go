@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -24,18 +25,20 @@ var (
 type Module struct {
 	log    *zerolog.Logger
 	client *grpcClient.Client
+	rpcCli *rpc.Client
 	broker broker
 	tbM    tb.ToBroker
 	cdc    codec.Codec
 }
 
-func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec) *Module {
+func New(b broker, cli *grpcClient.Client, rpcCli *rpc.Client, tbM tb.ToBroker, cdc codec.Codec) *Module {
 	return &Module{
 		log:    utils.NewModuleLogger(ModuleName),
 		broker: b,
 		client: cli,
 		tbM:    tbM,
 		cdc:    cdc,
+		rpcCli: rpcCli,
 	}
 }
 
