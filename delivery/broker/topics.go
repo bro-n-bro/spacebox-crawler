@@ -20,6 +20,10 @@ var (
 	DelegationRewardMessage            Topic = newTopic("delegation_reward_message")
 	Delegation                         Topic = newTopic("delegation")
 	DelegationMessage                  Topic = newTopic("delegation_message")
+	DeleteRouteMessage                 Topic = newTopic("delete_route_message")
+	EditRouteNameMessage               Topic = newTopic("edit_route_name_message")
+	EditRouteMessage                   Topic = newTopic("edit_route_message")
+	CreateRouteMessage                 Topic = newTopic("create_route_message")
 	DenomTrace                         Topic = newTopic("denom_trace")
 	DMNParams                          Topic = newTopic("dmn_params")
 	EditValidatorMessage               Topic = newTopic("edit_validator_message")
@@ -107,7 +111,7 @@ var (
 
 	dmnTopics = Topics{DMNParams}
 
-	gridTopics = Topics{GridParams}
+	gridTopics = Topics{GridParams, CreateRouteMessage, EditRouteMessage, EditRouteNameMessage, DeleteRouteMessage}
 
 	rankTopics = Topics{RankParams}
 )
