@@ -106,8 +106,8 @@ func BuildModules(
 			rank := rankModule.New(brk, cli, tbm)
 			mods.Add(rank)
 		case resourcesModule.ModuleName:
-			rank := resourcesModule.New(brk, cli, tbm)
-			mods.Add(rank)
+			resources := resourcesModule.New(brk, cli, tbm)
+			mods.Add(resources)
 		default:
 			log.Warn().Str("name", mod).Msg("unknown module")
 			continue
