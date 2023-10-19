@@ -218,6 +218,8 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, gridTopics.ToStringSlice()...)
 		case "rank":
 			topics = append(topics, rankTopics.ToStringSlice()...)
+		case "resources":
+			topics = append(topics, resourcesTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Str("name", m).Msg("unknown module in config")
 			continue

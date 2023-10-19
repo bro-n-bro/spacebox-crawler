@@ -109,4 +109,7 @@ type Broker interface {
 
 	// rank module
 	PublishRankParams(context.Context, model.RankParams) error
+
+	// resources module
+	PublishIvestmintMessage(context.Context, model.InvestmintMessage) error
 }
