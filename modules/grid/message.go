@@ -38,9 +38,9 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 
 	case *grid.MsgEditRoute:
 		if err := m.broker.PublishEditRouteMessage(ctx, model.EditRouteMessage{
+			Value:       m.tbM.MapCoin(types.NewCoinFromCdk(msg.Value)),
 			Source:      msg.Source,
 			Destination: msg.Destination,
-			Value:       model.Coin{},
 			TxHash:      tx.TxHash,
 			Height:      tx.Height,
 			MsgIndex:    int64(index),
