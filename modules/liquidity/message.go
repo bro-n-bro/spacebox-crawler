@@ -80,9 +80,7 @@ func (m *Module) parseReverseCoins(
 		return
 	}
 
-	resp, err := m.client.BankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{
-		Address: address,
-	})
+	resp, err := m.client.BankQueryClient.AllBalances(ctx, &banktypes.QueryAllBalancesRequest{Address: address})
 	if err != nil {
 		return
 	}
