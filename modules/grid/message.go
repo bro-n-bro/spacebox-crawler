@@ -24,7 +24,6 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 	}
 
 	switch msg := bostromMsg.(type) { //nolint:gocritic
-
 	case *grid.MsgCreateRoute:
 		if err := m.broker.PublishCreateRouteMessage(ctx, model.CreateRouteMessage{
 			Source:      msg.Source,
