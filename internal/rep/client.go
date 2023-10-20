@@ -15,7 +15,7 @@ type (
 		Block(ctx context.Context, height int64) (*cometbftcoretypes.ResultBlock, error)
 		Validators(ctx context.Context, height int64) (*cometbftcoretypes.ResultValidators, error)
 
-		Txs(ctx context.Context, txs cometbfttypes.Txs) ([]*tx.GetTxResponse, error)
+		Txs(ctx context.Context, height int64, txs cometbfttypes.Txs) ([]*tx.GetTxResponse, error)
 	}
 
 	RPCClient interface {
