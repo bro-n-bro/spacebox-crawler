@@ -14,8 +14,9 @@ const (
 )
 
 var (
-	_ types.Module       = &Module{}
-	_ types.BlockHandler = &Module{}
+	_ types.Module         = &Module{}
+	_ types.BlockHandler   = &Module{}
+	_ types.MessageHandler = &Module{}
 )
 
 type Module struct {

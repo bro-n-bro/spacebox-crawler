@@ -106,6 +106,10 @@ type Broker interface {
 
 	// grid module
 	PublishGridParams(context.Context, model.GridParams) error
+	PublishCreateRouteMessage(context.Context, model.CreateRouteMessage) error
+	PublishEditRouteMessage(context.Context, model.EditRouteMessage) error
+	PublishEditRouteNameMessage(context.Context, model.EditRouteNameMessage) error
+	PublishDeleteRouteMessage(context.Context, model.DeleteRouteMessage) error
 
 	// rank module
 	PublishRankParams(context.Context, model.RankParams) error
