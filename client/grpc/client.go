@@ -22,6 +22,7 @@ import (
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	ranktypes "github.com/cybercongress/go-cyber/x/rank/types"
+	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -50,6 +51,7 @@ type (
 		DMNQueryClient          dmntypes.QueryClient
 		GridQueryClient         gridtypes.QueryClient
 		RankQueryClient         ranktypes.QueryClient
+		ResourcesQueryClient    resourcestypes.QueryClient
 		conn                    *grpc.ClientConn
 		cfg                     Config
 	}
@@ -112,6 +114,7 @@ func (c *Client) Start(ctx context.Context) error {
 	c.DMNQueryClient = dmntypes.NewQueryClient(grpcConn)
 	c.GridQueryClient = gridtypes.NewQueryClient(grpcConn)
 	c.RankQueryClient = ranktypes.NewQueryClient(grpcConn)
+	c.ResourcesQueryClient = resourcestypes.NewQueryClient(grpcConn)
 
 	c.conn = grpcConn
 

@@ -22,6 +22,7 @@ import (
 	liquidityModule "github.com/bro-n-bro/spacebox-crawler/modules/liquidity"
 	mintModule "github.com/bro-n-bro/spacebox-crawler/modules/mint"
 	rankModule "github.com/bro-n-bro/spacebox-crawler/modules/rank"
+	resourcesModule "github.com/bro-n-bro/spacebox-crawler/modules/resources"
 	slashingModule "github.com/bro-n-bro/spacebox-crawler/modules/slashing"
 	stakingModule "github.com/bro-n-bro/spacebox-crawler/modules/staking"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
@@ -104,6 +105,9 @@ func BuildModules(
 		case rankModule.ModuleName:
 			rank := rankModule.New(brk, cli, tbm)
 			mods.Add(rank)
+		case resourcesModule.ModuleName:
+			resources := resourcesModule.New(brk, cli, tbm)
+			mods.Add(resources)
 		default:
 			log.Warn().Str("name", mod).Msg("unknown module")
 			continue

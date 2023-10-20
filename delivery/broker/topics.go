@@ -43,6 +43,7 @@ var (
 	ProposerReward                     Topic = newTopic("proposer_reward")
 	RevokeAllowanceMessage             Topic = newTopic("revoke_allowance_message")
 	RankParams                         Topic = newTopic("rank_params")
+	InvestmintMessage                  Topic = newTopic("investmint_message")
 	Redelegation                       Topic = newTopic("redelegation")
 	RedelegationMessage                Topic = newTopic("redelegation_message")
 	RevokeMessage                      Topic = newTopic("revoke_message")
@@ -110,6 +111,8 @@ var (
 	gridTopics = Topics{GridParams}
 
 	rankTopics = Topics{RankParams}
+
+	resourcesTopics = Topics{InvestmintMessage}
 )
 
 type (
