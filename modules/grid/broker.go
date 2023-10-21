@@ -7,10 +7,12 @@ import (
 )
 
 type broker interface {
-	PublishGridParams(ctx context.Context, mp model.GridParams) error
+	PublishGridParams(context.Context, model.GridParams) error
 
-	PublishCreateRouteMessage(ctx context.Context, msg model.CreateRouteMessage) error
-	PublishEditRouteMessage(ctx context.Context, msg model.EditRouteMessage) error
-	PublishEditRouteNameMessage(ctx context.Context, msg model.EditRouteNameMessage) error
-	PublishDeleteRouteMessage(ctx context.Context, msg model.DeleteRouteMessage) error
+	PublishCreateRouteMessage(context.Context, model.CreateRouteMessage) error
+	PublishEditRouteMessage(context.Context, model.EditRouteMessage) error
+	PublishEditRouteNameMessage(context.Context, model.EditRouteNameMessage) error
+	PublishDeleteRouteMessage(context.Context, model.DeleteRouteMessage) error
+
+	PublishRoute(context.Context, model.Route) error
 }

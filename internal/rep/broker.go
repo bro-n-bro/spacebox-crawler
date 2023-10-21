@@ -12,60 +12,60 @@ type Broker interface {
 
 	// core module
 	PublishBlock(context.Context, model.Block) error
-	PublishMessage(ctx context.Context, message model.Message) error
-	PublishTransaction(ctx context.Context, tx model.Transaction) error
-	PublishValidatorPreCommit(ctx context.Context, vp model.ValidatorPreCommit) error
-	PublishValidatorVotingPower(ctx context.Context, vp model.ValidatorVotingPower) error
+	PublishMessage(context.Context, model.Message) error
+	PublishTransaction(context.Context, model.Transaction) error
+	PublishValidatorPreCommit(context.Context, model.ValidatorPreCommit) error
+	PublishValidatorVotingPower(context.Context, model.ValidatorVotingPower) error
 
 	// bank module
 	PublishSupply(context.Context, model.Supply) error
 	PublishSendMessage(context.Context, model.SendMessage) error
-	PublishMultiSendMessage(ctx context.Context, msm model.MultiSendMessage) error
-	PublishAccountBalance(ctx context.Context, ab model.AccountBalance) error
+	PublishMultiSendMessage(context.Context, model.MultiSendMessage) error
+	PublishAccountBalance(context.Context, model.AccountBalance) error
 
 	// distribution module
 	PublishDelegationReward(context.Context, model.DelegationReward) error
 	PublishDelegationRewardMessage(context.Context, model.DelegationRewardMessage) error
-	PublishDistributionParams(ctx context.Context, dp model.DistributionParams) error
-	PublishValidatorCommission(ctx context.Context, commission model.ValidatorCommission) error
-	PublishSetWithdrawAddressMessage(_ context.Context, swm model.SetWithdrawAddressMessage) error
-	PublishProposerReward(ctx context.Context, pr model.ProposerReward) error
-	PublishDistributionCommission(ctx context.Context, commission model.DistributionCommission) error
-	PublishDistributionReward(ctx context.Context, reward model.DistributionReward) error
-	PublishWithdrawValidatorCommissionMessage(_ context.Context, wvcm model.WithdrawValidatorCommissionMessage) error
+	PublishDistributionParams(context.Context, model.DistributionParams) error
+	PublishValidatorCommission(context.Context, model.ValidatorCommission) error
+	PublishSetWithdrawAddressMessage(context.Context, model.SetWithdrawAddressMessage) error
+	PublishProposerReward(context.Context, model.ProposerReward) error
+	PublishDistributionCommission(context.Context, model.DistributionCommission) error
+	PublishDistributionReward(context.Context, model.DistributionReward) error
+	PublishWithdrawValidatorCommissionMessage(context.Context, model.WithdrawValidatorCommissionMessage) error
 
 	// staking module
-	PublishCommunityPool(ctx context.Context, cp model.CommunityPool) error
+	PublishCommunityPool(context.Context, model.CommunityPool) error
 	PublishUnbondingDelegation(context.Context, model.UnbondingDelegation) error
 	PublishUnbondingDelegationMessage(context.Context, model.UnbondingDelegationMessage) error
-	PublishStakingParams(ctx context.Context, sp model.StakingParams) error
-	PublishDelegation(ctx context.Context, d model.Delegation) error
-	PublishDisabledDelegation(ctx context.Context, d model.Delegation) error
-	PublishDelegationMessage(ctx context.Context, dm model.DelegationMessage) error
+	PublishStakingParams(context.Context, model.StakingParams) error
+	PublishDelegation(context.Context, model.Delegation) error
+	PublishDisabledDelegation(context.Context, model.Delegation) error
+	PublishDelegationMessage(context.Context, model.DelegationMessage) error
 	PublishRedelegationMessage(context.Context, model.RedelegationMessage) error
 	PublishRedelegation(context.Context, model.Redelegation) error
-	PublishStakingPool(ctx context.Context, sp model.StakingPool) error
-	PublishValidator(ctx context.Context, val model.Validator) error
-	PublishValidatorInfo(ctx context.Context, info model.ValidatorInfo) error
-	PublishValidatorStatus(ctx context.Context, status model.ValidatorStatus) error
-	PublishValidatorDescription(ctx context.Context, description model.ValidatorDescription) error
-	PublishCreateValidatorMessage(ctx context.Context, cvm model.CreateValidatorMessage) error
-	PublishEditValidatorMessage(ctx context.Context, message model.EditValidatorMessage) error
-	PublishCancelUnbondingDelegationMessage(_ context.Context, description model.CancelUnbondingDelegationMessage) error
+	PublishStakingPool(context.Context, model.StakingPool) error
+	PublishValidator(context.Context, model.Validator) error
+	PublishValidatorInfo(context.Context, model.ValidatorInfo) error
+	PublishValidatorStatus(context.Context, model.ValidatorStatus) error
+	PublishValidatorDescription(context.Context, model.ValidatorDescription) error
+	PublishCreateValidatorMessage(context.Context, model.CreateValidatorMessage) error
+	PublishEditValidatorMessage(context.Context, model.EditValidatorMessage) error
+	PublishCancelUnbondingDelegationMessage(context.Context, model.CancelUnbondingDelegationMessage) error
 
 	// mint module
-	PublishMintParams(ctx context.Context, mp model.MintParams) error
-	PublishAnnualProvision(ctx context.Context, ap model.AnnualProvision) error
+	PublishMintParams(context.Context, model.MintParams) error
+	PublishAnnualProvision(context.Context, model.AnnualProvision) error
 
 	// gov module
-	PublishProposal(ctx context.Context, proposal model.Proposal) error
-	PublishGovParams(ctx context.Context, params model.GovParams) error
-	PublishProposalDeposit(ctx context.Context, pvm model.ProposalDeposit) error
-	PublishProposalDepositMessage(ctx context.Context, pvm model.ProposalDepositMessage) error
+	PublishProposal(context.Context, model.Proposal) error
+	PublishGovParams(context.Context, model.GovParams) error
+	PublishProposalDeposit(context.Context, model.ProposalDeposit) error
+	PublishProposalDepositMessage(context.Context, model.ProposalDepositMessage) error
 	PublishProposalVoteMessage(context.Context, model.ProposalVoteMessage) error
-	PublishProposalTallyResult(ctx context.Context, ptr model.ProposalTallyResult) error
-	PublishSubmitProposalMessage(ctx context.Context, spm model.SubmitProposalMessage) error
-	PublishVoteWeightedMessage(ctx context.Context, vwm model.VoteWeightedMessage) error
+	PublishProposalTallyResult(context.Context, model.ProposalTallyResult) error
+	PublishSubmitProposalMessage(context.Context, model.SubmitProposalMessage) error
+	PublishVoteWeightedMessage(context.Context, model.VoteWeightedMessage) error
 
 	// authz module
 	PublishGrantMessage(context.Context, model.GrantMessage) error
@@ -106,6 +106,7 @@ type Broker interface {
 
 	// grid module
 	PublishGridParams(context.Context, model.GridParams) error
+	PublishRoute(context.Context, model.Route)
 	PublishCreateRouteMessage(context.Context, model.CreateRouteMessage) error
 	PublishEditRouteMessage(context.Context, model.EditRouteMessage) error
 	PublishEditRouteNameMessage(context.Context, model.EditRouteNameMessage) error
