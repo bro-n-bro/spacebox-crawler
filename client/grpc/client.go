@@ -18,6 +18,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -40,11 +41,14 @@ type Client struct {
 	IbcTransferQueryClient  ibctransfertypes.QueryClient
 	LiquidityQueryClient    liquiditytypes.QueryClient
 	conn                    *grpc.ClientConn
+	log                     *zerolog.Logger
 	cfg                     Config
 }
 
-func New(cfg Config) *Client {
-	return &Client{cfg: cfg}
+func New(cfg Config, l zerolog.Logger) *Client {
+	l = l.With().Str("cmp", "grpc-client").Logger()
+
+	return &Client{cfg: cfg, log: &l}
 }
 
 func (c *Client) Start(ctx context.Context) error {

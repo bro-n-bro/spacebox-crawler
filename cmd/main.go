@@ -18,6 +18,9 @@ const (
 	EnvFile        = "ENV_FILE"
 )
 
+// Version provided by ldflags
+var Version = "develop"
+
 func main() {
 	// try to get .env file from Environments
 	fileName, ok := os.LookupEnv(EnvFile)
@@ -52,7 +55,7 @@ func main() {
 		Logger()
 
 	// create an application
-	a := app.New(cfg, logger)
+	a := app.New(cfg, Version, logger)
 
 	// run service
 	if err := executor.Run(a); err != nil {

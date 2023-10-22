@@ -18,6 +18,7 @@ import (
 
 const (
 	keyHeight = "height"
+	keyTxHash = "tx_hash"
 	keyModule = "module"
 )
 
@@ -167,7 +168,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 
 	_txsDur := time.Now()
 
-	txsRes, err := w.grpcClient.Txs(ctx, block.Block.Data.Txs)
+	txsRes, err := w.grpcClient.Txs(ctx, height, block.Block.Data.Txs)
 	if err != nil {
 		w.log.Error().Err(err).Msgf("get txs error: %v", err)
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
@@ -296,6 +297,21 @@ func (w *Worker) processMessages(ctx context.Context, txs []*types.Tx) error {
 }
 
 func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.Tx, msgIndex int) error {
+	if msg == nil {
+		w.log.Warn().Int64(keyHeight, tx.Height).Str(keyTxHash, tx.TxHash).Msg("can't process nil message")
+
+		if err := w.storage.InsertErrorMessage(ctx, w.tsM.NewErrorMessage(tx.Height, "message is nil")); err != nil {
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, tx.Height).
+				Msgf("fail to insert error_message: %v", err)
+
+			return err
+		}
+
+		return nil
+	}
+
 	stdMsg, err := w.unpackMessage(ctx, tx.Height, msg)
 	if err != nil {
 		return err
