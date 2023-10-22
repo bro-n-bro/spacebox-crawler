@@ -64,9 +64,6 @@ const (
 )
 
 var (
-	// Version provided by ldflags
-	Version = "develop"
-
 	ErrStartTimeout    = errors.New("start timeout")
 	ErrShutdownTimeout = errors.New("shutdown timeout")
 
@@ -76,9 +73,10 @@ var (
 
 type (
 	App struct {
-		log  *zerolog.Logger
-		cmps []cmp
-		cfg  Config
+		log     *zerolog.Logger
+		cmps    []cmp
+		cfg     Config
+		version string
 	}
 	cmp struct {
 		Service rep.Lifecycle
@@ -86,12 +84,13 @@ type (
 	}
 )
 
-func New(cfg Config, l zerolog.Logger) *App {
-	l = l.With().Str("version", Version).Str("cmp", "app").Logger()
+func New(cfg Config, version string, l zerolog.Logger) *App {
+	l = l.With().Str("version", version).Str("cmp", "app").Logger()
 
 	return &App{
-		log: &l,
-		cfg: cfg,
+		log:     &l,
+		cfg:     cfg,
+		version: version,
 	}
 }
 
@@ -154,7 +153,7 @@ func (a *App) Start(ctx context.Context) error {
 			Namespace:   "spacebox_crawler",
 			Name:        "version",
 			Help:        "Crawler version",
-			ConstLabels: prometheus.Labels{"version": Version},
+			ConstLabels: prometheus.Labels{"version": a.version},
 		}).Inc()
 	}
 

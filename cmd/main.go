@@ -13,6 +13,9 @@ import (
 	executor "github.com/bro-n-bro/spacebox-crawler/pkg/app"
 )
 
+// Version provided by ldflags
+var Version = "develop"
+
 const (
 	DefaultEnvFile = ".env"
 	EnvFile        = "ENV_FILE"
@@ -52,7 +55,7 @@ func main() {
 		Logger()
 
 	// create an application
-	a := app.New(cfg, logger)
+	a := app.New(cfg, Version, logger)
 
 	// run service
 	if err := executor.Run(a); err != nil {
