@@ -74,9 +74,9 @@ var (
 type (
 	App struct {
 		log     *zerolog.Logger
+		version string
 		cmps    []cmp
 		cfg     Config
-		version string
 	}
 	cmp struct {
 		Service rep.Lifecycle

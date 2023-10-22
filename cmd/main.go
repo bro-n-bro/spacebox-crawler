@@ -13,13 +13,13 @@ import (
 	executor "github.com/bro-n-bro/spacebox-crawler/pkg/app"
 )
 
-// Version provided by ldflags
-var Version = "develop"
-
 const (
 	DefaultEnvFile = ".env"
 	EnvFile        = "ENV_FILE"
 )
+
+// Version provided by ldflags
+var Version = "develop"
 
 func main() {
 	// try to get .env file from Environments
