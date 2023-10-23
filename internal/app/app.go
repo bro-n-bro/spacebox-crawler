@@ -43,6 +43,8 @@ import (
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
@@ -76,9 +78,10 @@ var (
 
 type (
 	App struct {
-		log  *zerolog.Logger
-		cmps []cmp
-		cfg  Config
+		log     *zerolog.Logger
+		version string
+		cmps    []cmp
+		cfg     Config
 	}
 	cmp struct {
 		Service rep.Lifecycle
@@ -86,12 +89,13 @@ type (
 	}
 )
 
-func New(cfg Config, l zerolog.Logger) *App {
-	l = l.With().Str("cmp", "app").Logger()
+func New(cfg Config, version string, l zerolog.Logger) *App {
+	l = l.With().Str("version", version).Str("cmp", "app").Logger()
 
 	return &App{
-		log: &l,
-		cfg: cfg,
+		log:     &l,
+		cfg:     cfg,
+		version: version,
 	}
 }
 
@@ -99,7 +103,7 @@ func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
 	var (
-		grpcCli = grpcClient.New(a.cfg.GRPCConfig)
+		grpcCli = grpcClient.New(a.cfg.GRPCConfig, *a.log)
 		rpcCli  = rpcClient.New(a.cfg.RPCConfig)
 	)
 
@@ -151,6 +155,13 @@ func (a *App) Start(ctx context.Context) error {
 		valStatusCache.Patch(cache.WithMetrics[string, int64]("validators_status"))
 		tCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
 		aCache.Patch(cache.WithMetrics[string, int64]("account"))
+
+		promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace:   "spacebox_crawler",
+			Name:        "version",
+			Help:        "Crawler version",
+			ConstLabels: prometheus.Labels{"version": a.version},
+		}).Inc()
 	}
 
 	var (

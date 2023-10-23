@@ -82,6 +82,17 @@ func (w *Worker) Start(_ context.Context) error {
 				Help:      "Duration of parsed blockchain objects",
 			}, []string{"type"}),
 		}
+
+		var val float64
+		if w.cfg.RecoveryMode {
+			val = 1
+		}
+
+		promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: "spacebox_crawler",
+			Name:      "worker_recovery_mode",
+			Help:      "Is worker recovery mode enabled",
+		}).Set(val)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -188,8 +199,4 @@ func (w *Worker) Stop(_ context.Context) error {
 	w.log.Info().Msg("stop workers")
 
 	return nil
-}
-
-func (w *Worker) GetProcessMessagesFn() func(ctx context.Context, txs []*types.Tx) error {
-	return w.processMessages
 }

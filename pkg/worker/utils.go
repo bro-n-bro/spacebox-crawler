@@ -63,7 +63,7 @@ func (w *Worker) unpackMessage(ctx context.Context, height int64, msg *codec.Any
 	}
 
 	if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
-		w.log.Warn().Err(err).Msg("error while unpacking message")
+		w.log.Warn().Err(err).Int64(keyHeight, height).Msg("error while unpacking message")
 
 		if err = w.storage.InsertErrorMessage(ctx, w.tsM.NewErrorMessage(height, err.Error())); err != nil {
 			w.log.Error().

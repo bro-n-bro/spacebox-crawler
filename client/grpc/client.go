@@ -24,6 +24,7 @@ import (
 	ranktypes "github.com/cybercongress/go-cyber/x/rank/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -53,12 +54,14 @@ type (
 		RankQueryClient         ranktypes.QueryClient
 		ResourcesQueryClient    resourcestypes.QueryClient
 		conn                    *grpc.ClientConn
-		cfg                     Config
+		log                     *zerolog.Loggercfg                     Config
 	}
 )
 
-func New(cfg Config) *Client {
-	return &Client{cfg: cfg}
+func New(cfg Config, l zerolog.Logger) *Client {
+	l = l.With().Str("cmp", "grpc-client").Logger()
+
+	return &Client{cfg: cfg, log: &l}
 }
 
 func (c *Client) Start(ctx context.Context) error {
