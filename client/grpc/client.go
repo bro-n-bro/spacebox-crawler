@@ -54,7 +54,8 @@ type (
 		RankQueryClient         ranktypes.QueryClient
 		ResourcesQueryClient    resourcestypes.QueryClient
 		conn                    *grpc.ClientConn
-		log                     *zerolog.Loggercfg                     Config
+		log                     *zerolog.Logger
+		cfg                     Config
 	}
 )
 
