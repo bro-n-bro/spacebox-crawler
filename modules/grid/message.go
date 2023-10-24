@@ -116,6 +116,7 @@ func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination
 		isActive = false
 	}
 
+	// case when route is not found
 	if route != nil {
 		value = m.tbM.MapCoins(types.NewCoinsFromSDK(route.Route.Value))
 		alias = route.Route.Name
