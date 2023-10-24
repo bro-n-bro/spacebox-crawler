@@ -114,8 +114,13 @@ func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination
 		isActive = false
 	}
 
+	var value model.Coins
+	if len(route.Route.Value) > 0 {
+		value = m.tbM.MapCoins(types.NewCoinsFromSDK(route.Route.Value))
+	}
+
 	return m.broker.PublishRoute(ctx, model.Route{
-		Value:       m.tbM.MapCoins(types.NewCoinsFromSDK(route.Route.Value)),
+		Value:       value,
 		Source:      route.Route.Source,
 		Destination: route.Route.Destination,
 		Alias:       route.Route.Name,
