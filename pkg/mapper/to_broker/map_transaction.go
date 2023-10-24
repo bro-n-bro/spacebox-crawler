@@ -82,7 +82,7 @@ func (tb *ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 			}
 
 			t.Fee = &model.Fee{
-				Coins:    tb.MapCoins(types.NewCoinsFromCdk(tx.GetFee())),
+				Coins:    tb.MapCoins(types.NewCoinsFromSDK(tx.GetFee())),
 				GasLimit: tx.GetGas(),
 				Granter:  tx.FeeGranter().String(),
 				Payer:    payer,

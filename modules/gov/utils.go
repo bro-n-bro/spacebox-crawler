@@ -91,9 +91,8 @@ func (m *Module) getAndPublishTallyResult(ctx context.Context, proposalID uint64
 			m.log.Warn().Uint64("proposal_id", proposalID).Msg("tally result not found")
 			return nil
 		}
-		m.log.Error().
+		m.log.Error().Err(err).
 			Str("handler", "HandleEndBlocker").
-			Err(err).
 			Msg("failed to get proposal tally result")
 
 		return err

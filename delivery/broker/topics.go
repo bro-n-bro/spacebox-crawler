@@ -47,6 +47,7 @@ var (
 	ProposerReward                     Topic = newTopic("proposer_reward")
 	RevokeAllowanceMessage             Topic = newTopic("revoke_allowance_message")
 	RankParams                         Topic = newTopic("rank_params")
+	Route                              Topic = newTopic("route")
 	InvestmintMessage                  Topic = newTopic("investmint_message")
 	Redelegation                       Topic = newTopic("redelegation")
 	RedelegationMessage                Topic = newTopic("redelegation_message")
@@ -112,7 +113,7 @@ var (
 
 	dmnTopics = Topics{DMNParams}
 
-	gridTopics = Topics{GridParams, CreateRouteMessage, EditRouteMessage, EditRouteNameMessage, DeleteRouteMessage}
+	gridTopics = Topics{GridParams, CreateRouteMessage, EditRouteMessage, EditRouteNameMessage, DeleteRouteMessage, Route}
 
 	rankTopics = Topics{RankParams}
 

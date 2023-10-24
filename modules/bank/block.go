@@ -37,7 +37,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 			supply.Coins = make(model.Coins, 0, respPb.Pagination.Total)
 		}
 
-		supply.Coins = append(supply.Coins, m.tbM.MapCoins(types.NewCoinsFromCdk(respPb.Supply))...)
+		supply.Coins = append(supply.Coins, m.tbM.MapCoins(types.NewCoinsFromSDK(respPb.Supply))...)
 
 		nextKey = respPb.Pagination.NextKey
 		if len(nextKey) == 0 {

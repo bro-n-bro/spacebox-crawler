@@ -25,3 +25,7 @@ func (b *Broker) PublishEditRouteNameMessage(ctx context.Context, msg model.Edit
 func (b *Broker) PublishDeleteRouteMessage(ctx context.Context, msg model.DeleteRouteMessage) error {
 	return b.marshalAndProduce(DeleteRouteMessage, msg)
 }
+
+func (b *Broker) PublishRoute(ctx context.Context, msg model.Route) error {
+	return b.marshalAndProduce(Route, msg)
+}

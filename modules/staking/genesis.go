@@ -175,7 +175,7 @@ func (m *Module) publishDelegations(
 				DelegatorAddress: del.DelegatorAddress,
 				Height:           doc.InitialHeight,
 				Coin: m.tbM.MapCoin(
-					types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, delegationAmount))),
+					types.NewCoinFromSDK(sdk.NewCoin(genState.Params.BondDenom, delegationAmount))),
 			}); err != nil {
 				return err
 			}
@@ -195,7 +195,7 @@ func (m *Module) publishUnbondingDelegations(ctx context.Context, doc *cometbftt
 		valUD := findUnbondingDelegations(genState.UnbondingDelegations, validator.OperatorAddress)
 		for _, ud := range valUD {
 			for _, entry := range ud.Entries {
-				coin = types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))
+				coin = types.NewCoinFromSDK(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))
 				// TODO: test it
 				if err := m.broker.PublishUnbondingDelegation(ctx, model.UnbondingDelegation{
 					Height:           doc.InitialHeight,
@@ -227,7 +227,7 @@ func (m *Module) publishRedelegations(ctx context.Context, doc *cometbfttypes.Ge
 				SrcValidatorAddress: genRedelegation.ValidatorSrcAddress,
 				DstValidatorAddress: genRedelegation.ValidatorDstAddress,
 				Coin: m.tbM.MapCoin(
-					types.NewCoinFromCdk(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))),
+					types.NewCoinFromSDK(sdk.NewCoin(genState.Params.BondDenom, entry.InitialBalance))),
 				CompletionTime: entry.CompletionTime,
 			}); err != nil {
 				return err

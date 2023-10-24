@@ -6,6 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	grid "github.com/cybercongress/go-cyber/x/grid/types"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
 	"github.com/bro-n-bro/spacebox/broker/model"
@@ -36,9 +38,11 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 			return errors.Wrap(err, msgErrorPublishingCreateRouteMessage)
 		}
 
+		return m.getAndPublishRoute(ctx, tx.TxHash, msg.Source, msg.Destination, tx.Timestamp, tx.Height)
+
 	case *grid.MsgEditRoute:
 		if err := m.broker.PublishEditRouteMessage(ctx, model.EditRouteMessage{
-			Value:       m.tbM.MapCoin(types.NewCoinFromCdk(msg.Value)),
+			Value:       m.tbM.MapCoin(types.NewCoinFromSDK(msg.Value)),
 			Source:      msg.Source,
 			Destination: msg.Destination,
 			TxHash:      tx.TxHash,
@@ -47,6 +51,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 		}); err != nil {
 			return errors.Wrap(err, msgErrorPublishingEditRouteMessage)
 		}
+
+		return m.getAndPublishRoute(ctx, tx.TxHash, msg.Source, msg.Destination, tx.Timestamp, tx.Height)
 
 	case *grid.MsgEditRouteName:
 		if err := m.broker.PublishEditRouteNameMessage(ctx, model.EditRouteNameMessage{
@@ -60,6 +66,8 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 			return errors.Wrap(err, msgErrorPublishingEditRouteNameMessage)
 		}
 
+		return m.getAndPublishRoute(ctx, tx.TxHash, msg.Source, msg.Destination, tx.Timestamp, tx.Height)
+
 	case *grid.MsgDeleteRoute:
 		if err := m.broker.PublishDeleteRouteMessage(ctx, model.DeleteRouteMessage{
 			Source:      msg.Source,
@@ -70,7 +78,48 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 		}); err != nil {
 			return errors.Wrap(err, msgErrorPublishingDeleteRouteMessage)
 		}
+
+		return m.getAndPublishRoute(ctx, tx.TxHash, msg.Source, msg.Destination, tx.Timestamp, tx.Height)
 	}
 
 	return nil
+}
+
+func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination, ts string, height int64) error {
+	key := source + "-" + destination
+	// publish only newest heights
+	if m.routeCache != nil && !m.routeCache.UpdateCacheValue(key, height) {
+		return nil
+	}
+
+	route, err := m.client.GridQueryClient.Route(ctx, &grid.QueryRouteRequest{
+		Source:      source,
+		Destination: destination,
+	})
+
+	isActive := true
+
+	if err != nil {
+		if s, ok := status.FromError(err); !ok || s.Code() != codes.NotFound {
+			m.log.Error().Err(err).
+				Str("source", source).
+				Str("destination", destination).
+				Msg("error while getting route")
+
+			return err
+		}
+
+		isActive = false
+	}
+
+	return m.broker.PublishRoute(ctx, model.Route{
+		Value:       m.tbM.MapCoins(types.NewCoinsFromSDK(route.Route.Value)),
+		Source:      route.Route.Source,
+		Destination: route.Route.Destination,
+		Alias:       route.Route.Name,
+		Timestamp:   ts,
+		TxHash:      tx,
+		Height:      height,
+		IsActive:    isActive,
+	})
 }

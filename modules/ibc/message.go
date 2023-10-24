@@ -33,7 +33,7 @@ func (m *Module) HandleMessageRecursive(
 	case *ibctransfertypes.MsgTransfer:
 		return nil, m.broker.PublishTransferMessage(ctx, model.TransferMessage{
 			SourceChannel: msg.SourceChannel,
-			Coin:          m.tbM.MapCoin(types.NewCoinFromCdk(msg.Token)),
+			Coin:          m.tbM.MapCoin(types.NewCoinFromSDK(msg.Token)),
 			Sender:        msg.Sender,
 			Receiver:      msg.Receiver,
 			Height:        tx.Height,
