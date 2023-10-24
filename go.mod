@@ -3,8 +3,6 @@ module github.com/bro-n-bro/spacebox-crawler
 go 1.21
 
 replace (
-	//github.com/bro-n-bro/spacebox => ./../spacebox
-
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.47.3
 
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
@@ -13,7 +11,7 @@ replace (
 )
 
 require (
-	github.com/bro-n-bro/spacebox v1.1.4-0.20231021191935-067bc1c78c85
+	github.com/bro-n-bro/spacebox v1.1.4-0.20231024172206-09c6d257bcc7
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/confluentinc/confluent-kafka-go v1.9.2
