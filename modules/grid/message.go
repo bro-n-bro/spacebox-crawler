@@ -89,6 +89,8 @@ func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination
 	var (
 		key      = source + "-" + destination
 		isActive = true
+		value    model.Coins
+		alias    string
 	)
 
 	// publish only newest heights
@@ -114,16 +116,16 @@ func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination
 		isActive = false
 	}
 
-	var value model.Coins
-	if len(route.Route.Value) > 0 {
+	if route != nil {
 		value = m.tbM.MapCoins(types.NewCoinsFromSDK(route.Route.Value))
+		alias = route.Route.Name
 	}
 
 	return m.broker.PublishRoute(ctx, model.Route{
 		Value:       value,
-		Source:      route.Route.Source,
-		Destination: route.Route.Destination,
-		Alias:       route.Route.Name,
+		Source:      source,
+		Destination: destination,
+		Alias:       alias,
 		Timestamp:   ts,
 		TxHash:      tx,
 		Height:      height,
