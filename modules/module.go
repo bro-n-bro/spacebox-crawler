@@ -34,6 +34,7 @@ type (
 
 	tallyCache   Cache[uint64, int64]
 	accountCache Cache[string, int64]
+	routeCache   Cache[string, int64]
 )
 
 func BuildModules(
@@ -48,6 +49,7 @@ func BuildModules(
 	aParse coreModule.MsgAddrParser,
 	tCache tallyCache,
 	aCache accountCache,
+	rCache routeCache,
 ) []types.Module {
 
 	mods := NewModuleLoader().WithLogger(log)
@@ -100,7 +102,7 @@ func BuildModules(
 			dmn := dmnModule.New(brk, cli, tbm)
 			mods.Add(dmn)
 		case gridModule.ModuleName:
-			grid := gridModule.New(brk, cli, tbm)
+			grid := gridModule.New(brk, cli, tbm).WithCache(rCache)
 			mods.Add(grid)
 		case rankModule.ModuleName:
 			rank := rankModule.New(brk, cli, tbm)

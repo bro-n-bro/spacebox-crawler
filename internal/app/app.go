@@ -145,6 +145,12 @@ func (a *App) Start(ctx context.Context) error {
 		return err
 	}
 
+	// collect data only from bigger height
+	rCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
+	if err != nil {
+		return err
+	}
+
 	if a.cfg.MetricsEnabled {
 		cache.RegisterMetrics("spacebox_crawler")
 
@@ -178,7 +184,7 @@ func (a *App) Start(ctx context.Context) error {
 			broker.WithValidatorStatusCache(valStatusCache),
 		)
 
-		mds = modules.BuildModules(a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache) //nolint:lll
+		mds = modules.BuildModules(a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache, rCache) //nolint:lll
 		tos = ts.NewToStorage()
 		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
 		srv = server.New(a.cfg.Server, sto, *a.log)

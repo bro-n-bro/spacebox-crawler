@@ -23,7 +23,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 	switch msg := bostromMsg.(type) { //nolint:gocritic
 	case *resources.MsgInvestmint:
 		if err := m.broker.PublishInvestmintMessage(ctx, model.InvestmintMessage{
-			Amount:   m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Amount:   m.tbM.MapCoin(types.NewCoinFromSDK(msg.Amount)),
 			Neuron:   msg.Neuron,
 			Resource: msg.Resource,
 			Length:   msg.Length,

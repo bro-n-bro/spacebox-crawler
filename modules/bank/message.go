@@ -30,7 +30,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 
 			for _, to := range msg.Outputs {
 				message.AddressesTo = append(message.AddressesTo, to.Address)
-				message.Coins = append(message.Coins, m.tbM.MapCoins(types.NewCoinsFromCdk(to.Coins))...)
+				message.Coins = append(message.Coins, m.tbM.MapCoins(types.NewCoinsFromSDK(to.Coins))...)
 			}
 
 			if err := m.broker.PublishMultiSendMessage(ctx, message); err != nil {
@@ -40,7 +40,7 @@ func (m *Module) HandleMessage(ctx context.Context, index int, cosmosMsg sdk.Msg
 	case *banktypes.MsgSend:
 		// TODO: test it
 		if err := m.broker.PublishSendMessage(ctx, model.SendMessage{
-			Coins:       m.tbM.MapCoins(types.NewCoinsFromCdk(msg.Amount)),
+			Coins:       m.tbM.MapCoins(types.NewCoinsFromSDK(msg.Amount)),
 			AddressFrom: msg.FromAddress,
 			AddressTo:   msg.ToAddress,
 			TxHash:      tx.TxHash,

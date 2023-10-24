@@ -117,7 +117,7 @@ func (m *Module) handleMsgCreateValidator(
 		OperatorAddress:  msg.ValidatorAddress,
 		DelegatorAddress: msg.DelegatorAddress,
 		Height:           height,
-		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Value)),
+		Coin:             m.tbM.MapCoin(types.NewCoinFromSDK(msg.Value)),
 	}); err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ Publish:
 		DelegatorAddress:    msg.DelegatorAddress,
 		SrcValidatorAddress: msg.ValidatorSrcAddress,
 		DstValidatorAddress: msg.ValidatorDstAddress,
-		Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+		Coin:                m.tbM.MapCoin(types.NewCoinFromSDK(msg.Amount)),
 		CompletionTime:      completionTime,
 	}); err != nil {
 		return err
@@ -226,7 +226,7 @@ Publish:
 			DelegatorAddress:    msg.DelegatorAddress,
 			SrcValidatorAddress: msg.ValidatorSrcAddress,
 			DstValidatorAddress: msg.ValidatorDstAddress,
-			Coin:                m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Coin:                m.tbM.MapCoin(types.NewCoinFromSDK(msg.Amount)),
 			CompletionTime:      completionTime,
 		},
 		TxHash:   tx.TxHash,
@@ -290,7 +290,7 @@ PublishMessage:
 			Height:           tx.Height,
 			DelegatorAddress: msg.DelegatorAddress,
 			OperatorAddress:  msg.ValidatorAddress,
-			Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Coin:             m.tbM.MapCoin(types.NewCoinFromSDK(msg.Amount)),
 			CompletionTime:   completionTime,
 		},
 		TxHash:   tx.TxHash,
@@ -309,7 +309,7 @@ func (m *Module) handleMsgDelegate(ctx context.Context, tx *types.Tx, msg *staki
 		Delegation: model.Delegation{
 			OperatorAddress:  msg.ValidatorAddress,
 			DelegatorAddress: msg.DelegatorAddress,
-			Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(msg.Amount)),
+			Coin:             m.tbM.MapCoin(types.NewCoinFromSDK(msg.Amount)),
 			Height:           tx.Height,
 		},
 		TxHash:   tx.TxHash,
@@ -392,7 +392,7 @@ func (m *Module) updateDelegations(ctx context.Context, height int64, delegator,
 			OperatorAddress:  delegation.Delegation.ValidatorAddress,
 			DelegatorAddress: delegation.Delegation.DelegatorAddress,
 			Height:           height,
-			Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(delegation.Balance)),
+			Coin:             m.tbM.MapCoin(types.NewCoinFromSDK(delegation.Balance)),
 		}); err != nil {
 			return err
 		}
@@ -435,7 +435,7 @@ func (m *Module) updateOrDisableDelegation(ctx context.Context, delegatorAddr, o
 		OperatorAddress:  operatorAddr,
 		DelegatorAddress: delegatorAddr,
 		Height:           height,
-		Coin:             m.tbM.MapCoin(types.NewCoinFromCdk(respPb.DelegationResponse.Balance)),
+		Coin:             m.tbM.MapCoin(types.NewCoinFromSDK(respPb.DelegationResponse.Balance)),
 	}); err != nil {
 		return err
 	}

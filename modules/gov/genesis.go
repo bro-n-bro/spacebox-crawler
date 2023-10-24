@@ -74,7 +74,7 @@ func (m *Module) publishProposals(ctx context.Context, proposals govtypesv1beta1
 			ProposalID:       proposal.ProposalId,
 			Height:           1,
 			DepositorAddress: "",
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(proposal.TotalDeposit)),
+			Coins:            m.tbM.MapCoins(types.NewCoinsFromSDK(proposal.TotalDeposit)),
 		}); err != nil {
 			return err
 		}

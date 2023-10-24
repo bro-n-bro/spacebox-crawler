@@ -28,7 +28,7 @@ func (m *Module) updateBalance(ctx context.Context, addresses []string, height i
 			model.AccountBalance{
 				Address: address,
 				Height:  height,
-				Coins:   m.tbM.MapCoins(types.NewCoinsFromCdk(balRes.Balances)),
+				Coins:   m.tbM.MapCoins(types.NewCoinsFromSDK(balRes.Balances)),
 			}); err != nil {
 			return err
 		}

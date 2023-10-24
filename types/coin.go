@@ -22,23 +22,23 @@ func NewCoin(denom string, amount float64) Coin {
 	}
 }
 
-func NewCoinFromCdk(coin sdk.Coin) Coin {
+func NewCoinFromSDK(coin sdk.Coin) Coin {
 	return Coin{
 		Denom:  coin.Denom,
 		Amount: float64(coin.Amount.BigInt().Int64()),
 	}
 }
 
-func NewCoinsFromCdk(coins sdk.Coins) Coins {
+func NewCoinsFromSDK(coins sdk.Coins) Coins {
 	res := make(Coins, len(coins))
 	for i, c := range coins {
-		res[i] = NewCoinFromCdk(c)
+		res[i] = NewCoinFromSDK(c)
 	}
 
 	return res
 }
 
-func NewCoinsFromCdkDec(coins sdk.DecCoins) Coins {
+func NewCoinsFromSDKDec(coins sdk.DecCoins) Coins {
 	res := make(Coins, len(coins))
 	for i, c := range coins {
 		res[i] = Coin{

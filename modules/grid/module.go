@@ -19,12 +19,17 @@ var (
 	_ types.MessageHandler = &Module{}
 )
 
-type Module struct {
-	log    *zerolog.Logger
-	client *grpcClient.Client
-	broker broker
-	tbM    tb.ToBroker
-}
+type (
+	RouteCache[K, V comparable] interface{ UpdateCacheValue(K, V) bool }
+
+	Module struct {
+		log        *zerolog.Logger
+		client     *grpcClient.Client
+		broker     broker
+		tbM        tb.ToBroker
+		routeCache RouteCache[string, int64]
+	}
+)
 
 func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker) *Module {
 	return &Module{
@@ -36,3 +41,11 @@ func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker) *Module {
 }
 
 func (m *Module) Name() string { return ModuleName }
+
+func (m *Module) WithCache(cache RouteCache[string, int64]) *Module {
+	if cache != nil {
+		m.routeCache = cache
+	}
+
+	return m
+}

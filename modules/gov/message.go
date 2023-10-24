@@ -69,7 +69,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		TxHash:         tx.TxHash,
 		MsgIndex:       int64(index),
 		Proposer:       msg.Proposer,
-		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		InitialDeposit: m.tbM.MapCoins(types.NewCoinsFromSDK(msg.InitialDeposit)),
 		Title:          content.GetTitle(),
 		Description:    content.GetDescription(),
 		Type:           content.ProposalType(),
@@ -88,7 +88,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 		ProposalID:       proposalID,
 		Height:           tx.Height,
 		DepositorAddress: msg.Proposer,
-		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+		Coins:            m.tbM.MapCoins(types.NewCoinsFromSDK(msg.InitialDeposit)),
 	}); err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (m *Module) handleMsgSubmitProposal(ctx context.Context, tx *types.Tx, inde
 			ProposalID:       proposalID,
 			Height:           tx.Height,
 			DepositorAddress: msg.Proposer,
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.InitialDeposit)),
+			Coins:            m.tbM.MapCoins(types.NewCoinsFromSDK(msg.InitialDeposit)),
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),
@@ -122,7 +122,7 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 			ProposalID:       msg.ProposalId,
 			DepositorAddress: msg.Depositor,
 			Height:           tx.Height,
-			Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(msg.Amount)),
+			Coins:            m.tbM.MapCoins(types.NewCoinsFromSDK(msg.Amount)),
 		},
 		TxHash:   tx.TxHash,
 		MsgIndex: int64(index),
@@ -156,7 +156,7 @@ func (m *Module) handleMsgDeposit(ctx context.Context, tx *types.Tx, index int, 
 		ProposalID:       msg.ProposalId,
 		DepositorAddress: msg.Depositor,
 		Height:           tx.Height,
-		Coins:            m.tbM.MapCoins(types.NewCoinsFromCdk(res.Deposit.Amount)),
+		Coins:            m.tbM.MapCoins(types.NewCoinsFromSDK(res.Deposit.Amount)),
 	}); err != nil {
 		return err
 	}

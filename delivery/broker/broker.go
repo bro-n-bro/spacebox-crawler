@@ -30,21 +30,21 @@ type (
 	}
 
 	lruCache struct {
-		validator      cacheI[string, int64]
-		valCommission  cacheI[string, int64]
-		valDescription cacheI[string, int64]
-		valInfo        cacheI[string, int64]
-		valStatus      cacheI[string, int64]
+		validator      cache[string, int64]
+		valCommission  cache[string, int64]
+		valDescription cache[string, int64]
+		valInfo        cache[string, int64]
+		valStatus      cache[string, int64]
 	}
 
-	cacheI[K, V comparable] interface {
+	cache[K, V comparable] interface {
 		UpdateCacheValue(K, V) bool
 	}
 
-	opts func(b *Broker)
+	opt func(b *Broker)
 )
 
-func New(cfg Config, modules []string, l zerolog.Logger, opts ...opts) *Broker {
+func New(cfg Config, modules []string, l zerolog.Logger, opts ...opt) *Broker {
 	l = l.With().Str("cmp", "broker").Logger()
 
 	b := &Broker{
@@ -53,8 +53,8 @@ func New(cfg Config, modules []string, l zerolog.Logger, opts ...opts) *Broker {
 		modules: modules,
 	}
 
-	for _, opt := range opts {
-		opt(b)
+	for _, apply := range opts {
+		apply(b)
 	}
 
 	return b
@@ -229,31 +229,31 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 	return topics
 }
 
-func WithValidatorCache(valCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorCache(valCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.validator = valCache
 	}
 }
 
-func WithValidatorCommissionCache(valCommissionCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorCommissionCache(valCommissionCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valCommission = valCommissionCache
 	}
 }
 
-func WithValidatorDescriptionCache(valDescriptionCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorDescriptionCache(valDescriptionCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valDescription = valDescriptionCache
 	}
 }
 
-func WithValidatorInfoCache(valInfoCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorInfoCache(valInfoCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valInfo = valInfoCache
 	}
 }
 
-func WithValidatorStatusCache(valStatusCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorStatusCache(valStatusCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valStatus = valStatusCache
 	}

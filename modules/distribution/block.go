@@ -37,7 +37,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// TODO: test it
 	if err := m.broker.PublishCommunityPool(ctx, model.CommunityPool{
 		Height: block.Height,
-		Coins:  m.tbM.MapCoins(types.NewCoinsFromCdkDec(res.Pool)),
+		Coins:  m.tbM.MapCoins(types.NewCoinsFromSDKDec(res.Pool)),
 	}); err != nil {
 		return errors.Wrap(err, "publish CommunityPool error")
 	}
