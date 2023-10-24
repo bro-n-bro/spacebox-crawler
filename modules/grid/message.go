@@ -86,7 +86,11 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 }
 
 func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination, ts string, height int64) error {
-	key := source + "-" + destination
+	var (
+		key      = source + "-" + destination
+		isActive = true
+	)
+
 	// publish only newest heights
 	if m.routeCache != nil && !m.routeCache.UpdateCacheValue(key, height) {
 		return nil
@@ -96,8 +100,6 @@ func (m *Module) getAndPublishRoute(ctx context.Context, tx, source, destination
 		Source:      source,
 		Destination: destination,
 	})
-
-	isActive := true
 
 	if err != nil {
 		if s, ok := status.FromError(err); !ok || s.Code() != codes.NotFound {
