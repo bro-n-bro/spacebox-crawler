@@ -4,7 +4,7 @@ ARG version
 
 ENV CGO_ENABLED=1
 
-RUN apk update && apk add --no-cache make git build-base musl-dev librdkafka librdkafka-dev
+RUN apk update && apk add --no-cache make git build-base musl-dev librdkafka librdkafka-dev libc6
 WORKDIR /go/src/github.com/spacebox-crawler
 COPY . ./
 
