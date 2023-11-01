@@ -19,7 +19,7 @@ RUN cp /lib/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.a
 RUN echo "build binary" && \
     export PATH=$PATH:/usr/local/go/bin && \
     go mod download && \
-    go build -ldflags="-X 'main.Version=$version'" -tags musl,muslc,netgo /go/src/github.com/spacebox-crawler/cmd/main.go && \
+    go build -ldflags="-X 'main.Version=$version' -linkmode=external -extldflags '-Wl,-z,muldefs -static'" -tags musl,muslc,netgo /go/src/github.com/spacebox-crawler/cmd/main.go && \
     mkdir -p /spacebox-crawler && \
     mv main /spacebox-crawler/main && \
     rm -Rf /usr/local/go/src
