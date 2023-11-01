@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/CosmWasm/wasmd/x/wasm"
+	// "github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -294,7 +295,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 			ibc.AppModuleBasic{},
 			ibclightclient.AppModuleBasic{},
 			interchainprovider.AppModuleBasic{},
-			wasm.AppModuleBasic{},
+			// wasm.AppModuleBasic{},
 			gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					paramsclient.ProposalHandler,
@@ -318,6 +319,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	dmntypes.RegisterInterfaces(registry)
 	gridtypes.RegisterInterfaces(registry)
 	resourcestypes.RegisterInterfaces(registry)
+	wasmtypes.RegisterInterfaces(registry)
 
 	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
