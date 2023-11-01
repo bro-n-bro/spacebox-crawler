@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	// "github.com/CosmWasm/wasmd/x/wasm"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
@@ -295,7 +294,6 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 			ibc.AppModuleBasic{},
 			ibclightclient.AppModuleBasic{},
 			interchainprovider.AppModuleBasic{},
-			// wasm.AppModuleBasic{},
 			gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					paramsclient.ProposalHandler,
