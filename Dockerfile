@@ -17,7 +17,7 @@ RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep 465e3a088e96fd009a11bfd234c69
 RUN echo "build binary" && \
     export PATH=$PATH:/usr/local/go/bin && \
     go mod download && \
-    go build -ldflags="-X 'main.Version=$version'" -tags musl /go/src/github.com/spacebox-crawler/cmd/main.go && \
+    go build -ldflags="-X 'main.Version=$version'" -tags musl,muslc,netgo /go/src/github.com/spacebox-crawler/cmd/main.go && \
     mkdir -p /spacebox-crawler && \
     mv main /spacebox-crawler/main && \
     rm -Rf /usr/local/go/src
