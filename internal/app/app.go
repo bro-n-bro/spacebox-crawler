@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -316,6 +317,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	dmntypes.RegisterInterfaces(registry)
 	gridtypes.RegisterInterfaces(registry)
 	resourcestypes.RegisterInterfaces(registry)
+	wasmtypes.RegisterInterfaces(registry)
 
 	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
