@@ -94,8 +94,8 @@ type Broker interface {
 	PublishLiquidityPool(context.Context, model.LiquidityPool) error
 
 	// graph module
-	PublishCyberLink(context.Context, model.CyberLink) error
-	PublishCyberLinkMessage(context.Context, model.CyberLinkMessage) error
+	PublishCyberlink(context.Context, model.Cyberlink) error
+	PublishCyberlinkMessage(context.Context, model.CyberlinkMessage) error
 	PublishParticle(context.Context, model.Particle) error
 
 	// bandwidth module

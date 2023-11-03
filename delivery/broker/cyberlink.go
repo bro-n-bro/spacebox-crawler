@@ -6,12 +6,12 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (b *Broker) PublishCyberLink(ctx context.Context, msg model.CyberLink) error {
-	return b.marshalAndProduce(CyberLink, msg)
+func (b *Broker) PublishCyberlink(ctx context.Context, msg model.Cyberlink) error {
+	return b.marshalAndProduce(Cyberlink, msg)
 }
 
-func (b *Broker) PublishCyberLinkMessage(ctx context.Context, msg model.CyberLinkMessage) error {
-	return b.marshalAndProduce(CyberLinkMessage, msg)
+func (b *Broker) PublishCyberlinkMessage(ctx context.Context, msg model.CyberlinkMessage) error {
+	return b.marshalAndProduce(CyberlinkMessage, msg)
 }
 
 func (b *Broker) PublishParticle(ctx context.Context, msg model.Particle) error {

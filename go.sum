@@ -289,8 +289,8 @@ github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kB
 github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816 h1:41iFGWnSlI2gVpmOtVTJZNodLdLQLn/KsJqFvXwnd/s=
 github.com/bgentry/speakeasy v0.1.1-0.20220910012023-760eaf8b6816/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/bits-and-blooms/bitset v1.2.0/go.mod h1:gIdJ4wp64HaoK2YrL1Q5/N7Y16edYb8uY+O0FJTyyDA=
-github.com/bro-n-bro/spacebox v1.1.4-0.20231024172206-09c6d257bcc7 h1:wf7XfJeNvmCHdaeC7GqEGodiRn75wH0b5kG398NqOoI=
-github.com/bro-n-bro/spacebox v1.1.4-0.20231024172206-09c6d257bcc7/go.mod h1:HtLDKfstS5gaocXKym0e1LLygmxLFHgn4UxBbDzTyLg=
+github.com/bro-n-bro/spacebox v1.1.4-0.20231103172141-5a175d33e349 h1:9tUwwHtvktteDnR+Mmv8wxsiri6jWP1/Q1yhBXtCYew=
+github.com/bro-n-bro/spacebox v1.1.4-0.20231103172141-5a175d33e349/go.mod h1:HtLDKfstS5gaocXKym0e1LLygmxLFHgn4UxBbDzTyLg=
 github.com/btcsuite/btcd v0.20.1-beta/go.mod h1:wVuoA8VJLEcwgqHBwHmzLRazpKxTv13Px/pDuV7OomQ=
 github.com/btcsuite/btcd v0.22.0-beta h1:LTDpDKUM5EeOFBPM8IXpinEcmZ6FWfNZbE3lfrfdnWo=
 github.com/btcsuite/btcd v0.22.0-beta/go.mod h1:9n5ntfhhHQBIhUvlhDvD3Qg6fRUj4jkN0VB8L8svzOA=

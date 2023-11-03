@@ -12,7 +12,7 @@ replace (
 
 require (
 	github.com/CosmWasm/wasmd v0.43.0
-	github.com/bro-n-bro/spacebox v1.1.4-0.20231024172206-09c6d257bcc7
+	github.com/bro-n-bro/spacebox v1.1.4-0.20231103172141-5a175d33e349
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/confluentinc/confluent-kafka-go/v2 v2.3.0

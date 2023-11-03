@@ -10,8 +10,8 @@ var (
 	BandwidthParams                    Topic = newTopic("bandwidth_params")
 	CancelUnbondingDelegationMessage   Topic = newTopic("cancel_unbonding_delegation_message")
 	CommunityPool                      Topic = newTopic("community_pool")
-	CyberLinkMessage                   Topic = newTopic("cyberlink_message")
-	CyberLink                          Topic = newTopic("cyberlink")
+	CyberlinkMessage                   Topic = newTopic("cyberlink_message")
+	Cyberlink                          Topic = newTopic("cyberlink")
 	CreateValidatorMessage             Topic = newTopic("create_validator_message")
 	DistributionCommission             Topic = newTopic("distribution_commission")
 	DistributionReward                 Topic = newTopic("distribution_reward")
@@ -107,7 +107,7 @@ var (
 
 	liquidityTopics = Topics{Swap, LiquidityPool}
 
-	graphTopics = Topics{CyberLink, CyberLinkMessage, Particle}
+	graphTopics = Topics{Cyberlink, CyberlinkMessage, Particle}
 
 	bandwidthTopics = Topics{BandwidthParams}
 
