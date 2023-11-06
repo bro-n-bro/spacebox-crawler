@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"time"
 
 	cometbftcoreypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -318,7 +319,7 @@ func (w *Worker) processMessage(ctx context.Context, msg *codec.Any, tx *types.T
 	}
 
 	// message is not supported. skip it
-	if stdMsg == nil {
+	if stdMsg == nil || reflect.ValueOf(stdMsg).IsNil() {
 		return nil
 	}
 

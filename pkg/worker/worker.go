@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/prometheus/client_golang/prometheus"
@@ -186,10 +185,6 @@ func (w *Worker) Stop(_ context.Context) error {
 	if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() {
 		w.stopWsListener()
 	}
-
-	t := time.NewTicker(2 * time.Second)
-	defer t.Stop()
-	<-t.C // XXX save from send to closed channel
 
 	close(w.heightCh)
 	w.wg.Wait()
