@@ -45,6 +45,11 @@ type (
 // JoinMessageParsers joins together all the given parsers, calling them in order
 func JoinMessageParsers(parsers ...MsgAddrParser) MsgAddrParser {
 	return func(cdc codec.Codec, msg sdk.Msg) []string {
+		// https://github.com/bro-n-bro/spacebox-crawler/issues/131
+		if msg == nil {
+			return nil
+		}
+
 		for _, parser := range parsers {
 			// Try getting the addresses
 

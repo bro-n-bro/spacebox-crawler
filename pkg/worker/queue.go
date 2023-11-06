@@ -28,9 +28,8 @@ func (w *Worker) enqueueHeight(ctx context.Context, wg *sync.WaitGroup, startHei
 		case <-ctx.Done():
 			w.log.Info().Msg("stop enqueueHeight")
 			return
-		default:
+		case w.heightCh <- height: // put height to channel for processing the block
 		}
-		w.heightCh <- height // put height to channel for processing the block
 	}
 }
 
@@ -50,9 +49,16 @@ func (w *Worker) enqueueNewBlocks(ctx context.Context, eventCh <-chan cometbftco
 				w.log.Warn().Msg("failed to cast ws event to EventDataNewBlock type")
 				continue
 			}
+
 			height := newBlock.Block.Header.Height
 			w.log.Info().Int64("height", height).Msg("enqueueing new block")
-			w.heightCh <- height
+
+			select {
+			case <-ctx.Done():
+				w.log.Info().Msg("stop new block listener")
+				return
+			case w.heightCh <- height:
+			}
 		}
 	}
 }
@@ -84,9 +90,8 @@ func (w *Worker) enqueueErrorBlocks(ctx context.Context, wg *sync.WaitGroup) {
 				case <-ctx.Done():
 					w.log.Info().Msg("stop GetErrorBlockHeights")
 					return
-				default:
+				case w.heightCh <- height:
 				}
-				w.heightCh <- height
 			}
 		}
 	}
