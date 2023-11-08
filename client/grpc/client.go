@@ -23,6 +23,7 @@ import (
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	ranktypes "github.com/cybercongress/go-cyber/x/rank/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
@@ -66,18 +67,19 @@ func New(cfg Config, l zerolog.Logger) *Client {
 }
 
 func (c *Client) Start(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second) // dial timeout
 	defer cancel()
 
 	options := []grpc.DialOption{
 		grpc.WithBlock(),
+		grpc.WithChainUnaryInterceptor(timeout.UnaryClientInterceptor(15 * time.Second)), // request timeout
 	}
 
 	if c.cfg.MetricsEnabled {
 		options = append(
 			options,
-			grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
+			grpc.WithChainUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+			grpc.WithChainStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
 		)
 
 		grpc_prometheus.EnableClientHandlingTimeHistogram()

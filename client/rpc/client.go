@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"net/http"
 
 	cometbftHttp "github.com/cometbft/cometbft/rpc/client/http"
 	jsonrpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
@@ -12,8 +11,7 @@ type Client struct {
 	*jsonrpcclient.WSClient
 	*cometbftHttp.WSEvents
 
-	RPCClient  *cometbftHttp.HTTP
-	HTTPClient *http.Client
+	RPCClient *cometbftHttp.HTTP
 
 	cfg Config
 }
@@ -23,17 +21,11 @@ func New(cfg Config) *Client {
 }
 
 func (c *Client) Start(ctx context.Context) error {
-	httpCli, err := jsonrpcclient.DefaultHTTPClient(c.cfg.Host)
-	if err != nil {
-		return err
-	}
-
-	c.HTTPClient = httpCli
-
 	// FIXME: does not work without websocket connection
 	var rpcCli *cometbftHttp.HTTP
 	if c.cfg.WSEnabled {
-		rpcCli, err = cometbftHttp.NewWithClient(c.cfg.Host, "/websocket", httpCli)
+		var err error
+		rpcCli, err = cometbftHttp.NewWithTimeout(c.cfg.Host, "/websocket", 15)
 		if err != nil {
 			return err
 		}
@@ -42,7 +34,8 @@ func (c *Client) Start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		rpcCli, err = cometbftHttp.NewWithClient(c.cfg.Host, "", httpCli)
+		var err error
+		rpcCli, err = cometbftHttp.NewWithTimeout(c.cfg.Host, "", 15)
 		if err != nil {
 			return err
 		}
@@ -57,8 +50,6 @@ func (c *Client) Start(ctx context.Context) error {
 }
 
 func (c *Client) Stop(ctx context.Context) error {
-	c.HTTPClient.CloseIdleConnections()
-
 	if c.cfg.WSEnabled {
 		if err := c.RPCClient.Stop(); err != nil {
 			return err
