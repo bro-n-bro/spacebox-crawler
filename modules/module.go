@@ -25,6 +25,7 @@ import (
 	resourcesModule "github.com/bro-n-bro/spacebox-crawler/modules/resources"
 	slashingModule "github.com/bro-n-bro/spacebox-crawler/modules/slashing"
 	stakingModule "github.com/bro-n-bro/spacebox-crawler/modules/staking"
+	wasmModule "github.com/bro-n-bro/spacebox-crawler/modules/wasm"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
@@ -37,6 +38,7 @@ type (
 	routeCache   Cache[string, int64]
 )
 
+//nolint:gocyclo
 func BuildModules(
 	log *zerolog.Logger,
 	mds []string,
@@ -110,6 +112,9 @@ func BuildModules(
 		case resourcesModule.ModuleName:
 			resources := resourcesModule.New(brk, cli, tbm)
 			mods.Add(resources)
+		case wasmModule.ModuleName:
+			wasm := wasmModule.New(brk)
+			mods.Add(wasm)
 		default:
 			log.Warn().Str("name", mod).Msg("unknown module")
 			continue
