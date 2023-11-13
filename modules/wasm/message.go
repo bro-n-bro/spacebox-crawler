@@ -26,6 +26,18 @@ func (m *Module) HandleMessage(ctx context.Context, index int, bostromMsg sdk.Ms
 		return nil
 	}
 
+	if err := m.findAndPublishCyberLink(ctx, tx, index); err != nil {
+		if errors.Is(err, types.ErrNoEventFound) || errors.Is(err, types.ErrNoAttributeFound) {
+			return nil
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (m *Module) findAndPublishCyberLink(ctx context.Context, tx *types.Tx, index int) error {
 	event, err := tx.FindEventByType(index, graph.EventTypeCyberlink)
 	if err != nil {
 		return err
