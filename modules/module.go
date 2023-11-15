@@ -113,7 +113,7 @@ func BuildModules(
 			resources := resourcesModule.New(brk, cli, tbm)
 			mods.Add(resources)
 		case wasmModule.ModuleName:
-			wasm := wasmModule.New(brk)
+			wasm := wasmModule.New(brk, cdc)
 			mods.Add(wasm)
 		default:
 			log.Warn().Str("name", mod).Msg("unknown module")

@@ -1,6 +1,7 @@
 package wasm
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
 	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
@@ -20,13 +21,15 @@ type (
 	Module struct {
 		log    *zerolog.Logger
 		broker broker
+		cdc    codec.Codec
 	}
 )
 
-func New(b broker) *Module {
+func New(b broker, cdc codec.Codec) *Module {
 	return &Module{
 		log:    utils.NewModuleLogger(ModuleName),
 		broker: b,
+		cdc:    cdc,
 	}
 }
 
