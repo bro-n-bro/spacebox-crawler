@@ -103,11 +103,6 @@ func New(cfg Config, version string, l zerolog.Logger) *App {
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
-	var (
-		grpcCli = grpcClient.New(a.cfg.GRPCConfig, *a.log)
-		rpcCli  = rpcClient.New(a.cfg.RPCConfig)
-	)
-
 	// TODO: use redis
 	valCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
@@ -174,6 +169,8 @@ func (a *App) Start(ctx context.Context) error {
 	var (
 		cod, amn = MakeEncodingConfig()
 		sto      = storage.New(a.cfg.StorageConfig, *a.log)
+		rpcCli   = rpcClient.New(a.cfg.RPCConfig)
+		grpcCli  = grpcClient.New(a.cfg.GRPCConfig, *a.log, sto)
 		tbr      = tb.NewToBroker(cod, amn.LegacyAmino)
 		par      = core.JoinMessageParsers(core.CosmosMessageAddressesParser)
 
