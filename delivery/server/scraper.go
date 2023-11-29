@@ -39,6 +39,12 @@ func (s *Server) startMetricsScrapper() {
 			Name:      "total_error_messages",
 			Help:      "Total error messages",
 		})
+		// count of error txs in storage
+		errorTxsCount = promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "total_error_txs",
+			Help:      "Total error txs",
+		})
 
 		statusMap map[string]int
 		ctx       = context.Background()
@@ -92,6 +98,13 @@ func (s *Server) startMetricsScrapper() {
 				continue
 			}
 			errorMessagesCount.Set(float64(count))
+
+			count, err = s.storage.CountErrorTxs(ctx)
+			if err != nil {
+				s.log.Error().Err(err).Msg("can't get count of error txs")
+				continue
+			}
+			errorTxsCount.Set(float64(count))
 		}
 	}
 }
