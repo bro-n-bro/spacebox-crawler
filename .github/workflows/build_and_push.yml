@@ -18,15 +18,13 @@ jobs:
         DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: |
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-    - name: Build specify tag
+    - name: Build and push specify tag
       run: |
         echo 'build image: bronbro/spacebox-crawler:${{github.ref_name}}'
         docker build -t bronbro/spacebox-crawler:${{github.ref_name}} --target=app --build-arg version=${{github.ref_name}} .
-    - name: Build latest tag
+        docker push bronbro/spacebox-crawler:${{github.ref_name}}
+    - name: Build and push latest tag
       if: startsWith(github.ref, 'refs/tags/v')
-      run: docker build -t bronbro/spacebox-crawler:latest --target=app --build-arg version=latest .
-    - name: push specify tag to registry
-      run: docker push bronbro/spacebox-crawler:${{github.ref_name}}
-    - name: push latest tag to registry
-      if: startsWith(github.ref, 'refs/tags/v')
-      run: docker push bronbro/spacebox-crawler:latest
+      run: |
+        docker build -t bronbro/spacebox-crawler:latest --target=app --build-arg version=latest .
+        docker push bronbro/spacebox-crawler:latest
