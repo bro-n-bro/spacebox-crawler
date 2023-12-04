@@ -39,10 +39,18 @@ func (s *Server) startMetricsScrapper() {
 			Name:      "total_error_messages",
 			Help:      "Total error messages",
 		})
+		// count of error txs in storage
+		errorTxsCount = promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "total_error_txs",
+			Help:      "Total error txs",
+		})
 
 		statusMap map[string]int
 		ctx       = context.Background()
 		ticker    = time.NewTicker(1 * time.Minute)
+		blocks    []*model.Block
+		err       error
 	)
 
 	defer ticker.Stop()
@@ -53,10 +61,11 @@ func (s *Server) startMetricsScrapper() {
 			s.log.Info().Msg("stop metrics scraper")
 			return
 		case <-ticker.C:
-			if err := s.storage.Ping(ctx); err != nil {
+			if err = s.storage.Ping(ctx); err != nil {
 				continue
 			}
-			blocks, err := s.storage.GetAllBlocks(ctx)
+
+			blocks, err = s.storage.GetAllBlocks(ctx)
 			if err != nil {
 				s.log.Error().Err(err).Msg("can't get all blocks from storage")
 				continue
@@ -82,12 +91,20 @@ func (s *Server) startMetricsScrapper() {
 				statusMetric.With(prometheus.Labels{"status": statusName}).Set(float64(count))
 			}
 
-			count, err := s.storage.CountErrorMessages(ctx)
+			var count int64
+			count, err = s.storage.CountErrorMessages(ctx)
 			if err != nil {
 				s.log.Error().Err(err).Msg("can't get count of error messages")
 				continue
 			}
 			errorMessagesCount.Set(float64(count))
+
+			count, err = s.storage.CountErrorTxs(ctx)
+			if err != nil {
+				s.log.Error().Err(err).Msg("can't get count of error txs")
+				continue
+			}
+			errorTxsCount.Set(float64(count))
 		}
 	}
 }

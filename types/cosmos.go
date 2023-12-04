@@ -18,7 +18,8 @@ import (
 )
 
 var (
-	ErrNoEventFound = errors.New("no event found")
+	ErrNoEventFound     = errors.New("no event found")
+	ErrNoAttributeFound = errors.New("no event with attribute")
 )
 
 type (
@@ -206,7 +207,7 @@ func (tx Tx) FindAttributeByKey(event sdk.StringEvent, attrKey string) (string, 
 		}
 	}
 
-	return "", errors.New(fmt.Sprintf("no event with attribute %s found inside tx with hash %s", attrKey, tx.TxHash))
+	return "", fmt.Errorf("%w: %s found inside tx with hash %s", ErrNoAttributeFound, attrKey, tx.TxHash)
 }
 
 // Successful tells whether this tx is successful or not

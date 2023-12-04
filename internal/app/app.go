@@ -43,6 +43,9 @@ import (
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
+	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
+	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
+	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -102,11 +105,6 @@ func New(cfg Config, version string, l zerolog.Logger) *App {
 
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
-
-	var (
-		grpcCli = grpcClient.New(a.cfg.GRPCConfig, *a.log)
-		rpcCli  = rpcClient.New(a.cfg.RPCConfig)
-	)
 
 	// TODO: use redis
 	valCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
@@ -174,6 +172,8 @@ func (a *App) Start(ctx context.Context) error {
 	var (
 		cod, amn = MakeEncodingConfig()
 		sto      = storage.New(a.cfg.StorageConfig, *a.log)
+		rpcCli   = rpcClient.New(a.cfg.RPCConfig)
+		grpcCli  = grpcClient.New(a.cfg.GRPCConfig, *a.log, sto)
 		tbr      = tb.NewToBroker(cod, amn.LegacyAmino)
 		par      = core.JoinMessageParsers(core.CosmosMessageAddressesParser)
 
@@ -311,6 +311,9 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	cryptocodec.RegisterInterfaces(registry)
 	interchaintypes.RegisterInterfaces(registry)
 	liquiditytypes.RegisterInterfaces(registry)
+	liqstakingtypes.RegisterInterfaces(registry)
+	liqslashingtypes.RegisterInterfaces(registry)
+	liqdibutiontypes.RegisterInterfaces(registry)
 
 	// bostrom
 	graphtypes.RegisterInterfaces(registry)

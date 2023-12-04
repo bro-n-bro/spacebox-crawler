@@ -179,6 +179,7 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 }
 
 // getCurrentTopics returns the list of topics based on enabled modules.
+// nolint:gocyclo
 func (b *Broker) getCurrentTopics(modules []string) []string {
 	topics := make([]string, 0)
 
@@ -220,13 +221,15 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, rankTopics.ToStringSlice()...)
 		case "resources":
 			topics = append(topics, resourcesTopics.ToStringSlice()...)
+		case "wasm":
+			topics = append(topics, wasmTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Str("name", m).Msg("unknown module in config")
 			continue
 		}
 	}
 
-	return topics
+	return removeDuplicates(topics)
 }
 
 func WithValidatorCache(valCache cache[string, int64]) func(b *Broker) {
@@ -257,4 +260,18 @@ func WithValidatorStatusCache(valStatusCache cache[string, int64]) func(b *Broke
 	return func(b *Broker) {
 		b.cache.valStatus = valStatusCache
 	}
+}
+
+func removeDuplicates[T comparable](s []T) []T {
+	res := make([]T, 0)
+	uniq := make(map[T]struct{})
+
+	for i := 0; i < len(s); i++ {
+		if _, ok := uniq[s[i]]; !ok {
+			uniq[s[i]] = struct{}{}
+			res = append(res, s[i])
+		}
+	}
+
+	return res
 }

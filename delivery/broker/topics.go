@@ -118,6 +118,8 @@ var (
 	rankTopics = Topics{RankParams}
 
 	resourcesTopics = Topics{InvestmintMessage}
+
+	wasmTopics = Topics{Cyberlink, Particle}
 )
 
 type (

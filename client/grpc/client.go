@@ -23,16 +23,22 @@ import (
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	ranktypes "github.com/cybercongress/go-cyber/x/rank/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
 )
 
 type (
+	storage interface {
+		InsertErrorTx(ctx context.Context, tx model.Tx) error
+	}
+
 	Client struct {
 		SlashingQueryClient     slashingtypes.QueryClient
 		TmsService              tmservice.ServiceClient
@@ -55,29 +61,31 @@ type (
 		ResourcesQueryClient    resourcestypes.QueryClient
 		conn                    *grpc.ClientConn
 		log                     *zerolog.Logger
+		storage                 storage
 		cfg                     Config
 	}
 )
 
-func New(cfg Config, l zerolog.Logger) *Client {
+func New(cfg Config, l zerolog.Logger, st storage) *Client {
 	l = l.With().Str("cmp", "grpc-client").Logger()
 
-	return &Client{cfg: cfg, log: &l}
+	return &Client{cfg: cfg, log: &l, storage: st}
 }
 
 func (c *Client) Start(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second) // dial timeout
 	defer cancel()
 
 	options := []grpc.DialOption{
 		grpc.WithBlock(),
+		grpc.WithChainUnaryInterceptor(timeout.UnaryClientInterceptor(c.cfg.Timeout)), // request timeout
 	}
 
 	if c.cfg.MetricsEnabled {
 		options = append(
 			options,
-			grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
-			grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
+			grpc.WithChainUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+			grpc.WithChainStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
 		)
 
 		grpc_prometheus.EnableClientHandlingTimeHistogram()
