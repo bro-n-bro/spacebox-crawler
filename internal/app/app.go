@@ -43,6 +43,9 @@ import (
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
+	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
+	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
+	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -308,6 +311,9 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	cryptocodec.RegisterInterfaces(registry)
 	interchaintypes.RegisterInterfaces(registry)
 	liquiditytypes.RegisterInterfaces(registry)
+	liqstakingtypes.RegisterInterfaces(ir)
+	liqslashingtypes.RegisterInterfaces(ir)
+	liqdibutiontypes.RegisterInterfaces(ir)
 
 	// bostrom
 	graphtypes.RegisterInterfaces(registry)
