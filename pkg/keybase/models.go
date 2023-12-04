@@ -6,6 +6,7 @@ type (
 		Status  QueryStatus      `json:"status"`
 		Objects []AccountDetails `json:"them"`
 	}
+
 	// QueryStatus contains the details of the status of a request
 	QueryStatus struct {
 		ErrDesc string `json:"desc"`

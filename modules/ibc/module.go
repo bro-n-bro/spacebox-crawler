@@ -1,19 +1,19 @@
 package ibc
 
 import (
-	"os"
 	"sync"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 const (
-	moduleName = "ibc"
+	ModuleName = "ibc"
 )
 
 var (
@@ -39,11 +39,8 @@ type (
 )
 
 func New(b broker, tbM tb.ToBroker, client *grpcClient.Client, cdc codec.Codec) *Module {
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", moduleName).Logger()
-
 	return &Module{
-		log:        &l,
+		log:        utils.NewModuleLogger(ModuleName),
 		broker:     b,
 		tbM:        tbM,
 		client:     client,
@@ -52,4 +49,4 @@ func New(b broker, tbM tb.ToBroker, client *grpcClient.Client, cdc codec.Codec) 
 	}
 }
 
-func (m *Module) Name() string { return moduleName }
+func (m *Module) Name() string { return ModuleName }

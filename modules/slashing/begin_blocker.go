@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	errCantFindBurnedCoin = errors.New("cant find burned tokens")
+	errCantFindBurnedCoin = errors.New("can't find burned tokens")
 
 	base64KeyAddress     = base64.StdEncoding.EncodeToString([]byte(slashingtypes.AttributeKeyAddress))
 	base64KeyPower       = base64.StdEncoding.EncodeToString([]byte(slashingtypes.AttributeKeyPower))

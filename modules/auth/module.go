@@ -1,19 +1,18 @@
 package auth
 
 import (
-	"os"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 const (
-	moduleName = "auth"
+	ModuleName = "auth"
 )
 
 var (
@@ -33,19 +32,14 @@ type (
 		broker   broker
 		tbM      tb.ToBroker
 		cdc      codec.Codec
-		parser   core.MessageAddressesParser
+		parser   core.MsgAddrParser
 		accCache AccountCache[string, int64]
 	}
 )
 
-func New(b broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec,
-	parser core.MessageAddressesParser) *Module {
-
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", moduleName).Logger()
-
+func New(b broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec, parser core.MsgAddrParser) *Module {
 	return &Module{
-		log:    &l,
+		log:    utils.NewModuleLogger(ModuleName),
 		broker: b,
 		tbM:    tb,
 		client: cli,
@@ -54,8 +48,12 @@ func New(b broker, cli *grpcClient.Client, tb tb.ToBroker, cdc codec.Codec,
 	}
 }
 
-func (m *Module) Name() string { return moduleName }
+func (m *Module) Name() string { return ModuleName }
 
-func (m *Module) SetAccountCache(cache AccountCache[string, int64]) {
-	m.accCache = cache
+func (m *Module) WithAccountCache(cache AccountCache[string, int64]) *Module {
+	if cache != nil {
+		m.accCache = cache
+	}
+
+	return m
 }

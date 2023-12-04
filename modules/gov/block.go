@@ -46,7 +46,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// TODO: maybe check diff from mongo in my side?
 	return m.broker.PublishGovParams(ctx, model.GovParams{
 		DepositParams: model.DepositParams{
-			MinDeposit:       m.tbM.MapCoins(types.NewCoinsFromCdk(respDeposit.DepositParams.MinDeposit)),
+			MinDeposit:       m.tbM.MapCoins(types.NewCoinsFromSDK(respDeposit.DepositParams.MinDeposit)),
 			MaxDepositPeriod: respDeposit.DepositParams.MaxDepositPeriod.Nanoseconds(),
 		},
 		VotingParams: model.VotingParams{

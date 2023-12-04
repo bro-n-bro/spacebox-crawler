@@ -98,7 +98,7 @@ func (s *Storage) GetErrorBlockHeights(ctx context.Context) ([]int64, error) {
 	return res, nil
 }
 
-func (s *Storage) GetAllBlocks(ctx context.Context) ([]*model.Block, error) {
+func (s *Storage) GetAllBlocks(ctx context.Context) (blocks []*model.Block, err error) {
 	cursor, err := s.blocksCollection.Find(ctx, bson.D{})
 	if err != nil {
 		return nil, err
@@ -109,7 +109,6 @@ func (s *Storage) GetAllBlocks(ctx context.Context) ([]*model.Block, error) {
 		}
 	}()
 
-	blocks := make([]*model.Block, 0)
 	if err = cursor.All(ctx, &blocks); err != nil {
 		return nil, err
 	}

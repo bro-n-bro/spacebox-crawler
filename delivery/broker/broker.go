@@ -4,17 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
 const (
 	MsgErrJSONMarshalFail   = "json marshal fail: %w"
-	MsgErrCreateProducer    = "cant create producer connection to broker: %w "
-	MsgErrCreateAdminClient = "cant create admin client connection to broker: %w"
-	MsgErrCreateTopics      = "cant create topics in broker: %w"
-	MsgErrCreatePartitions  = "cant create partitions in broker: %w"
+	MsgErrCreateProducer    = "can't create producer connection to broker: %w "
+	MsgErrCreateAdminClient = "can't create admin client connection to broker: %w"
+	MsgErrCreateTopics      = "can't create topics in broker: %w"
+	MsgErrProduceTopic      = "can't produce topic: %w"
+	MsgErrCreatePartitions  = "can't create partitions in broker: %w"
 )
 
 type (
@@ -28,21 +30,21 @@ type (
 	}
 
 	lruCache struct {
-		validator      cacheI[string, int64]
-		valCommission  cacheI[string, int64]
-		valDescription cacheI[string, int64]
-		valInfo        cacheI[string, int64]
-		valStatus      cacheI[string, int64]
+		validator      cache[string, int64]
+		valCommission  cache[string, int64]
+		valDescription cache[string, int64]
+		valInfo        cache[string, int64]
+		valStatus      cache[string, int64]
 	}
 
-	cacheI[K, V comparable] interface {
+	cache[K, V comparable] interface {
 		UpdateCacheValue(K, V) bool
 	}
 
-	opts func(b *Broker)
+	opt func(b *Broker)
 )
 
-func New(cfg Config, modules []string, l zerolog.Logger, opts ...opts) *Broker {
+func New(cfg Config, modules []string, l zerolog.Logger, opts ...opt) *Broker {
 	l = l.With().Str("cmp", "broker").Logger()
 
 	b := &Broker{
@@ -51,8 +53,8 @@ func New(cfg Config, modules []string, l zerolog.Logger, opts ...opts) *Broker {
 		modules: modules,
 	}
 
-	for _, opt := range opts {
-		opt(b)
+	for _, apply := range opts {
+		apply(b)
 	}
 
 	return b
@@ -111,7 +113,7 @@ func (b *Broker) Start(ctx context.Context) error {
 			}
 
 			if err := m.TopicPartition.Error; err != nil {
-				b.log.Error().Err(err).Msgf("Delivery error: %v", m.TopicPartition)
+				b.log.Error().Str("topic_partition", m.TopicPartition.String()).Err(err).Msg("delivery error")
 			}
 		}
 	}(p.Events())
@@ -135,6 +137,21 @@ func (b *Broker) Stop(ctx context.Context) error {
 	return nil
 }
 
+// marshalAndProduce marshals the message to JSON and produces it to the kafka.
+func (b *Broker) marshalAndProduce(topic Topic, msg interface{}) error {
+	data, err := jsoniter.Marshal(msg)
+	if err != nil {
+		return errors.Wrap(err, MsgErrJSONMarshalFail)
+	}
+
+	if err = b.produce(topic, data); err != nil {
+		return errors.Wrap(err, MsgErrProduceTopic)
+	}
+
+	return nil
+}
+
+// produce produces the message to the kafka.
 func (b *Broker) produce(topic Topic, data []byte) error {
 	if !b.cfg.Enabled {
 		return nil
@@ -146,10 +163,10 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	}, nil)
 
 	if kafkaError, ok := err.(kafka.Error); ok && kafkaError.Code() == kafka.ErrQueueFull {
-		b.log.Info().Str("topic", *topic).Msg("Kafka local queue full error - Going to Flush then retry...")
+		b.log.Info().Str("topic", *topic).Msg("kafka local queue full error. Going to Flush then retry")
 		flushedMessages := b.p.Flush(30 * 1000)
-		b.log.Info().Str("topic", *topic).
-			Msgf("Flushed kafka messages. Outstanding events still un-flushed: %d", flushedMessages)
+		b.log.Info().Str("topic", *topic).Int("flushed_messages", flushedMessages).
+			Msg("flushed kafka messages. Outstanding events still un-flushed")
 
 		return b.produce(topic, data)
 	}
@@ -161,6 +178,8 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	return nil
 }
 
+// getCurrentTopics returns the list of topics based on enabled modules.
+// nolint:gocyclo
 func (b *Broker) getCurrentTopics(modules []string) []string {
 	topics := make([]string, 0)
 
@@ -190,41 +209,69 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, ibcTopics.ToStringSlice()...)
 		case "liquidity":
 			topics = append(topics, liquidityTopics.ToStringSlice()...)
+		case "graph":
+			topics = append(topics, graphTopics.ToStringSlice()...)
+		case "bandwidth":
+			topics = append(topics, bandwidthTopics.ToStringSlice()...)
+		case "dmn":
+			topics = append(topics, dmnTopics.ToStringSlice()...)
+		case "grid":
+			topics = append(topics, gridTopics.ToStringSlice()...)
+		case "rank":
+			topics = append(topics, rankTopics.ToStringSlice()...)
+		case "resources":
+			topics = append(topics, resourcesTopics.ToStringSlice()...)
+		case "wasm":
+			topics = append(topics, wasmTopics.ToStringSlice()...)
 		default:
-			b.log.Warn().Msgf("unknown module in config: %v", m)
+			b.log.Warn().Str("name", m).Msg("unknown module in config")
 			continue
 		}
 	}
 
-	return topics
+	return removeDuplicates(topics)
 }
 
-func WithValidatorCache(valCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorCache(valCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.validator = valCache
 	}
 }
 
-func WithValidatorCommissionCache(valCommissionCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorCommissionCache(valCommissionCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valCommission = valCommissionCache
 	}
 }
 
-func WithValidatorDescriptionCache(valDescriptionCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorDescriptionCache(valDescriptionCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valDescription = valDescriptionCache
 	}
 }
 
-func WithValidatorInfoCache(valInfoCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorInfoCache(valInfoCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valInfo = valInfoCache
 	}
 }
 
-func WithValidatorStatusCache(valStatusCache cacheI[string, int64]) func(b *Broker) {
+func WithValidatorStatusCache(valStatusCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.valStatus = valStatusCache
 	}
+}
+
+func removeDuplicates[T comparable](s []T) []T {
+	res := make([]T, 0)
+	uniq := make(map[T]struct{})
+
+	for i := 0; i < len(s); i++ {
+		if _, ok := uniq[s[i]]; !ok {
+			uniq[s[i]] = struct{}{}
+			res = append(res, s[i])
+		}
+	}
+
+	return res
 }

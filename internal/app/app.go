@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -38,6 +39,10 @@ import (
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
 	interchaintypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
+	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
+	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
+	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
 	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
 	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
 	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
@@ -58,6 +63,7 @@ import (
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
+	_ "github.com/bro-n-bro/spacebox-crawler/types/bostrom"
 	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
 )
 
@@ -100,9 +106,6 @@ func New(cfg Config, version string, l zerolog.Logger) *App {
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
-	grpcCli := grpcClient.New(a.cfg.GRPCConfig, *a.log)
-	rpcCli := rpcClient.New(a.cfg.RPCConfig)
-
 	// TODO: use redis
 	valCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
@@ -130,13 +133,19 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// collect data only from bigger height
-	tallyCache, err := cache.New[uint64, int64](defaultCacheSize, cache.WithCompareFunc[uint64, int64](lessInt64))
+	tCache, err := cache.New[uint64, int64](defaultCacheSize, cache.WithCompareFunc[uint64, int64](lessInt64))
 	if err != nil {
 		return err
 	}
 
 	// collect data only from earlier height
-	accCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](greaterInt64))
+	aCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](greaterInt64))
+	if err != nil {
+		return err
+	}
+
+	// collect data only from bigger height
+	rCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
 	if err != nil {
 		return err
 	}
@@ -149,8 +158,8 @@ func (a *App) Start(ctx context.Context) error {
 		valDescriptionCache.Patch(cache.WithMetrics[string, int64]("validators_description"))
 		valInfoCache.Patch(cache.WithMetrics[string, int64]("validators_info"))
 		valStatusCache.Patch(cache.WithMetrics[string, int64]("validators_status"))
-		tallyCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
-		accCache.Patch(cache.WithMetrics[string, int64]("account"))
+		tCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
+		aCache.Patch(cache.WithMetrics[string, int64]("account"))
 
 		promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace:   "spacebox_crawler",
@@ -160,43 +169,44 @@ func (a *App) Start(ctx context.Context) error {
 		}).Inc()
 	}
 
-	b := broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
-		broker.WithValidatorCache(valCache),
-		broker.WithValidatorCommissionCache(valCommissionCache),
-		broker.WithValidatorDescriptionCache(valDescriptionCache),
-		broker.WithValidatorInfoCache(valInfoCache),
-		broker.WithValidatorStatusCache(valStatusCache),
+	var (
+		cod, amn = MakeEncodingConfig()
+		sto      = storage.New(a.cfg.StorageConfig, *a.log)
+		rpcCli   = rpcClient.New(a.cfg.RPCConfig)
+		grpcCli  = grpcClient.New(a.cfg.GRPCConfig, *a.log, sto)
+		tbr      = tb.NewToBroker(cod, amn.LegacyAmino)
+		par      = core.JoinMessageParsers(core.CosmosMessageAddressesParser)
+
+		brk = broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
+			broker.WithValidatorCache(valCache),
+			broker.WithValidatorCommissionCache(valCommissionCache),
+			broker.WithValidatorDescriptionCache(valDescriptionCache),
+			broker.WithValidatorInfoCache(valInfoCache),
+			broker.WithValidatorStatusCache(valStatusCache),
+		)
+
+		mds = modules.BuildModules(a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache, rCache) //nolint:lll
+		tos = ts.NewToStorage()
+		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
+		srv = server.New(a.cfg.Server, sto, *a.log)
 	)
-	s := storage.New(a.cfg.StorageConfig, *a.log)
 
-	cdc, amino := MakeEncodingConfig()
-	tb := tb.NewToBroker(cdc, amino.LegacyAmino)
-	parser := core.JoinMessageParsers(core.CosmosMessageAddressesParser)
+	MakeSDKConfig(a.cfg, sdk.GetConfig())
 
-	modules := modules.BuildModules(b, a.log, grpcCli, rpcCli, *tb, cdc, a.cfg.Modules, parser, a.cfg.DefaultDenom,
-		tallyCache, accCache)
-
-	ts := ts.NewToStorage()
-	w := worker.New(a.cfg.WorkerConfig, *a.log, b, rpcCli, grpcCli, modules, s, cdc, *tb, *ts)
-	server := server.New(a.cfg.Server, s, *a.log)
-
-	MakeSdkConfig(a.cfg, sdk.GetConfig())
-
-	a.cmps = append(
-		a.cmps,
-		cmp{s, "storage"},
-		cmp{grpcCli, "grpcClient"},
-		cmp{rpcCli, "rpcClient"},
-		cmp{b, "broker"},
-		cmp{w, "worker"},
-		cmp{server, "server"},
+	a.cmps = append(a.cmps,
+		cmp{sto, "storage"},
+		cmp{grpcCli, "grpc_client"},
+		cmp{rpcCli, "rpc_client"},
+		cmp{brk, "broker"},
+		cmp{wrk, "worker"},
+		cmp{srv, "server"},
 	)
 
 	okCh, errCh := make(chan struct{}), make(chan error)
 
 	go func() {
 		for _, c := range a.cmps {
-			a.log.Info().Msgf("%v is starting", c.Name)
+			a.log.Info().Str("service", c.Name).Msg("starting")
 
 			if err := c.Service.Start(ctx); err != nil {
 				a.log.Error().Err(err).Msgf(FmtCannotStart, c.Name)
@@ -205,8 +215,9 @@ func (a *App) Start(ctx context.Context) error {
 				return
 			}
 
-			a.log.Info().Msgf("%v started", c.Name)
+			a.log.Info().Str("service", c.Name).Msg("started")
 		}
+
 		okCh <- struct{}{}
 	}()
 
@@ -216,7 +227,7 @@ func (a *App) Start(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-okCh:
-		a.log.Info().Msg("Application started!")
+		a.log.Info().Msg("application started")
 		return nil
 	}
 }
@@ -229,10 +240,11 @@ func (a *App) Stop(ctx context.Context) error {
 	go func() {
 		for i := len(a.cmps) - 1; i > 0; i-- {
 			c := a.cmps[i]
-			a.log.Info().Msgf("stopping %q...", c.Name)
+
+			a.log.Info().Str("service", c.Name).Msg("stopping")
 
 			if err := c.Service.Stop(ctx); err != nil {
-				a.log.Error().Err(err).Msgf("cannot stop %q", c.Name)
+				a.log.Error().Str("service", c.Name).Err(err).Msg("cannot stop")
 				errCh <- err
 
 				return
@@ -248,7 +260,7 @@ func (a *App) Stop(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-okCh:
-		a.log.Info().Msg("Application stopped!")
+		a.log.Info().Msg("application stopped")
 		return nil
 	}
 }
@@ -258,69 +270,82 @@ func (a *App) GetStopTimeout() time.Duration  { return a.cfg.StopTimeout }
 
 // MakeEncodingConfig creates an EncodingConfig to properly handle and marshal all messages
 func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
-	ir := cdc.NewInterfaceRegistry()
-
-	var basicManager = module.NewBasicManager(
-		auth.AppModuleBasic{},
-		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
-		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
-		staking.AppModuleBasic{},
-		mint.AppModuleBasic{},
-		distribution.AppModuleBasic{},
-		gov.NewAppModuleBasic(
-			[]govclient.ProposalHandler{
-				paramsclient.ProposalHandler,
-				upgradeclient.LegacyProposalHandler,
-				upgradeclient.LegacyCancelProposalHandler,
-			},
-		),
-		params.AppModuleBasic{},
-		crisis.AppModuleBasic{},
-		slashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
-		upgrade.AppModuleBasic{},
-		evidence.AppModuleBasic{},
-		authzmodule.AppModuleBasic{},
-		groupmodule.AppModuleBasic{},
-		vesting.AppModuleBasic{},
-		nftmodule.AppModuleBasic{},
-		consensus.AppModuleBasic{},
-		ibc.AppModuleBasic{},
-		ibclightclient.AppModuleBasic{},
-		interchainprovider.AppModuleBasic{},
+	var (
+		registry     = cdc.NewInterfaceRegistry()
+		basicManager = module.NewBasicManager(
+			auth.AppModuleBasic{},
+			genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			bank.AppModuleBasic{},
+			capability.AppModuleBasic{},
+			staking.AppModuleBasic{},
+			mint.AppModuleBasic{},
+			distribution.AppModuleBasic{},
+			params.AppModuleBasic{},
+			crisis.AppModuleBasic{},
+			slashing.AppModuleBasic{},
+			feegrantmodule.AppModuleBasic{},
+			upgrade.AppModuleBasic{},
+			evidence.AppModuleBasic{},
+			authzmodule.AppModuleBasic{},
+			groupmodule.AppModuleBasic{},
+			vesting.AppModuleBasic{},
+			nftmodule.AppModuleBasic{},
+			consensus.AppModuleBasic{},
+			ibc.AppModuleBasic{},
+			ibclightclient.AppModuleBasic{},
+			interchainprovider.AppModuleBasic{},
+			gov.NewAppModuleBasic(
+				[]govclient.ProposalHandler{
+					paramsclient.ProposalHandler,
+					upgradeclient.LegacyProposalHandler,
+					upgradeclient.LegacyCancelProposalHandler,
+				},
+			),
+		)
 	)
 
-	basicManager.RegisterInterfaces(ir)
-	std.RegisterInterfaces(ir)
-	ibctransfertypes.RegisterInterfaces(ir)
-	cryptocodec.RegisterInterfaces(ir)
-	interchaintypes.RegisterInterfaces(ir)
-	liquiditytypes.RegisterInterfaces(ir)
-	liqstakingtypes.RegisterInterfaces(ir)
-	liqslashingtypes.RegisterInterfaces(ir)
-	liqdibutiontypes.RegisterInterfaces(ir)
+	//
+	basicManager.RegisterInterfaces(registry)
+	std.RegisterInterfaces(registry)
+	ibctransfertypes.RegisterInterfaces(registry)
+	cryptocodec.RegisterInterfaces(registry)
+	interchaintypes.RegisterInterfaces(registry)
+	liquiditytypes.RegisterInterfaces(registry)
+	liqstakingtypes.RegisterInterfaces(registry)
+	liqslashingtypes.RegisterInterfaces(registry)
+	liqdibutiontypes.RegisterInterfaces(registry)
 
+	// bostrom
+	graphtypes.RegisterInterfaces(registry)
+	dmntypes.RegisterInterfaces(registry)
+	gridtypes.RegisterInterfaces(registry)
+	resourcestypes.RegisterInterfaces(registry)
+	wasmtypes.RegisterInterfaces(registry)
+
+	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
 	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 	liquiditytypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
 
-	return codec.NewProtoCodec(ir), amino
+	return codec.NewProtoCodec(registry), amino
 }
 
-// MakeSdkConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
+// MakeSDKConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix
 // inside the configuration
-func MakeSdkConfig(cfg Config, sdkConfig *sdk.Config) {
+func MakeSDKConfig(cfg Config, sdkConfig *sdk.Config) {
 	prefix := cfg.ChainPrefix
+
 	sdkConfig.SetBech32PrefixForAccount(
 		prefix,
 		prefix+sdk.PrefixPublic,
 	)
+
 	sdkConfig.SetBech32PrefixForValidator(
 		prefix+sdk.PrefixValidator+sdk.PrefixOperator,
 		prefix+sdk.PrefixValidator+sdk.PrefixOperator+sdk.PrefixPublic,
 	)
+
 	sdkConfig.SetBech32PrefixForConsensusNode(
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus,
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,

@@ -3,9 +3,12 @@ package grpc
 import (
 	"context"
 	"encoding/hex"
+	"time"
 
 	cometbfttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
+
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 )
 
 // Txs queries for all the transactions in a block. Transactions are returned
@@ -15,9 +18,18 @@ func (c *Client) Txs(ctx context.Context, height int64, txs cometbfttypes.Txs) (
 	txResponses := make([]*tx.GetTxResponse, 0, len(txs))
 
 	for _, tmTx := range txs {
-		respPb, err := c.TxService.GetTx(ctx, &tx.GetTxRequest{Hash: hex.EncodeToString(tmTx.Hash())})
+		hash := hex.EncodeToString(tmTx.Hash())
+
+		respPb, err := c.TxService.GetTx(ctx, &tx.GetTxRequest{Hash: hash})
 		if err != nil {
-			c.log.Error().Err(err).Int64("height", height).Msg("GetTx error")
+			_ = c.storage.InsertErrorTx(ctx, model.Tx{
+				Created:      time.Now(),
+				ErrorMessage: err.Error(),
+				Hash:         hash,
+				Height:       height,
+			})
+
+			c.log.Warn().Err(err).Int64("height", height).Msg("GetTx error")
 			continue
 		}
 

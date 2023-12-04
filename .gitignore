@@ -22,3 +22,5 @@ vendor/
 .idea/
 volumes/
 .env.local
+tmp
+bin

@@ -33,7 +33,7 @@ func (m *Module) HandleMessageRecursive(
 	case *ibctransfertypes.MsgTransfer:
 		return nil, m.broker.PublishTransferMessage(ctx, model.TransferMessage{
 			SourceChannel: msg.SourceChannel,
-			Coin:          m.tbM.MapCoin(types.NewCoinFromCdk(msg.Token)),
+			Coin:          m.tbM.MapCoin(types.NewCoinFromSDK(msg.Token)),
 			Sender:        msg.Sender,
 			Receiver:      msg.Receiver,
 			Height:        tx.Height,
@@ -79,8 +79,7 @@ func (m *Module) HandleMessageRecursive(
 			if err := m.cdc.Unmarshal(hostData.Data, &cosmosTx); err != nil {
 				// skip unsupported messages
 				if strings.HasPrefix(err.Error(), "no concrete type registered for type URL") {
-					m.log.Warn().Err(err).Msgf("error while unpacking message: %s", err)
-
+					m.log.Warn().Err(err).Msg("error while unpacking message")
 					return nil, nil
 				}
 

@@ -9,8 +9,12 @@ import (
 	"github.com/bro-n-bro/spacebox/broker/model"
 )
 
-func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
-	signatures := make([]string, 0, len(tx.Signatures))
+func (tb *ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
+	var (
+		signatures = make([]string, 0, len(tx.Signatures))
+		messages   = make([][]byte, len(tx.Body.Messages))
+	)
+
 	for _, s := range tx.Signatures {
 		signer, err := types.ConvertAddressToBech32String(types.BytesToAddress(s))
 		if err == nil {
@@ -18,7 +22,6 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 		}
 	}
 
-	var msgs = make([][]byte, len(tx.Body.Messages))
 	for i, msg := range tx.Body.Messages {
 		msgBytes, err := tb.cdc.MarshalJSON(msg)
 		if err != nil {
@@ -28,7 +31,8 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 				return model.Transaction{}, err
 			}
 		}
-		msgs[i] = msgBytes
+
+		messages[i] = msgBytes
 	}
 
 	logs, err := tb.amino.MarshalJSON(tx.Logs)
@@ -40,7 +44,7 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 		Hash:       tx.TxHash,
 		Height:     tx.Height,
 		Success:    tx.Successful(),
-		Messages:   msgs,
+		Messages:   messages,
 		Memo:       tx.Body.Memo,
 		Signatures: signatures,
 		Signer:     tx.Signer,
@@ -60,6 +64,7 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 					Sequence:  info.Sequence,
 				}
 			}
+
 			t.SignerInfos = infos
 		}
 
@@ -77,7 +82,7 @@ func (tb ToBroker) MapTransaction(tx *types.Tx) (model.Transaction, error) {
 			}
 
 			t.Fee = &model.Fee{
-				Coins:    tb.MapCoins(types.NewCoinsFromCdk(tx.GetFee())),
+				Coins:    tb.MapCoins(types.NewCoinsFromSDK(tx.GetFee())),
 				GasLimit: tx.GetGas(),
 				Granter:  tx.FeeGranter().String(),
 				Payer:    payer,

@@ -1,18 +1,17 @@
 package bank
 
 import (
-	"os"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/rs/zerolog"
 
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/modules/utils"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	"github.com/bro-n-bro/spacebox-crawler/types"
 )
 
 const (
-	moduleName = "gov"
+	ModuleName = "gov"
 )
 
 var (
@@ -40,11 +39,8 @@ type (
 )
 
 func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec) *Module {
-	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
-		Str("module", moduleName).Logger()
-
 	m := &Module{
-		log:    &l,
+		log:    utils.NewModuleLogger(ModuleName),
 		broker: b,
 		client: cli,
 		tbM:    tbM,
@@ -54,8 +50,12 @@ func New(b broker, cli *grpcClient.Client, tbM tb.ToBroker, cdc codec.Codec) *Mo
 	return m
 }
 
-func (m *Module) Name() string { return moduleName }
+func (m *Module) Name() string { return ModuleName }
 
-func (m *Module) SetTallyCache(cache TallyCache[uint64, int64]) {
-	m.tallyCache = cache
+func (m *Module) WithTallyCache(cache TallyCache[uint64, int64]) *Module {
+	if cache != nil {
+		m.tallyCache = cache
+	}
+
+	return m
 }

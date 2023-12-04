@@ -15,6 +15,7 @@ type Storage struct {
 	cli                *mongo.Client
 	blocksCollection   *mongo.Collection
 	messagesCollection *mongo.Collection
+	txCollection       *mongo.Collection
 
 	cfg Config
 }
@@ -61,6 +62,7 @@ func (s *Storage) Start(ctx context.Context) error {
 	blocksCollection := s.cli.Database("spacebox").Collection("blocks")
 	s.blocksCollection = blocksCollection
 	s.messagesCollection = s.cli.Database("spacebox").Collection("error_messages")
+	s.txCollection = s.cli.Database("spacebox").Collection("error_txs")
 
 	mod := mongo.IndexModel{
 		Keys: bson.M{"height": 1}, // index in ascending order or -1 for descending order

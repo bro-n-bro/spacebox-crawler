@@ -37,7 +37,7 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 	// TODO: test it
 	if err := m.broker.PublishCommunityPool(ctx, model.CommunityPool{
 		Height: block.Height,
-		Coins:  m.tbM.MapCoins(types.NewCoinsFromCdkDec(res.Pool)),
+		Coins:  m.tbM.MapCoins(types.NewCoinsFromSDKDec(res.Pool)),
 	}); err != nil {
 		return errors.Wrap(err, "publish CommunityPool error")
 	}
@@ -57,7 +57,7 @@ func (m *Module) updateParams(ctx context.Context, height int64) error {
 
 	if err := m.broker.PublishDistributionParams(ctx, model.DistributionParams{
 		Height: height,
-		Params: model.DParams{
+		Params: model.RawDistributionParams{
 			CommunityTax:        res.Params.CommunityTax.MustFloat64(),
 			BaseProposerReward:  res.Params.BaseProposerReward.MustFloat64(),  //nolint:staticcheck
 			BonusProposerReward: res.Params.BonusProposerReward.MustFloat64(), //nolint:staticcheck
