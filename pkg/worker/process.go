@@ -162,7 +162,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	})
 
 	if err := g.Wait(); err != nil {
-		w.log.Error().Err(err).Msgf("processHeight block got error: %v", err)
+		w.log.Error().Err(err).Int64(keyHeight, height).Msgf("processHeight block got error: %v", err)
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
 		return
 	}

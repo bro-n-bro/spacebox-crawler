@@ -38,6 +38,9 @@ import (
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
 	interchaintypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
+	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
+	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -294,6 +297,9 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	cryptocodec.RegisterInterfaces(ir)
 	interchaintypes.RegisterInterfaces(ir)
 	liquiditytypes.RegisterInterfaces(ir)
+	liqstakingtypes.RegisterInterfaces(ir)
+	liqslashingtypes.RegisterInterfaces(ir)
+	liqdibutiontypes.RegisterInterfaces(ir)
 
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
 	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
