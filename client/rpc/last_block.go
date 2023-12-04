@@ -2,11 +2,10 @@ package rpc
 
 import (
 	"context"
-	"time"
 )
 
 func (c *Client) GetLastBlockHeight(ctx context.Context) (int64, error) {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.Timeout)
 	defer cancel()
 
 	resp, err := c.RPCClient.ABCIInfo(ctx)

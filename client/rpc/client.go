@@ -25,7 +25,7 @@ func (c *Client) Start(ctx context.Context) error {
 	var rpcCli *cometbftHttp.HTTP
 	if c.cfg.WSEnabled {
 		var err error
-		rpcCli, err = cometbftHttp.NewWithTimeout(c.cfg.Host, "/websocket", 15)
+		rpcCli, err = cometbftHttp.NewWithTimeout(c.cfg.Host, "/websocket", uint(c.cfg.Timeout.Seconds()))
 		if err != nil {
 			return err
 		}
@@ -35,7 +35,7 @@ func (c *Client) Start(ctx context.Context) error {
 		}
 	} else {
 		var err error
-		rpcCli, err = cometbftHttp.NewWithTimeout(c.cfg.Host, "", 15)
+		rpcCli, err = cometbftHttp.NewWithTimeout(c.cfg.Host, "", uint(c.cfg.Timeout.Seconds()))
 		if err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ func (c *Client) Start(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Stop(ctx context.Context) error {
+func (c *Client) Stop(_ context.Context) error {
 	if c.cfg.WSEnabled {
 		if err := c.RPCClient.Stop(); err != nil {
 			return err
