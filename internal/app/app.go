@@ -311,9 +311,9 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	cryptocodec.RegisterInterfaces(registry)
 	interchaintypes.RegisterInterfaces(registry)
 	liquiditytypes.RegisterInterfaces(registry)
-	liqstakingtypes.RegisterInterfaces(ir)
-	liqslashingtypes.RegisterInterfaces(ir)
-	liqdibutiontypes.RegisterInterfaces(ir)
+	liqstakingtypes.RegisterInterfaces(registry)
+	liqslashingtypes.RegisterInterfaces(registry)
+	liqdibutiontypes.RegisterInterfaces(registry)
 
 	// bostrom
 	graphtypes.RegisterInterfaces(registry)
