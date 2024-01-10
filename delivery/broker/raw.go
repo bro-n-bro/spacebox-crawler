@@ -5,13 +5,13 @@ import (
 )
 
 func (b *Broker) PublishRawBlock(_ context.Context, block interface{}) error {
-	return b.marshalAndProduce(Account, block)
+	return b.marshalAndProduce(RawBlock, block)
 }
 
 func (b *Broker) PublishRawTransaction(_ context.Context, tx interface{}) error {
-	return b.marshalAndProduce(Account, tx)
+	return b.marshalAndProduce(RawTransaction, tx)
 }
 
 func (b *Broker) PublishRawBlockResults(_ context.Context, br interface{}) error {
-	return b.marshalAndProduce(Account, br)
+	return b.marshalAndProduce(RawBlockResults, br)
 }
