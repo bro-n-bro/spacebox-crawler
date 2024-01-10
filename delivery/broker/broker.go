@@ -223,6 +223,8 @@ func (b *Broker) getCurrentTopics(modules []string) []string {
 			topics = append(topics, resourcesTopics.ToStringSlice()...)
 		case "wasm":
 			topics = append(topics, wasmTopics.ToStringSlice()...)
+		case "raw":
+			topics = append(topics, rawTopics.ToStringSlice()...)
 		default:
 			b.log.Warn().Str("name", m).Msg("unknown module in config")
 			continue

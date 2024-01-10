@@ -117,4 +117,9 @@ type Broker interface {
 
 	// resources module
 	PublishInvestmintMessage(context.Context, model.InvestmintMessage) error
+
+	// raw
+	PublishRawBlock(ctx context.Context, b interface{}) error
+	PublishRawTransaction(ctx context.Context, tx interface{}) error
+	PublishRawBlockResults(ctx context.Context, br interface{}) error
 }
