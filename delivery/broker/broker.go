@@ -98,7 +98,7 @@ func (b *Broker) Start(ctx context.Context) error {
 	// create a producer connection
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": b.cfg.ServerURL,
-		// "message.max.bytes": 5 << 20, // 5 MB
+		"message.max.bytes": 25 << 20, // 5 MB
 	})
 	if err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateProducer)
