@@ -49,6 +49,7 @@ var (
 	RankParams                         Topic = newTopic("rank_params")
 	RawBlock                           Topic = newTopic("raw_block")
 	RawBlockResults                    Topic = newTopic("raw_block_results")
+	RawGenesis                         Topic = newTopic("raw_genesis")
 	RawTransaction                     Topic = newTopic("raw_transaction")
 	ReceivePacketMessage               Topic = newTopic("receive_packet_message")
 	Redelegation                       Topic = newTopic("redelegation")
@@ -124,7 +125,7 @@ var (
 
 	wasmTopics = Topics{Cyberlink, Particle}
 
-	rawTopics = Topics{RawBlock, RawTransaction, RawBlockResults}
+	rawTopics = Topics{RawBlock, RawTransaction, RawBlockResults, RawGenesis}
 )
 
 type (
