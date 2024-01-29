@@ -71,7 +71,7 @@ func (c *Checker) run() {
 			c.log.Info().Msg("checker stopped")
 			return
 		case <-ticker.C:
-			c.log.Debug().Msg("checking health")
+			c.log.Info().Msg("checking health")
 
 			func() {
 				ctx2, cancel2 := context.WithTimeout(ctx, c.cfg.Interval/2)
