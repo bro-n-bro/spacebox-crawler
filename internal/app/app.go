@@ -351,12 +351,13 @@ func MakeSDKConfig(cfg Config, sdkConfig *sdk.Config) {
 // checkLastBlockDiff checks whether the block was created no later than maxDiff.
 func checkLastBlockDiff(maxDiff time.Duration, storage interface {
 	GetLatestBlock(ctx context.Context) (*model.Block, error)
-}) func(context.Context) bool {
+}) func(context.Context, *zerolog.Logger) bool {
 
-	return func(ctx context.Context) bool {
+	return func(ctx context.Context, log *zerolog.Logger) bool {
 		lastBlock, err := storage.GetLatestBlock(ctx)
 		if err != nil {
-			return false
+			log.Error().Err(err).Msg("cannot get latest block")
+			return true
 		}
 
 		if lastBlock == nil {

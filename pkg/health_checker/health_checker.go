@@ -10,7 +10,7 @@ import (
 const defaultInterval = time.Minute
 
 type (
-	CheckFn func(ctx context.Context) bool
+	CheckFn func(ctx context.Context, log *zerolog.Logger) bool
 
 	Checker struct {
 		log      *zerolog.Logger
@@ -77,7 +77,7 @@ func (c *Checker) run() {
 				ctx2, cancel2 := context.WithTimeout(ctx, c.cfg.Interval/2)
 				defer cancel2()
 
-				if !c.isHealth(ctx2) {
+				if !c.isHealth(ctx2, c.log) {
 					if c.cfg.FatalOnCheck {
 						c.log.Fatal().Msg("service is not healthy")
 						return
