@@ -48,6 +48,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	rpcClient "github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
@@ -56,6 +57,7 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/modules"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/cache"
+	healthchecker "github.com/bro-n-bro/spacebox-crawler/pkg/health_checker"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
@@ -185,6 +187,7 @@ func (a *App) Start(ctx context.Context) error {
 		tos = ts.NewToStorage()
 		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
 		srv = server.New(a.cfg.Server, sto, *a.log)
+		hc  = healthchecker.New(*a.log, checkLastBlockDiff(a.cfg.HealthcheckConfig.MaxBlockLag, sto), a.cfg.HealthcheckConfig) //nolint:lll
 	)
 
 	MakeSDKConfig(a.cfg, sdk.GetConfig())
@@ -196,6 +199,7 @@ func (a *App) Start(ctx context.Context) error {
 		cmp{brk, "broker"},
 		cmp{wrk, "worker"},
 		cmp{srv, "server"},
+		cmp{hc, "health_checker"},
 	)
 
 	okCh, errCh := make(chan struct{}), make(chan error)
@@ -342,4 +346,24 @@ func MakeSDKConfig(cfg Config, sdkConfig *sdk.Config) {
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus,
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,
 	)
+}
+
+// checkLastBlockDiff checks whether the block was created no later than maxDiff.
+func checkLastBlockDiff(maxDiff time.Duration, storage interface {
+	GetLatestBlock(ctx context.Context) (*model.Block, error)
+}) func(context.Context, *zerolog.Logger) bool {
+
+	return func(ctx context.Context, log *zerolog.Logger) bool {
+		lastBlock, err := storage.GetLatestBlock(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("cannot get latest block")
+			return true
+		}
+
+		if lastBlock == nil {
+			return true
+		}
+
+		return time.Since(lastBlock.Created) <= maxDiff
+	}
 }
