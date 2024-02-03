@@ -7,6 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -114,6 +115,21 @@ func (s *Storage) GetAllBlocks(ctx context.Context) (blocks []*model.Block, err 
 	}
 
 	return blocks, err
+}
+
+func (s *Storage) GetLatestBlock(ctx context.Context) (*model.Block, error) {
+	var block model.Block
+
+	err := s.blocksCollection.FindOne(
+		ctx,
+		bson.D{},
+		options.FindOne().SetSort(bson.D{{Key: "_id", Value: -1}}),
+	).Decode(&block)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, types.ErrBlockNotFound
+	}
+
+	return &block, err
 }
 
 func (s *Storage) setErrorStatusForProcessing(ctx context.Context) error {
