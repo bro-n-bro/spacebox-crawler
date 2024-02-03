@@ -56,6 +56,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
+	blocksdktypes "github.com/skip-mev/block-sdk/x/auction/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
@@ -335,6 +336,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	neutroninterchaintxstypes.RegisterInterfaces(registry)
 	neutrontokenfactorytypes.RegisterInterfaces(registry)
 	neutrontransfertypes.RegisterInterfaces(registry)
+	blocksdktypes.RegisterInterfaces(registry)
 
 	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
