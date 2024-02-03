@@ -5,7 +5,7 @@ go 1.21.4
 replace (
 	github.com/cosmos/admin-module => github.com/neutron-org/admin-module v1.0.0
 
-	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.47.5
+	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.47.7-0.20240112104847-173f2ea773b4
 
 	github.com/cosmos/gaia/v11 => github.com/cosmos/gaia/v11 v11.0.0-20230724152830-861ba391c3b4
 
@@ -32,7 +32,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/golang-lru/v2 v2.0.1
-	github.com/iqlusioninc/liquidity-staking-module v1.0.1-0.20230328111802-7516902199bb
 	github.com/joho/godotenv v1.4.0
 	github.com/json-iterator/go v1.1.12
 	github.com/neutron-org/neutron/v2 v2.0.2

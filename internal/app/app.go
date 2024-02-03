@@ -39,14 +39,10 @@ import (
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
-	interchaintypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
 	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
-	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
-	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
-	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	contractmanagertypes "github.com/neutron-org/neutron/v2/x/contractmanager/types"
 	neutroncrontypes "github.com/neutron-org/neutron/v2/x/cron/types"
 	neutrondextypes "github.com/neutron-org/neutron/v2/x/dex/types"
@@ -319,11 +315,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	std.RegisterInterfaces(registry)
 	ibctransfertypes.RegisterInterfaces(registry)
 	cryptocodec.RegisterInterfaces(registry)
-	interchaintypes.RegisterInterfaces(registry)
 	liquiditytypes.RegisterInterfaces(registry)
-	liqstakingtypes.RegisterInterfaces(registry)
-	liqslashingtypes.RegisterInterfaces(registry)
-	liqdibutiontypes.RegisterInterfaces(registry)
 
 	// bostrom
 	graphtypes.RegisterInterfaces(registry)

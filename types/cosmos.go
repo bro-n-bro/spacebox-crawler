@@ -35,6 +35,8 @@ type (
 	}
 
 	Block struct {
+		rb *cometbftcoretypes.ResultBlock
+
 		Timestamp           time.Time
 		Hash                string
 		ProposerAddress     string
@@ -92,6 +94,8 @@ func NewBlockFromTmBlock(blk *cometbftcoretypes.ResultBlock, totalGas uint64) *B
 	if blk.Block.LastCommit != nil {
 		res.ValidatorPreCommits = NewValidatorPreCommitsFromTmSignatures(blk.Block.LastCommit.Signatures)
 	}
+
+	res.rb = blk
 
 	return res
 }
@@ -214,3 +218,5 @@ func (tx Tx) FindAttributeByKey(event sdk.StringEvent, attrKey string) (string, 
 func (tx Tx) Successful() bool {
 	return tx.TxResponse.Code == 0
 }
+
+func (b Block) Raw() *cometbftcoretypes.ResultBlock { return b.rb }
