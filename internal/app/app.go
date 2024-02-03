@@ -38,7 +38,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
+	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
 	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
