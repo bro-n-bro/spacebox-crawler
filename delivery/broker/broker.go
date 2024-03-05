@@ -176,14 +176,6 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	return nil
 }
 
-// getCurrentTopics returns the list of topics based on enabled modules.
-// nolint:gocyclo
-func (b *Broker) getTopics(modules []string) []string {
-	topics := make([]string, 0)
-
-	return removeDuplicates(topics)
-}
-
 func WithValidatorCache(valCache cache[string, int64]) func(b *Broker) {
 	return func(b *Broker) {
 		b.cache.validator = valCache

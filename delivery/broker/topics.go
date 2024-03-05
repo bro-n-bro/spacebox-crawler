@@ -136,8 +136,8 @@ var (
 		return removeDuplicates(stringTopics)
 	}([]Topics{
 		authTopics, bankTopics, distributionTopics, govTopics, mintTopics, stakingTopics, coreTopics, authzTopics,
-		feegrantTopics, slashingTopics, ibcTopics, liquidityTopics, graphTopics, bandwidthTopics, dmnTopics, gridTopics,
-		rankTopics, resourcesTopics, wasmTopics, rawTopics})
+		feegrantTopics, slashingTopics, ibcTopics, liquidityTopics, graphTopics, bandwidthTopics, dmnTopics,
+		gridTopics, rankTopics, resourcesTopics, wasmTopics, rawTopics})
 )
 
 type (
