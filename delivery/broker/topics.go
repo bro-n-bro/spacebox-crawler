@@ -126,6 +126,18 @@ var (
 	wasmTopics = Topics{Cyberlink, Particle}
 
 	rawTopics = Topics{RawBlock, RawTransaction, RawBlockResults, RawGenesis}
+
+	// allTopics is the list of all topics.
+	allTopics = func(tcs []Topics) []string {
+		stringTopics := make([]string, 0)
+		for _, t := range tcs {
+			stringTopics = append(stringTopics, t.ToStringSlice()...)
+		}
+		return removeDuplicates(stringTopics)
+	}([]Topics{
+		authTopics, bankTopics, distributionTopics, govTopics, mintTopics, stakingTopics, coreTopics, authzTopics,
+		feegrantTopics, slashingTopics, ibcTopics, liquidityTopics, graphTopics, bandwidthTopics, dmnTopics, gridTopics,
+		rankTopics, resourcesTopics, wasmTopics, rawTopics})
 )
 
 type (
