@@ -5,6 +5,7 @@ import (
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	adminTypes "github.com/cosmos/admin-module/x/adminmodule/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -46,6 +47,15 @@ import (
 	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
 	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
 	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
+	contractmanagertypes "github.com/neutron-org/neutron/v2/x/contractmanager/types"
+	neutroncrontypes "github.com/neutron-org/neutron/v2/x/cron/types"
+	neutrondextypes "github.com/neutron-org/neutron/v2/x/dex/types"
+	neutronfeeburnertypes "github.com/neutron-org/neutron/v2/x/feeburner/types"
+	neutronfeerefundertypes "github.com/neutron-org/neutron/v2/x/feerefunder/types"
+	neutroninterchainqueriestypes "github.com/neutron-org/neutron/v2/x/interchainqueries/types"
+	neutroninterchaintxstypes "github.com/neutron-org/neutron/v2/x/interchaintxs/types"
+	neutrontokenfactorytypes "github.com/neutron-org/neutron/v2/x/tokenfactory/types"
+	neutrontransfertypes "github.com/neutron-org/neutron/v2/x/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -321,6 +331,18 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	gridtypes.RegisterInterfaces(registry)
 	resourcestypes.RegisterInterfaces(registry)
 	wasmtypes.RegisterInterfaces(registry)
+
+	// neutron
+	adminTypes.RegisterInterfaces(registry)
+	contractmanagertypes.RegisterInterfaces(registry)
+	neutroncrontypes.RegisterInterfaces(registry)
+	neutrondextypes.RegisterInterfaces(registry)
+	neutronfeeburnertypes.RegisterInterfaces(registry)
+	neutronfeerefundertypes.RegisterInterfaces(registry)
+	neutroninterchainqueriestypes.RegisterInterfaces(registry)
+	neutroninterchaintxstypes.RegisterInterfaces(registry)
+	neutrontokenfactorytypes.RegisterInterfaces(registry)
+	neutrontransfertypes.RegisterInterfaces(registry)
 
 	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
