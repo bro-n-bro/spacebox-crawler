@@ -5,6 +5,7 @@ import (
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	adminTypes "github.com/cosmos/admin-module/x/adminmodule/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -37,15 +38,25 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
+	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
 	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
+	contractmanagertypes "github.com/neutron-org/neutron/v2/x/contractmanager/types"
+	neutroncrontypes "github.com/neutron-org/neutron/v2/x/cron/types"
+	neutrondextypes "github.com/neutron-org/neutron/v2/x/dex/types"
+	neutronfeeburnertypes "github.com/neutron-org/neutron/v2/x/feeburner/types"
+	neutronfeerefundertypes "github.com/neutron-org/neutron/v2/x/feerefunder/types"
+	neutroninterchainqueriestypes "github.com/neutron-org/neutron/v2/x/interchainqueries/types"
+	neutroninterchaintxstypes "github.com/neutron-org/neutron/v2/x/interchaintxs/types"
+	neutrontokenfactorytypes "github.com/neutron-org/neutron/v2/x/tokenfactory/types"
+	neutrontransfertypes "github.com/neutron-org/neutron/v2/x/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
+	blocksdktypes "github.com/skip-mev/block-sdk/x/auction/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
@@ -317,6 +328,19 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	gridtypes.RegisterInterfaces(registry)
 	resourcestypes.RegisterInterfaces(registry)
 	wasmtypes.RegisterInterfaces(registry)
+
+	// neutron
+	adminTypes.RegisterInterfaces(registry)
+	contractmanagertypes.RegisterInterfaces(registry)
+	neutroncrontypes.RegisterInterfaces(registry)
+	neutrondextypes.RegisterInterfaces(registry)
+	neutronfeeburnertypes.RegisterInterfaces(registry)
+	neutronfeerefundertypes.RegisterInterfaces(registry)
+	neutroninterchainqueriestypes.RegisterInterfaces(registry)
+	neutroninterchaintxstypes.RegisterInterfaces(registry)
+	neutrontokenfactorytypes.RegisterInterfaces(registry)
+	neutrontransfertypes.RegisterInterfaces(registry)
+	blocksdktypes.RegisterInterfaces(registry)
 
 	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
