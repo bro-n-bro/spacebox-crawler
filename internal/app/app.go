@@ -38,15 +38,11 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
-	interchaintypes "github.com/cosmos/interchain-security/v3/x/ccv/types"
+	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
 	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
 	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
 	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
 	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
-	liqdibutiontypes "github.com/iqlusioninc/liquidity-staking-module/x/distribution/types"
-	liqslashingtypes "github.com/iqlusioninc/liquidity-staking-module/x/slashing/types"
-	liqstakingtypes "github.com/iqlusioninc/liquidity-staking-module/x/staking/types"
 	contractmanagertypes "github.com/neutron-org/neutron/v2/x/contractmanager/types"
 	neutroncrontypes "github.com/neutron-org/neutron/v2/x/cron/types"
 	neutrondextypes "github.com/neutron-org/neutron/v2/x/dex/types"
@@ -60,8 +56,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
+	blocksdktypes "github.com/skip-mev/block-sdk/x/auction/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
 	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
 	rpcClient "github.com/bro-n-bro/spacebox-crawler/client/rpc"
 	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
@@ -70,6 +68,7 @@ import (
 	"github.com/bro-n-bro/spacebox-crawler/modules"
 	"github.com/bro-n-bro/spacebox-crawler/modules/core"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/cache"
+	healthchecker "github.com/bro-n-bro/spacebox-crawler/pkg/health_checker"
 	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
 	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
@@ -199,6 +198,7 @@ func (a *App) Start(ctx context.Context) error {
 		tos = ts.NewToStorage()
 		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
 		srv = server.New(a.cfg.Server, sto, *a.log)
+		hc  = healthchecker.New(*a.log, checkLastBlockDiff(a.cfg.HealthcheckConfig.MaxBlockLag, sto), a.cfg.HealthcheckConfig) //nolint:lll
 	)
 
 	MakeSDKConfig(a.cfg, sdk.GetConfig())
@@ -210,6 +210,7 @@ func (a *App) Start(ctx context.Context) error {
 		cmp{brk, "broker"},
 		cmp{wrk, "worker"},
 		cmp{srv, "server"},
+		cmp{hc, "health_checker"},
 	)
 
 	okCh, errCh := make(chan struct{}), make(chan error)
@@ -319,11 +320,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	std.RegisterInterfaces(registry)
 	ibctransfertypes.RegisterInterfaces(registry)
 	cryptocodec.RegisterInterfaces(registry)
-	interchaintypes.RegisterInterfaces(registry)
 	liquiditytypes.RegisterInterfaces(registry)
-	liqstakingtypes.RegisterInterfaces(registry)
-	liqslashingtypes.RegisterInterfaces(registry)
-	liqdibutiontypes.RegisterInterfaces(registry)
 
 	// bostrom
 	graphtypes.RegisterInterfaces(registry)
@@ -343,6 +340,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	neutroninterchaintxstypes.RegisterInterfaces(registry)
 	neutrontokenfactorytypes.RegisterInterfaces(registry)
 	neutrontransfertypes.RegisterInterfaces(registry)
+	blocksdktypes.RegisterInterfaces(registry)
 
 	//
 	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
@@ -372,4 +370,24 @@ func MakeSDKConfig(cfg Config, sdkConfig *sdk.Config) {
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus,
 		prefix+sdk.PrefixValidator+sdk.PrefixConsensus+sdk.PrefixPublic,
 	)
+}
+
+// checkLastBlockDiff checks whether the block was created no later than maxDiff.
+func checkLastBlockDiff(maxDiff time.Duration, storage interface {
+	GetLatestBlock(ctx context.Context) (*model.Block, error)
+}) func(context.Context, *zerolog.Logger) bool {
+
+	return func(ctx context.Context, log *zerolog.Logger) bool {
+		lastBlock, err := storage.GetLatestBlock(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("cannot get latest block")
+			return true
+		}
+
+		if lastBlock == nil {
+			return true
+		}
+
+		return time.Since(lastBlock.Created) <= maxDiff
+	}
 }

@@ -74,11 +74,9 @@ func (b *Broker) Start(ctx context.Context) error {
 		return errors.Wrap(err, MsgErrCreateAdminClient)
 	}
 
-	// get enabled topics based on enabled modules
-	topics := b.getCurrentTopics(b.modules)
-	kafkaTopics := make([]kafka.TopicSpecification, len(topics))
+	kafkaTopics := make([]kafka.TopicSpecification, len(allTopics))
 	// kafkaPartitions := make([]kafka.PartitionsSpecification, len(topics))
-	for i, topic := range topics {
+	for i, topic := range allTopics {
 		kafkaTopics[i] = kafka.TopicSpecification{
 			Topic:         topic,
 			NumPartitions: b.cfg.PartitionsCount,
@@ -98,7 +96,7 @@ func (b *Broker) Start(ctx context.Context) error {
 	// create a producer connection
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": b.cfg.ServerURL,
-		"message.max.bytes": 5 << 20, // 5 MB
+		"message.max.bytes": b.cfg.MaxMessageBytes,
 	})
 	if err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateProducer)
@@ -176,60 +174,6 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	}
 
 	return nil
-}
-
-// getCurrentTopics returns the list of topics based on enabled modules.
-// nolint:gocyclo
-func (b *Broker) getCurrentTopics(modules []string) []string {
-	topics := make([]string, 0)
-
-	for _, m := range modules {
-		switch m {
-		case "auth":
-			topics = append(topics, authTopics.ToStringSlice()...)
-		case "bank":
-			topics = append(topics, bankTopics.ToStringSlice()...)
-		case "gov":
-			topics = append(topics, govTopics.ToStringSlice()...)
-		case "mint":
-			topics = append(topics, mintTopics.ToStringSlice()...)
-		case "staking":
-			topics = append(topics, stakingTopics.ToStringSlice()...)
-		case "distribution":
-			topics = append(topics, distributionTopics.ToStringSlice()...)
-		case "core":
-			topics = append(topics, coreTopics.ToStringSlice()...)
-		case "authz":
-			topics = append(topics, authzTopics.ToStringSlice()...)
-		case "feegrant":
-			topics = append(topics, feegrantTopics.ToStringSlice()...)
-		case "slashing":
-			topics = append(topics, slashingTopics.ToStringSlice()...)
-		case "ibc":
-			topics = append(topics, ibcTopics.ToStringSlice()...)
-		case "liquidity":
-			topics = append(topics, liquidityTopics.ToStringSlice()...)
-		case "graph":
-			topics = append(topics, graphTopics.ToStringSlice()...)
-		case "bandwidth":
-			topics = append(topics, bandwidthTopics.ToStringSlice()...)
-		case "dmn":
-			topics = append(topics, dmnTopics.ToStringSlice()...)
-		case "grid":
-			topics = append(topics, gridTopics.ToStringSlice()...)
-		case "rank":
-			topics = append(topics, rankTopics.ToStringSlice()...)
-		case "resources":
-			topics = append(topics, resourcesTopics.ToStringSlice()...)
-		case "wasm":
-			topics = append(topics, wasmTopics.ToStringSlice()...)
-		default:
-			b.log.Warn().Str("name", m).Msg("unknown module in config")
-			continue
-		}
-	}
-
-	return removeDuplicates(topics)
 }
 
 func WithValidatorCache(valCache cache[string, int64]) func(b *Broker) {

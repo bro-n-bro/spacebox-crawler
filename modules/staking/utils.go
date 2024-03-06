@@ -109,6 +109,7 @@ func convertValidator(cdc codec.Codec, validator stakingtypes.Validator, height 
 	}
 
 	var minSelfDelegation int64
+	//nolint:staticcheck
 	if !validator.MinSelfDelegation.IsNil() {
 		minSelfDelegation = validator.MinSelfDelegation.Int64()
 	}
