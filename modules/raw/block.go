@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/bro-n-bro/spacebox-crawler/types"
@@ -34,13 +36,21 @@ func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {
 		return fmt.Errorf("failed to publish raw block: %w", err)
 	}
 
-	return m.publishBlockResults(ctx, block.Height)
+	return m.publishBlockResults(ctx, block.Height, block.Timestamp)
 }
 
-func (m *Module) publishBlockResults(ctx context.Context, height int64) error {
-	rawBR, err := m.rpcClient.GetBlockResults(ctx, height)
+func (m *Module) publishBlockResults(ctx context.Context, height int64, timestamp time.Time) error {
+	brResp, err := m.rpcClient.GetBlockResults(ctx, height)
 	if err != nil {
 		return fmt.Errorf("failed to get block results: %w", err)
+	}
+
+	rawBR := struct {
+		*coretypes.ResultBlockResults
+		Timestamp time.Time `json:"timestamp"`
+	}{
+		ResultBlockResults: brResp,
+		Timestamp:          timestamp,
 	}
 
 	return m.broker.PublishRawBlockResults(ctx, rawBR)
