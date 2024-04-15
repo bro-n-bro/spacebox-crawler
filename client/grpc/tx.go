@@ -8,7 +8,7 @@ import (
 	cometbfttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
 )
 
 // Txs queries for all the transactions in a block. Transactions are returned

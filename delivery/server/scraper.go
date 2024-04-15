@@ -7,7 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
 )
 
 const (

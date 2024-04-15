@@ -14,7 +14,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 const (
@@ -243,7 +243,12 @@ func (w *Worker) processGenesis(ctx context.Context, genesis *cometbfttypes.Gene
 func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 	for _, m := range blockHandlers {
 		if err := m.HandleBlock(ctx, block); err != nil {
-			w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("HandleBlock error")
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, block.Height).
+				Str(keyModule, m.Name()).
+				Msg("HandleBlock error")
+
 			return err
 		}
 	}
@@ -254,7 +259,12 @@ func (w *Worker) processBlock(ctx context.Context, block *types.Block) error {
 func (w *Worker) processValidators(ctx context.Context, height int64, vals *cometbftcoreypes.ResultValidators) error {
 	for _, m := range validatorsHandlers {
 		if err := m.HandleValidators(ctx, vals); err != nil {
-			w.log.Error().Err(err).Int64(keyHeight, height).Str(keyModule, m.Name()).Msg("HandleValidators error")
+			w.log.Error().
+				Err(err).
+				Int64(keyHeight, height).
+				Str(keyModule, m.Name()).
+				Msg("HandleValidators error")
+
 			return err
 		}
 	}
@@ -266,7 +276,12 @@ func (w *Worker) processTxs(ctx context.Context, txs []*types.Tx) error {
 	for _, tx := range txs {
 		for _, m := range transactionHandlers {
 			if err := m.HandleTx(ctx, tx); err != nil {
-				w.log.Error().Err(err).Str(keyModule, m.Name()).Msg("HandleTX error")
+				w.log.Error().
+					Err(err).
+					Int64(keyHeight, tx.Height).
+					Str(keyModule, m.Name()).
+					Msg("HandleTX error")
+
 				return err
 			}
 		}

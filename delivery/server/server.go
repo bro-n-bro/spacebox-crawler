@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage"
 )
 
 type Server struct {

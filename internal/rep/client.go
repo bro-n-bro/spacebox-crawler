@@ -7,7 +7,7 @@ import (
 	cometbfttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/types/tx"
 
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 type (
@@ -19,8 +19,6 @@ type (
 	}
 
 	RPCClient interface {
-		WsEnabled() bool
-
 		SubscribeNewBlocks(ctx context.Context) (<-chan cometbftcoretypes.ResultEvent, error)
 		Genesis(ctx context.Context) (*cometbfttypes.GenesisDoc, error)
 		GetLastBlockHeight(ctx context.Context) (int64, error)

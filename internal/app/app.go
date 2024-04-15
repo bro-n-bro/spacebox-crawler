@@ -5,7 +5,6 @@ import (
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	adminTypes "github.com/cosmos/admin-module/x/adminmodule/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -35,58 +34,38 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	gaia "github.com/cosmos/gaia/v15/x/metaprotocols"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
-	dmntypes "github.com/cybercongress/go-cyber/x/dmn/types"
-	graphtypes "github.com/cybercongress/go-cyber/x/graph/types"
-	gridtypes "github.com/cybercongress/go-cyber/x/grid/types"
-	resourcestypes "github.com/cybercongress/go-cyber/x/resources/types"
-	contractmanagertypes "github.com/neutron-org/neutron/v2/x/contractmanager/types"
-	neutroncrontypes "github.com/neutron-org/neutron/v2/x/cron/types"
-	neutrondextypes "github.com/neutron-org/neutron/v2/x/dex/types"
-	neutronfeeburnertypes "github.com/neutron-org/neutron/v2/x/feeburner/types"
-	neutronfeerefundertypes "github.com/neutron-org/neutron/v2/x/feerefunder/types"
-	neutroninterchainqueriestypes "github.com/neutron-org/neutron/v2/x/interchainqueries/types"
-	neutroninterchaintxstypes "github.com/neutron-org/neutron/v2/x/interchaintxs/types"
-	neutrontokenfactorytypes "github.com/neutron-org/neutron/v2/x/tokenfactory/types"
-	neutrontransfertypes "github.com/neutron-org/neutron/v2/x/transfer/types"
+	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
-	blocksdktypes "github.com/skip-mev/block-sdk/x/auction/types"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
-	grpcClient "github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	rpcClient "github.com/bro-n-bro/spacebox-crawler/client/rpc"
-	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
-	"github.com/bro-n-bro/spacebox-crawler/delivery/server"
-	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
-	"github.com/bro-n-bro/spacebox-crawler/modules"
-	"github.com/bro-n-bro/spacebox-crawler/modules/core"
-	"github.com/bro-n-bro/spacebox-crawler/pkg/cache"
-	healthchecker "github.com/bro-n-bro/spacebox-crawler/pkg/health_checker"
-	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
-	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
-	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
-	_ "github.com/bro-n-bro/spacebox-crawler/types/bostrom"
-	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/types/liquidity"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
+	grpcClient "github.com/bro-n-bro/spacebox-crawler/v2/client/grpc"
+	rpcClient "github.com/bro-n-bro/spacebox-crawler/v2/client/rpc"
+	"github.com/bro-n-bro/spacebox-crawler/v2/delivery/broker"
+	"github.com/bro-n-bro/spacebox-crawler/v2/delivery/server"
+	"github.com/bro-n-bro/spacebox-crawler/v2/internal/rep"
+	"github.com/bro-n-bro/spacebox-crawler/v2/modules"
+	rawModule "github.com/bro-n-bro/spacebox-crawler/v2/modules/raw"
+	healthchecker "github.com/bro-n-bro/spacebox-crawler/v2/pkg/health_checker"
+	ts "github.com/bro-n-bro/spacebox-crawler/v2/pkg/mapper/to_storage"
+	"github.com/bro-n-bro/spacebox-crawler/v2/pkg/worker"
+	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/v2/types/liquidity"
 )
 
 const (
-	defaultCacheSize = 100000
-	FmtCannotStart   = "cannot start %q"
+	FmtCannotStart = "cannot start %q"
 )
 
 var (
 	ErrStartTimeout    = errors.New("start timeout")
 	ErrShutdownTimeout = errors.New("shutdown timeout")
-
-	lessInt64    = func(cacheVal, newVal int64) bool { return cacheVal < newVal }
-	greaterInt64 = func(cacheVal, newVal int64) bool { return cacheVal > newVal }
 )
 
 type (
@@ -115,61 +94,7 @@ func New(cfg Config, version string, l zerolog.Logger) *App {
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
-	// TODO: use redis
-	valCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
-	if err != nil {
-		return err
-	}
-
-	valCommissionCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
-	if err != nil {
-		return err
-	}
-
-	valDescriptionCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64)) //nolint:lll
-	if err != nil {
-		return err
-	}
-
-	valInfoCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
-	if err != nil {
-		return err
-	}
-
-	valStatusCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
-	if err != nil {
-		return err
-	}
-
-	// collect data only from bigger height
-	tCache, err := cache.New[uint64, int64](defaultCacheSize, cache.WithCompareFunc[uint64, int64](lessInt64))
-	if err != nil {
-		return err
-	}
-
-	// collect data only from earlier height
-	aCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](greaterInt64))
-	if err != nil {
-		return err
-	}
-
-	// collect data only from bigger height
-	rCache, err := cache.New[string, int64](defaultCacheSize, cache.WithCompareFunc[string, int64](lessInt64))
-	if err != nil {
-		return err
-	}
-
 	if a.cfg.MetricsEnabled {
-		cache.RegisterMetrics("spacebox_crawler")
-
-		valCache.Patch(cache.WithMetrics[string, int64]("validators"))
-		valCommissionCache.Patch(cache.WithMetrics[string, int64]("validators_commission"))
-		valDescriptionCache.Patch(cache.WithMetrics[string, int64]("validators_description"))
-		valInfoCache.Patch(cache.WithMetrics[string, int64]("validators_info"))
-		valStatusCache.Patch(cache.WithMetrics[string, int64]("validators_status"))
-		tCache.Patch(cache.WithMetrics[uint64, int64]("tally"))
-		aCache.Patch(cache.WithMetrics[string, int64]("account"))
-
 		promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace:   "spacebox_crawler",
 			Name:        "version",
@@ -179,24 +104,18 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	var (
-		cod, amn = MakeEncodingConfig()
-		sto      = storage.New(a.cfg.StorageConfig, *a.log)
-		rpcCli   = rpcClient.New(a.cfg.RPCConfig)
-		grpcCli  = grpcClient.New(a.cfg.GRPCConfig, *a.log, sto)
-		tbr      = tb.NewToBroker(cod, amn.LegacyAmino)
-		par      = core.JoinMessageParsers(core.CosmosMessageAddressesParser)
+		cod     = MakeEncodingConfig()
+		sto     = storage.New(a.cfg.StorageConfig, *a.log)
+		rpcCli  = rpcClient.New(a.cfg.RPCConfig)
+		grpcCli = grpcClient.New(a.cfg.GRPCConfig, *a.log, sto)
 
-		brk = broker.New(a.cfg.BrokerConfig, a.cfg.Modules, *a.log,
-			broker.WithValidatorCache(valCache),
-			broker.WithValidatorCommissionCache(valCommissionCache),
-			broker.WithValidatorDescriptionCache(valDescriptionCache),
-			broker.WithValidatorInfoCache(valInfoCache),
-			broker.WithValidatorStatusCache(valStatusCache),
-		)
+		brk = broker.New(a.cfg.BrokerConfig, *a.log)
 
-		mds = modules.BuildModules(a.log, a.cfg.Modules, a.cfg.DefaultDenom, grpcCli, rpcCli, brk, cod, *tbr, par, tCache, aCache, rCache) //nolint:lll
+		raw  = rawModule.New(brk, rpcCli)
+		mods = modules.NewModuleLoader().WithLogger(a.log).WithModules(raw)
+
 		tos = ts.NewToStorage()
-		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mds, sto, cod, *tbr, *tos)
+		wrk = worker.New(a.cfg.WorkerConfig, *a.log, brk, rpcCli, grpcCli, mods.Build(), sto, cod, *tos)
 		srv = server.New(a.cfg.Server, sto, *a.log)
 		hc  = healthchecker.New(*a.log, checkLastBlockDiff(a.cfg.HealthcheckConfig.MaxBlockLag, sto), a.cfg.HealthcheckConfig) //nolint:lll
 	)
@@ -280,7 +199,7 @@ func (a *App) GetStartTimeout() time.Duration { return a.cfg.StartTimeout }
 func (a *App) GetStopTimeout() time.Duration  { return a.cfg.StopTimeout }
 
 // MakeEncodingConfig creates an EncodingConfig to properly handle and marshal all messages
-func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
+func MakeEncodingConfig() codec.Codec {
 	var (
 		registry     = cdc.NewInterfaceRegistry()
 		basicManager = module.NewBasicManager(
@@ -305,6 +224,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 			ibc.AppModuleBasic{},
 			ibclightclient.AppModuleBasic{},
 			interchainprovider.AppModuleBasic{},
+			gaia.AppModuleBasic{},
 			gov.NewAppModuleBasic(
 				[]govclient.ProposalHandler{
 					paramsclient.ProposalHandler,
@@ -315,6 +235,8 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 		)
 	)
 
+	wasmtypes.RegisterInterfaces(registry)
+
 	//
 	basicManager.RegisterInterfaces(registry)
 	std.RegisterInterfaces(registry)
@@ -322,33 +244,7 @@ func MakeEncodingConfig() (codec.Codec, *codec.AminoCodec) {
 	cryptocodec.RegisterInterfaces(registry)
 	liquiditytypes.RegisterInterfaces(registry)
 
-	// bostrom
-	graphtypes.RegisterInterfaces(registry)
-	dmntypes.RegisterInterfaces(registry)
-	gridtypes.RegisterInterfaces(registry)
-	resourcestypes.RegisterInterfaces(registry)
-	wasmtypes.RegisterInterfaces(registry)
-
-	// neutron
-	adminTypes.RegisterInterfaces(registry)
-	contractmanagertypes.RegisterInterfaces(registry)
-	neutroncrontypes.RegisterInterfaces(registry)
-	neutrondextypes.RegisterInterfaces(registry)
-	neutronfeeburnertypes.RegisterInterfaces(registry)
-	neutronfeerefundertypes.RegisterInterfaces(registry)
-	neutroninterchainqueriestypes.RegisterInterfaces(registry)
-	neutroninterchaintxstypes.RegisterInterfaces(registry)
-	neutrontokenfactorytypes.RegisterInterfaces(registry)
-	neutrontransfertypes.RegisterInterfaces(registry)
-	blocksdktypes.RegisterInterfaces(registry)
-
-	//
-	amino := codec.NewAminoCodec(codec.NewLegacyAmino())
-	std.RegisterLegacyAminoCodec(amino.LegacyAmino) // FIXME: not needed?
-	ibctransfertypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
-	liquiditytypes.RegisterLegacyAminoCodec(amino.LegacyAmino)
-
-	return codec.NewProtoCodec(registry), amino
+	return codec.NewProtoCodec(registry)
 }
 
 // MakeSDKConfig represents a handy implementation of SdkConfigSetup that simply setups the prefix

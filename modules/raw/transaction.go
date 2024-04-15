@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/gogoproto/jsonpb"
 
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 var (

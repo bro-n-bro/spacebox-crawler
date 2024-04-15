@@ -3,7 +3,7 @@ package rpc
 import (
 	"context"
 
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 // GetBlockEvents returns begin block and end block events.

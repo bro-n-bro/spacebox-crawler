@@ -9,8 +9,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 func (s *Storage) GetBlockByHeight(ctx context.Context, height int64) (*model.Block, error) {

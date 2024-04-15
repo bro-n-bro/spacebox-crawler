@@ -9,8 +9,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 
-	"github.com/bro-n-bro/spacebox-crawler/internal/app"
-	executor "github.com/bro-n-bro/spacebox-crawler/pkg/app"
+	"github.com/bro-n-bro/spacebox-crawler/v2/internal/app"
+	executor "github.com/bro-n-bro/spacebox-crawler/v2/pkg/app"
 )
 
 const (
