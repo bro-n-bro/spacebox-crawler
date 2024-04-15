@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	grpcprom "github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -50,9 +51,9 @@ func (c *Client) Start(ctx context.Context) error {
 
 	if c.cfg.MetricsEnabled {
 		cm := grpcprom.NewClientMetrics(
-			grpcprom.WithClientHandlingTimeHistogram(
-				grpcprom.WithHistogramBuckets([]float64{0.001, 0.01, 0.1, 0.3, 0.6, 1, 3, 6, 9, 20, 30, 60, 90, 120}), //nolint:lll
-			))
+			grpcprom.WithClientHandlingTimeHistogram())
+
+		prometheus.MustRegister(cm)
 
 		options = append(
 			options,
