@@ -5,6 +5,7 @@ import (
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	adminTypes "github.com/cosmos/admin-module/x/adminmodule/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -38,11 +39,21 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	interchainprovider "github.com/cosmos/interchain-security/v3/x/ccv/provider"
+	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
+	contractmanagertypes "github.com/neutron-org/neutron/v3/x/contractmanager/types"
+	neutroncrontypes "github.com/neutron-org/neutron/v3/x/cron/types"
+	neutrondextypes "github.com/neutron-org/neutron/v3/x/dex/types"
+	neutronfeeburnertypes "github.com/neutron-org/neutron/v3/x/feeburner/types"
+	neutronfeerefundertypes "github.com/neutron-org/neutron/v3/x/feerefunder/types"
+	neutroninterchainqueriestypes "github.com/neutron-org/neutron/v3/x/interchainqueries/types"
+	neutroninterchaintxstypes "github.com/neutron-org/neutron/v3/x/interchaintxs/types"
+	neutrontokenfactorytypes "github.com/neutron-org/neutron/v3/x/tokenfactory/types"
+	neutrontransfertypes "github.com/neutron-org/neutron/v3/x/transfer/types"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
+	blocksdktypes "github.com/skip-mev/block-sdk/x/auction/types"
 
 	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage"
 	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
@@ -234,6 +245,19 @@ func MakeEncodingConfig() codec.Codec {
 			),
 		)
 	)
+
+	// neutron
+	adminTypes.RegisterInterfaces(registry)
+	contractmanagertypes.RegisterInterfaces(registry)
+	neutroncrontypes.RegisterInterfaces(registry)
+	neutrondextypes.RegisterInterfaces(registry)
+	neutronfeeburnertypes.RegisterInterfaces(registry)
+	neutronfeerefundertypes.RegisterInterfaces(registry)
+	neutroninterchainqueriestypes.RegisterInterfaces(registry)
+	neutroninterchaintxstypes.RegisterInterfaces(registry)
+	neutrontokenfactorytypes.RegisterInterfaces(registry)
+	neutrontransfertypes.RegisterInterfaces(registry)
+	blocksdktypes.RegisterInterfaces(registry)
 
 	wasmtypes.RegisterInterfaces(registry)
 
