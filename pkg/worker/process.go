@@ -117,7 +117,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 
 		_blockDur := time.Now()
 		if block, err = w.grpcClient.Block(ctx2, height); err != nil {
-			return err
+			return fmt.Errorf("failed to get block: %w", err)
 		}
 		w.log.Debug().
 			Int("worker_number", workerIndex).
@@ -131,7 +131,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 		var err error
 		_validatorsDur := time.Now()
 		if vals, err = w.grpcClient.Validators(ctx2, height); err != nil {
-			return err
+			return fmt.Errorf("failed to get validators: %w", err)
 		}
 		w.log.Debug().
 			Int("worker_number", workerIndex).
@@ -147,7 +147,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 		_blockEventsDur := time.Now()
 		beginBlockEvents, endBlockEvents, err = w.rpcClient.GetBlockEvents(ctx2, height)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get block events: %w", err)
 		}
 
 		w.log.Debug().
@@ -160,7 +160,7 @@ func (w *Worker) processHeight(ctx context.Context, workerIndex int, height int6
 	})
 
 	if err := g.Wait(); err != nil {
-		w.log.Error().Int64(keyHeight, height).Err(err).Msg("processHeight block got error")
+		w.log.Error().Int64(keyHeight, height).Err(err).Msg("processHeight error")
 		w.setErrorStatusWithLogging(ctx, height, err.Error())
 		return
 	}
