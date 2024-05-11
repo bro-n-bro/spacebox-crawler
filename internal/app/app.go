@@ -36,8 +36,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	gaia "github.com/cosmos/gaia/v15/x/metaprotocols"
+	ibcaccounts "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
+	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v7/modules/core"
+	ibccore "github.com/cosmos/ibc-go/v7/modules/core"
 	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
 	contractmanagertypes "github.com/neutron-org/neutron/v3/x/contractmanager/types"
@@ -232,7 +234,9 @@ func MakeEncodingConfig() codec.Codec {
 			vesting.AppModuleBasic{},
 			nftmodule.AppModuleBasic{},
 			consensus.AppModuleBasic{},
-			ibc.AppModuleBasic{},
+			ibccore.AppModuleBasic{},
+			ibcfee.AppModuleBasic{},
+			ibcaccounts.AppModuleBasic{},
 			ibclightclient.AppModuleBasic{},
 			interchainprovider.AppModuleBasic{},
 			gaia.AppModuleBasic{},
