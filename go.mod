@@ -1,6 +1,6 @@
 module github.com/bro-n-bro/spacebox-crawler/v2
 
-go 1.22.2
+go 1.22.4
 
 replace (
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.47.11-ics-lsm
