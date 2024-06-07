@@ -47,6 +47,7 @@ func (c *Client) Start(ctx context.Context) error {
 	options := []grpc.DialOption{
 		grpc.WithBlock(),
 		grpc.WithChainUnaryInterceptor(timeout.UnaryClientInterceptor(c.cfg.Timeout)), // request timeout
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(c.cfg.MaxReceiveMessageSize)),
 	}
 
 	if c.cfg.MetricsEnabled {

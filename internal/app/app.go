@@ -35,7 +35,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	gaia "github.com/cosmos/gaia/v15/x/metaprotocols"
+	gaia "github.com/cosmos/gaia/v17/x/metaprotocols"
 	ibcaccounts "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
