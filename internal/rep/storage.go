@@ -3,7 +3,7 @@ package rep
 import (
 	"context"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
 )
 
 // Storage implementation needed for store some tmp data for correct processing

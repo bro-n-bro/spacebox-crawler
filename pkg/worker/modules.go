@@ -1,6 +1,6 @@
 package worker
 
-import "github.com/bro-n-bro/spacebox-crawler/types"
+import "github.com/bro-n-bro/spacebox-crawler/v2/types"
 
 var (
 	transactionHandlers       []types.TransactionHandler

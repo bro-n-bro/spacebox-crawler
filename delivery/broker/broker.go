@@ -21,36 +21,21 @@ const (
 
 type (
 	Broker struct {
-		log     *zerolog.Logger
-		p       *kafka.Producer
-		ac      *kafka.AdminClient
-		cache   lruCache
-		modules []string
-		cfg     Config
-	}
-
-	lruCache struct {
-		validator      cache[string, int64]
-		valCommission  cache[string, int64]
-		valDescription cache[string, int64]
-		valInfo        cache[string, int64]
-		valStatus      cache[string, int64]
-	}
-
-	cache[K, V comparable] interface {
-		UpdateCacheValue(K, V) bool
+		log *zerolog.Logger
+		p   *kafka.Producer
+		ac  *kafka.AdminClient
+		cfg Config
 	}
 
 	opt func(b *Broker)
 )
 
-func New(cfg Config, modules []string, l zerolog.Logger, opts ...opt) *Broker {
+func New(cfg Config, l zerolog.Logger, opts ...opt) *Broker {
 	l = l.With().Str("cmp", "broker").Logger()
 
 	b := &Broker{
-		log:     &l,
-		cfg:     cfg,
-		modules: modules,
+		log: &l,
+		cfg: cfg,
 	}
 
 	for _, apply := range opts {
@@ -97,6 +82,7 @@ func (b *Broker) Start(ctx context.Context) error {
 	p, err := kafka.NewProducer(&kafka.ConfigMap{
 		"bootstrap.servers": b.cfg.ServerURL,
 		"message.max.bytes": b.cfg.MaxMessageBytes,
+		"go.batch.producer": b.cfg.BatchProducer,
 	})
 	if err != nil {
 		b.log.Error().Err(err).Msg(MsgErrCreateProducer)
@@ -174,36 +160,6 @@ func (b *Broker) produce(topic Topic, data []byte) error {
 	}
 
 	return nil
-}
-
-func WithValidatorCache(valCache cache[string, int64]) func(b *Broker) {
-	return func(b *Broker) {
-		b.cache.validator = valCache
-	}
-}
-
-func WithValidatorCommissionCache(valCommissionCache cache[string, int64]) func(b *Broker) {
-	return func(b *Broker) {
-		b.cache.valCommission = valCommissionCache
-	}
-}
-
-func WithValidatorDescriptionCache(valDescriptionCache cache[string, int64]) func(b *Broker) {
-	return func(b *Broker) {
-		b.cache.valDescription = valDescriptionCache
-	}
-}
-
-func WithValidatorInfoCache(valInfoCache cache[string, int64]) func(b *Broker) {
-	return func(b *Broker) {
-		b.cache.valInfo = valInfoCache
-	}
-}
-
-func WithValidatorStatusCache(valStatusCache cache[string, int64]) func(b *Broker) {
-	return func(b *Broker) {
-		b.cache.valStatus = valStatusCache
-	}
 }
 
 func removeDuplicates[T comparable](s []T) []T {

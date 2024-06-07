@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 var (

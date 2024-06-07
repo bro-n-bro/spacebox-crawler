@@ -9,7 +9,7 @@ import (
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 func (m *Module) HandleBlock(ctx context.Context, block *types.Block) error {

@@ -3,7 +3,7 @@ package modules
 import (
 	"github.com/rs/zerolog"
 
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 type (
@@ -23,6 +23,13 @@ func (m *ModuleLoader) Len() int { return len(m.modules) }
 
 func (m *ModuleLoader) WithLogger(log *zerolog.Logger) *ModuleLoader {
 	m.logger = log
+	return m
+}
+
+func (m *ModuleLoader) WithModules(mods ...types.Module) *ModuleLoader {
+	for _, mod := range mods {
+		m.Add(mod)
+	}
 	return m
 }
 

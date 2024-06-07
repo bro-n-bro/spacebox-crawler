@@ -3,13 +3,13 @@ package app
 import (
 	"time"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage"
-	"github.com/bro-n-bro/spacebox-crawler/client/grpc"
-	"github.com/bro-n-bro/spacebox-crawler/client/rpc"
-	"github.com/bro-n-bro/spacebox-crawler/delivery/broker"
-	"github.com/bro-n-bro/spacebox-crawler/delivery/server"
-	healthchecker "github.com/bro-n-bro/spacebox-crawler/pkg/health_checker"
-	"github.com/bro-n-bro/spacebox-crawler/pkg/worker"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage"
+	"github.com/bro-n-bro/spacebox-crawler/v2/client/grpc"
+	"github.com/bro-n-bro/spacebox-crawler/v2/client/rpc"
+	"github.com/bro-n-bro/spacebox-crawler/v2/delivery/broker"
+	"github.com/bro-n-bro/spacebox-crawler/v2/delivery/server"
+	healthchecker "github.com/bro-n-bro/spacebox-crawler/v2/pkg/health_checker"
+	"github.com/bro-n-bro/spacebox-crawler/v2/pkg/worker"
 )
 
 type Config struct {
@@ -17,7 +17,6 @@ type Config struct {
 	DefaultDenom      string `env:"DEFAULT_DENOM" envDefault:"uatom"`
 	LogLevel          string `env:"LOG_LEVEL" envDefault:"info"`
 	Server            server.Config
-	Modules           []string `env:"MODULES" required:"true"`
 	GRPCConfig        grpc.Config
 	RPCConfig         rpc.Config
 	BrokerConfig      broker.Config

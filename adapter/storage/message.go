@@ -5,7 +5,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/bro-n-bro/spacebox-crawler/adapter/storage/model"
+	"github.com/bro-n-bro/spacebox-crawler/v2/adapter/storage/model"
 )
 
 func (s *Storage) InsertErrorMessage(ctx context.Context, message model.Message) error {

@@ -11,10 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/rs/zerolog"
 
-	"github.com/bro-n-bro/spacebox-crawler/internal/rep"
-	tb "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_broker"
-	ts "github.com/bro-n-bro/spacebox-crawler/pkg/mapper/to_storage"
-	"github.com/bro-n-bro/spacebox-crawler/types"
+	"github.com/bro-n-bro/spacebox-crawler/v2/internal/rep"
+	ts "github.com/bro-n-bro/spacebox-crawler/v2/pkg/mapper/to_storage"
+	"github.com/bro-n-bro/spacebox-crawler/v2/types"
 )
 
 type (
@@ -25,7 +24,6 @@ type (
 		tsM        ts.ToStorage
 		storage    rep.Storage
 		cdc        codec.Codec
-		tbM        tb.ToBroker
 		broker     rep.Broker
 		rpcClient  rep.RPCClient
 		grpcClient rep.GrpcClient
@@ -49,7 +47,7 @@ type (
 )
 
 func New(cfg Config, l zerolog.Logger, b rep.Broker, rpcCli rep.RPCClient, grpcCli rep.GrpcClient,
-	modules []types.Module, s rep.Storage, marshaler codec.Codec, tbM tb.ToBroker, tsM ts.ToStorage) *Worker {
+	modules []types.Module, s rep.Storage, marshaler codec.Codec, tsM ts.ToStorage) *Worker {
 
 	l = l.With().Str("cmp", "worker").Logger()
 
@@ -62,7 +60,6 @@ func New(cfg Config, l zerolog.Logger, b rep.Broker, rpcCli rep.RPCClient, grpcC
 		storage:    s,
 		modules:    modules,
 		cdc:        marshaler,
-		tbM:        tbM,
 		tsM:        tsM,
 		wg:         &sync.WaitGroup{},
 	}
@@ -143,7 +140,7 @@ func (w *Worker) Start(_ context.Context) error {
 	}
 
 	// subscribe to process new blocks by websocket
-	if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() {
+	if w.cfg.ProcessNewBlocks {
 		eventCh, err := w.rpcClient.SubscribeNewBlocks(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to subscribe to new blocks: %w", err)
@@ -165,7 +162,7 @@ func (w *Worker) Start(_ context.Context) error {
 
 	// graceful shutdown the application if processing is done
 	go func(wg *sync.WaitGroup) {
-		if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() { // we want to process new blocks
+		if w.cfg.ProcessNewBlocks { // we want to process new blocks
 			w.log.Info().Msg("exit not needed")
 			return
 		}
@@ -183,7 +180,7 @@ func (w *Worker) Stop(_ context.Context) error {
 	w.stopEnqueueHeight()
 	w.stopEnqueueErrorBlocks()
 
-	if w.cfg.ProcessNewBlocks && w.rpcClient.WsEnabled() {
+	if w.cfg.ProcessNewBlocks {
 		w.stopWsListener()
 	}
 
