@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdc "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -16,31 +16,33 @@ import (
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	"github.com/cosmos/cosmos-sdk/x/capability"
-	"github.com/cosmos/cosmos-sdk/x/consensus"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
-	"github.com/cosmos/cosmos-sdk/x/distribution"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	distrclient "github.com/cosmos/cosmos-sdk/x/distribution/client"
 	"github.com/cosmos/cosmos-sdk/x/evidence"
 	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/mint"
-	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	gaia "github.com/cosmos/gaia/v17/x/metaprotocols"
-	ibcaccounts "github.com/cosmos/ibc-go/v7/modules/apps/27-interchain-accounts"
-	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibccore "github.com/cosmos/ibc-go/v7/modules/core"
-	ibclightclient "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	interchainprovider "github.com/cosmos/interchain-security/v4/x/ccv/provider"
+	ibcfee "github.com/cosmos/ibc-go/v4/modules/apps/29-fee"
+	"github.com/cosmos/ibc-go/v4/modules/apps/transfer"
+	ibc "github.com/cosmos/ibc-go/v4/modules/core"
+	ibcclientclient "github.com/cosmos/ibc-go/v4/modules/core/02-client/client"
+	ibclightclienttypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	"github.com/cybercongress/go-cyber/v3/x/bandwidth"
+	"github.com/cybercongress/go-cyber/v3/x/cyberbank"
+	"github.com/cybercongress/go-cyber/v3/x/dmn"
+	"github.com/cybercongress/go-cyber/v3/x/graph"
+	grid "github.com/cybercongress/go-cyber/v3/x/grid"
+	"github.com/cybercongress/go-cyber/v3/x/rank"
+	"github.com/cybercongress/go-cyber/v3/x/resources"
+	"github.com/gravity-devs/liquidity/x/liquidity"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -58,7 +60,6 @@ import (
 	healthchecker "github.com/bro-n-bro/spacebox-crawler/v2/pkg/health_checker"
 	ts "github.com/bro-n-bro/spacebox-crawler/v2/pkg/mapper/to_storage"
 	"github.com/bro-n-bro/spacebox-crawler/v2/pkg/worker"
-	liquiditytypes "github.com/bro-n-bro/spacebox-crawler/v2/types/liquidity"
 )
 
 const (
@@ -206,47 +207,49 @@ func MakeEncodingConfig() codec.Codec {
 		registry     = cdc.NewInterfaceRegistry()
 		basicManager = module.NewBasicManager(
 			auth.AppModuleBasic{},
-			genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+			genutil.AppModuleBasic{},
 			bank.AppModuleBasic{},
 			capability.AppModuleBasic{},
 			staking.AppModuleBasic{},
 			mint.AppModuleBasic{},
-			distribution.AppModuleBasic{},
+			distr.AppModuleBasic{},
+			gov.NewAppModuleBasic(
+				append(
+					wasmclient.ProposalHandlers, //nolint:staticcheck
+					paramsclient.ProposalHandler,
+					distrclient.ProposalHandler,
+					upgradeclient.ProposalHandler,
+					upgradeclient.CancelProposalHandler,
+					ibcclientclient.UpdateClientProposalHandler,
+					ibcclientclient.UpgradeProposalHandler)...),
 			params.AppModuleBasic{},
 			crisis.AppModuleBasic{},
 			slashing.AppModuleBasic{},
 			feegrantmodule.AppModuleBasic{},
+			authzmodule.AppModuleBasic{},
+			ibc.AppModuleBasic{},
+			ibcfee.AppModuleBasic{},
 			upgrade.AppModuleBasic{},
 			evidence.AppModuleBasic{},
-			authzmodule.AppModuleBasic{},
-			groupmodule.AppModuleBasic{},
+			transfer.AppModuleBasic{},
 			vesting.AppModuleBasic{},
-			nftmodule.AppModuleBasic{},
-			consensus.AppModuleBasic{},
-			ibccore.AppModuleBasic{},
-			ibcfee.AppModuleBasic{},
-			ibcaccounts.AppModuleBasic{},
-			ibclightclient.AppModuleBasic{},
-			interchainprovider.AppModuleBasic{},
-			gaia.AppModuleBasic{},
-			gov.NewAppModuleBasic(
-				[]govclient.ProposalHandler{
-					paramsclient.ProposalHandler,
-					upgradeclient.LegacyProposalHandler,
-					upgradeclient.LegacyCancelProposalHandler,
-				},
-			),
+			liquidity.AppModuleBasic{},
+			wasm.AppModuleBasic{},
+			bandwidth.AppModuleBasic{},
+			cyberbank.AppModuleBasic{},
+			graph.AppModuleBasic{},
+			rank.AppModuleBasic{},
+			grid.AppModuleBasic{},
+			dmn.AppModuleBasic{},
+			resources.AppModuleBasic{},
 		)
 	)
 
-	wasmtypes.RegisterInterfaces(registry)
+	ibclightclienttypes.RegisterInterfaces(registry)
 
 	//
 	basicManager.RegisterInterfaces(registry)
 	std.RegisterInterfaces(registry)
-	ibctransfertypes.RegisterInterfaces(registry)
-	cryptocodec.RegisterInterfaces(registry)
-	liquiditytypes.RegisterInterfaces(registry)
 
 	return codec.NewProtoCodec(registry)
 }
